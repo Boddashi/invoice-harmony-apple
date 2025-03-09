@@ -5,6 +5,7 @@ import NotFound from './pages/NotFound';
 import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import Invoices from './pages/Invoices';
+import Login from './pages/Login';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -16,6 +17,7 @@ function App() {
       <CurrencyProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/login" element={<Login />} />
             <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/invoices" element={<Invoices />} />
