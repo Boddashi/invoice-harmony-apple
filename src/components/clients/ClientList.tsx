@@ -1,9 +1,11 @@
-
 import React, { useState } from 'react';
 import { MoreHorizontal, Plus, Mail, Phone } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Client {
   id: string;
@@ -20,15 +22,20 @@ interface Client {
   country?: string;
   vatNumber?: string;
   invoices: number;
-  totalSpent: number;
+  totalSpent: number | string;
 }
 
 const ClientList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { currencySymbol } = useCurrency();
+  const { toast } = useToast();
+  const { user } = useAuth();
   
   // Format amount with currency symbol
-  const formatAmount = (amount: number) => {
+  const formatAmount = (amount: number | string) => {
+    if (typeof amount === 'string') {
+      return amount;
+    }
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
   
@@ -91,8 +98,64 @@ const ClientList = () => {
     }
   ]);
 
-  const handleAddClient = (newClient: Client) => {
-    setClients([...clients, newClient]);
+  const handleAddClient = async (newClient: any) => {
+    try {
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to add clients."
+        });
+        return;
+      }
+
+      const clientData = {
+        user_id: user.id,
+        type: newClient.type,
+        name: newClient.name,
+        company: newClient.company || null,
+        email: newClient.email,
+        phone: newClient.phone || null,
+        street: newClient.street || null,
+        number: newClient.number || null,
+        bus: newClient.bus || null,
+        postcode: newClient.postcode || null,
+        city: newClient.city || null,
+        country: newClient.country || null,
+        vat_number: newClient.vatNumber || null
+      };
+
+      const { data, error } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      const clientWithInvoiceData = {
+        ...data,
+        vatNumber: data.vat_number,
+        invoices: 0,
+        totalSpent: '$0'
+      };
+
+      setClients([...clients, clientWithInvoiceData]);
+      
+      toast({
+        title: "Success",
+        description: "Client added successfully."
+      });
+    } catch (error: any) {
+      console.error('Error adding client:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add client."
+      });
+    }
   };
 
   return (
