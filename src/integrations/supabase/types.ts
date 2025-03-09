@@ -66,6 +66,75 @@ export type Database = {
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          account_number: string | null
+          bank_name: string | null
+          bus: string | null
+          city: string | null
+          company_email: string | null
+          company_name: string | null
+          company_phone: string | null
+          company_website: string | null
+          country: string | null
+          created_at: string | null
+          default_currency: string | null
+          iban: string | null
+          id: string
+          number: string | null
+          postal_code: string | null
+          street: string | null
+          swift: string | null
+          updated_at: string | null
+          user_id: string
+          vat_number: string | null
+        }
+        Insert: {
+          account_number?: string | null
+          bank_name?: string | null
+          bus?: string | null
+          city?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_website?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          iban?: string | null
+          id?: string
+          number?: string | null
+          postal_code?: string | null
+          street?: string | null
+          swift?: string | null
+          updated_at?: string | null
+          user_id: string
+          vat_number?: string | null
+        }
+        Update: {
+          account_number?: string | null
+          bank_name?: string | null
+          bus?: string | null
+          city?: string | null
+          company_email?: string | null
+          company_name?: string | null
+          company_phone?: string | null
+          company_website?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_currency?: string | null
+          iban?: string | null
+          id?: string
+          number?: string | null
+          postal_code?: string | null
+          street?: string | null
+          swift?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       invoice_items: {
         Row: {
           amount: number
