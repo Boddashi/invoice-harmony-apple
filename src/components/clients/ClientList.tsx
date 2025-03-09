@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MoreHorizontal, Plus, Mail, Phone } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
+import AddClientModal from './AddClientModal';
 
 interface Client {
   id: string;
@@ -14,8 +15,9 @@ interface Client {
 }
 
 const ClientList = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   // Mock data
-  const clients: Client[] = [
+  const [clients, setClients] = useState<Client[]>([
     {
       id: '1',
       name: 'Tim Cook',
@@ -61,13 +63,20 @@ const ClientList = () => {
       invoices: 1,
       totalSpent: '$2,800'
     }
-  ];
+  ]);
+
+  const handleAddClient = (newClient: Client) => {
+    setClients([...clients, newClient]);
+  };
 
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Clients</h2>
-        <button className="apple-button flex items-center gap-2">
+        <button 
+          className="apple-button flex items-center gap-2"
+          onClick={() => setIsModalOpen(true)}
+        >
           <Plus size={18} />
           <span>Add Client</span>
         </button>
@@ -119,6 +128,12 @@ const ClientList = () => {
           </table>
         </div>
       </CustomCard>
+
+      <AddClientModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onAddClient={handleAddClient} 
+      />
     </div>
   );
 };
