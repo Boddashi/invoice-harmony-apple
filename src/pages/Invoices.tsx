@@ -36,6 +36,7 @@ const Invoices = () => {
   const [filter, setFilter] = useState<InvoiceStatus>('all');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -96,9 +97,22 @@ const Invoices = () => {
     fetchInvoices();
   }, [user, toast]);
   
-  const filteredInvoices = filter === 'all' 
-    ? invoices 
-    : invoices.filter(invoice => invoice.status === filter);
+  // Filter invoices based on status filter and search query
+  const filteredInvoices = invoices
+    .filter(invoice => filter === 'all' || invoice.status === filter)
+    .filter(invoice => {
+      if (!searchQuery.trim()) return true;
+      
+      const query = searchQuery.toLowerCase();
+      return (
+        invoice.invoice_number.toLowerCase().includes(query) ||
+        (invoice.client?.name && invoice.client.name.toLowerCase().includes(query)) ||
+        (invoice.client?.company && invoice.client.company.toLowerCase().includes(query)) ||
+        formatDate(invoice.issue_date).toLowerCase().includes(query) ||
+        formatDate(invoice.due_date).toLowerCase().includes(query) ||
+        invoice.total_amount.toString().includes(query)
+      );
+    });
   
   const getStatusColor = (status: Invoice['status']) => {
     switch (status) {
@@ -143,6 +157,8 @@ const Invoices = () => {
               type="text"
               placeholder="Search invoices..."
               className="input-field w-full pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
@@ -202,7 +218,11 @@ const Invoices = () => {
             </div>
           ) : filteredInvoices.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-muted-foreground">No invoices found. Create your first invoice to get started.</p>
+              <p className="text-muted-foreground">
+                {searchQuery.trim() 
+                  ? "No invoices match your search. Try a different search term." 
+                  : "No invoices found. Create your first invoice to get started."}
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
