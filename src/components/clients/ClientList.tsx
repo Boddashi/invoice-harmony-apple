@@ -6,10 +6,18 @@ import AddClientModal from './AddClientModal';
 
 interface Client {
   id: string;
+  type: string;
   name: string;
   company: string;
   email: string;
   phone: string;
+  street?: string;
+  number?: string;
+  bus?: string;
+  postcode?: string;
+  city?: string;
+  country?: string;
+  vatNumber?: string;
   invoices: number;
   totalSpent: string;
 }
@@ -20,15 +28,22 @@ const ClientList = () => {
   const [clients, setClients] = useState<Client[]>([
     {
       id: '1',
+      type: 'business',
       name: 'Tim Cook',
       company: 'Apple Inc.',
       email: 'tim@apple.com',
       phone: '(123) 456-7890',
+      street: '1 Apple Park Way',
+      city: 'Cupertino',
+      postcode: '95014',
+      country: 'United States',
+      vatNumber: 'US123456789',
       invoices: 5,
       totalSpent: '$12,350'
     },
     {
       id: '2',
+      type: 'business',
       name: 'Satya Nadella',
       company: 'Microsoft Corp.',
       email: 'satya@microsoft.com',
@@ -38,6 +53,7 @@ const ClientList = () => {
     },
     {
       id: '3',
+      type: 'business',
       name: 'Sundar Pichai',
       company: 'Google LLC',
       email: 'sundar@google.com',
@@ -47,6 +63,7 @@ const ClientList = () => {
     },
     {
       id: '4',
+      type: 'business',
       name: 'Andy Jassy',
       company: 'Amazon.com Inc.',
       email: 'andy@amazon.com',
@@ -56,8 +73,9 @@ const ClientList = () => {
     },
     {
       id: '5',
+      type: 'individual',
       name: 'Elon Musk',
-      company: 'Tesla Inc.',
+      company: '',
       email: 'elon@tesla.com',
       phone: '(567) 890-1234',
       invoices: 1,
@@ -89,6 +107,7 @@ const ClientList = () => {
               <tr className="bg-secondary/50 text-foreground text-left">
                 <th className="p-4 font-medium">Name</th>
                 <th className="p-4 font-medium">Contact</th>
+                <th className="p-4 font-medium">Address</th>
                 <th className="p-4 font-medium text-right">Invoices</th>
                 <th className="p-4 font-medium text-right">Total Spent</th>
                 <th className="p-4 w-16"></th>
@@ -100,7 +119,10 @@ const ClientList = () => {
                   <td className="p-4">
                     <div className="flex flex-col">
                       <span className="font-medium">{client.name}</span>
-                      <span className="text-sm text-muted-foreground">{client.company}</span>
+                      {client.company && <span className="text-sm text-muted-foreground">{client.company}</span>}
+                      {client.type === 'business' && client.vatNumber && (
+                        <span className="text-xs text-muted-foreground mt-1">VAT: {client.vatNumber}</span>
+                      )}
                     </div>
                   </td>
                   <td className="p-4">
@@ -109,10 +131,25 @@ const ClientList = () => {
                         <Mail size={14} className="text-muted-foreground" />
                         <span className="text-sm">{client.email}</span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Phone size={14} className="text-muted-foreground" />
-                        <span className="text-sm">{client.phone}</span>
-                      </div>
+                      {client.phone && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <Phone size={14} className="text-muted-foreground" />
+                          <span className="text-sm">{client.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col text-sm">
+                      {client.street && (
+                        <span>{client.street} {client.number} {client.bus}</span>
+                      )}
+                      {client.postcode && client.city && (
+                        <span>{client.postcode} {client.city}</span>
+                      )}
+                      {client.country && (
+                        <span className="text-muted-foreground">{client.country}</span>
+                      )}
                     </div>
                   </td>
                   <td className="p-4 text-right">{client.invoices}</td>
