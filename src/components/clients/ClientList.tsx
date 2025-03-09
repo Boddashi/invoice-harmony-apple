@@ -135,14 +135,16 @@ const ClientList = () => {
         throw error;
       }
 
-      const clientWithInvoiceData = {
-        ...data,
-        vatNumber: data.vat_number,
-        invoices: 0,
-        totalSpent: '$0'
-      };
+      if (data) {
+        const clientWithInvoiceData = {
+          ...data,
+          vatNumber: data.vat_number,
+          invoices: 0,
+          totalSpent: 0
+        };
 
-      setClients([...clients, clientWithInvoiceData]);
+        setClients([...clients, clientWithInvoiceData]);
+      }
       
       toast({
         title: "Success",
