@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-type InvoiceStatus = 'paid' | 'pending' | 'overdue';
+type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'draft';
 
 interface Invoice {
   id: string;
@@ -43,6 +43,12 @@ const getStatusConfig = (status: InvoiceStatus) => {
         label: 'Overdue',
         color: 'bg-apple-red/10 text-apple-red border-apple-red/20',
         icon: AlertCircle
+      };
+    case 'draft':
+      return {
+        label: 'Draft',
+        color: 'bg-gray-100 text-gray-600 border-gray-200',
+        icon: FileText
       };
   }
 };
@@ -90,7 +96,13 @@ const InvoiceList = () => {
           throw error;
         }
         
-        setRecentInvoices(data || []);
+        // Cast the data to ensure status is treated as InvoiceStatus type
+        const typedData = data?.map(invoice => ({
+          ...invoice,
+          status: invoice.status as InvoiceStatus
+        })) || [];
+        
+        setRecentInvoices(typedData);
       } catch (error: any) {
         console.error('Error fetching recent invoices:', error);
         toast({

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
+type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
 
 interface Invoice {
   id: string;
@@ -17,7 +17,7 @@ interface Invoice {
   invoice_number: string;
   issue_date: string;
   due_date: string;
-  status: 'draft' | 'pending' | 'paid' | 'overdue';
+  status: InvoiceDBStatus;
   amount: number;
   tax_rate?: number;
   tax_amount?: number;
@@ -71,7 +71,13 @@ const Invoices = () => {
           throw error;
         }
         
-        setInvoices(data || []);
+        // Cast the data to ensure status is treated as InvoiceDBStatus type
+        const typedData = data?.map(invoice => ({
+          ...invoice,
+          status: invoice.status as InvoiceDBStatus
+        })) || [];
+        
+        setInvoices(typedData);
       } catch (error: any) {
         console.error('Error fetching invoices:', error);
         toast({
