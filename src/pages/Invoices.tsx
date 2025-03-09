@@ -1,98 +1,91 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { Check, ChevronDown, Download, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 
 interface Invoice {
   id: string;
-  client: string;
-  amount: number;
-  date: string;
-  dueDate: string;
+  client_id: string;
+  invoice_number: string;
+  issue_date: string;
+  due_date: string;
   status: 'draft' | 'pending' | 'paid' | 'overdue';
+  amount: number;
+  tax_rate?: number;
+  tax_amount?: number;
+  total_amount: number;
+  notes?: string;
+  client?: {
+    name: string;
+    company: string | null;
+  };
 }
 
 const Invoices = () => {
   const [filter, setFilter] = useState<InvoiceStatus>('all');
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { currencySymbol } = useCurrency();
+  const { user } = useAuth();
+  const { toast } = useToast();
   
   // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
+
+  // Format date to readable format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
   
-  // Mock data
-  const invoices: Invoice[] = [
-    {
-      id: 'INV-001',
-      client: 'Apple Inc.',
-      amount: 3250.00,
-      date: 'June 15, 2023',
-      dueDate: 'July 15, 2023',
-      status: 'paid'
-    },
-    {
-      id: 'INV-002',
-      client: 'Microsoft Corp.',
-      amount: 1840.00,
-      date: 'June 25, 2023',
-      dueDate: 'July 25, 2023',
-      status: 'pending'
-    },
-    {
-      id: 'INV-003',
-      client: 'Google LLC',
-      amount: 5600.00,
-      date: 'June 28, 2023',
-      dueDate: 'July 5, 2023',
-      status: 'overdue'
-    },
-    {
-      id: 'INV-004',
-      client: 'Amazon.com Inc.',
-      amount: 2100.00,
-      date: 'July 2, 2023',
-      dueDate: 'August 2, 2023',
-      status: 'pending'
-    },
-    {
-      id: 'INV-005',
-      client: 'Tesla Inc.',
-      amount: 4530.00,
-      date: 'July 5, 2023',
-      dueDate: 'August 5, 2023',
-      status: 'paid'
-    },
-    {
-      id: 'INV-006',
-      client: 'Facebook, Inc.',
-      amount: 2750.00,
-      date: 'July 10, 2023',
-      dueDate: 'August 10, 2023',
-      status: 'draft'
-    },
-    {
-      id: 'INV-007',
-      client: 'Netflix, Inc.',
-      amount: 3100.00,
-      date: 'July 12, 2023',
-      dueDate: 'August 12, 2023',
-      status: 'pending'
-    },
-    {
-      id: 'INV-008',
-      client: 'Oracle Corporation',
-      amount: 5250.00,
-      date: 'July 15, 2023',
-      dueDate: 'August 15, 2023',
-      status: 'overdue'
-    }
-  ];
+  // Fetch invoices from Supabase
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      if (!user) return;
+      
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('invoices')
+          .select(`
+            *,
+            client:clients(name, company)
+          `)
+          .eq('user_id', user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setInvoices(data || []);
+      } catch (error: any) {
+        console.error('Error fetching invoices:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch invoices."
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchInvoices();
+  }, [user, toast]);
   
   const filteredInvoices = filter === 'all' 
     ? invoices 
@@ -194,63 +187,84 @@ const Invoices = () => {
         </div>
         
         <CustomCard padding="none" className="animate-fade-in">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="border-b border-border bg-secondary/50">
-                  <th className="py-4 px-5 text-left font-medium">
-                    <div className="flex items-center gap-1">
-                      Invoice #
-                      <ChevronDown size={16} />
-                    </div>
-                  </th>
-                  <th className="py-4 px-5 text-left font-medium">Client</th>
-                  <th className="py-4 px-5 text-left font-medium">Date</th>
-                  <th className="py-4 px-5 text-left font-medium">Due Date</th>
-                  <th className="py-4 px-5 text-right font-medium">Amount</th>
-                  <th className="py-4 px-5 text-center font-medium">Status</th>
-                  <th className="py-4 px-5 text-center font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredInvoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
-                    <td className="py-4 px-5 font-medium">{invoice.id}</td>
-                    <td className="py-4 px-5">{invoice.client}</td>
-                    <td className="py-4 px-5">{invoice.date}</td>
-                    <td className="py-4 px-5">{invoice.dueDate}</td>
-                    <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.amount)}</td>
-                    <td className="py-4 px-5">
-                      <div className="flex justify-center">
-                        <span className={cn(
-                          "px-3 py-1 text-xs font-medium border rounded-full",
-                          getStatusColor(invoice.status)
-                        )}>
-                          {getStatusLabel(invoice.status)}
-                        </span>
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">Loading invoices...</p>
+            </div>
+          ) : filteredInvoices.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">No invoices found. Create your first invoice to get started.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <th className="py-4 px-5 text-left font-medium">
+                      <div className="flex items-center gap-1">
+                        Invoice #
+                        <ChevronDown size={16} />
                       </div>
-                    </td>
-                    <td className="py-4 px-5">
-                      <div className="flex justify-center gap-2">
-                        <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
-                          <Eye size={18} />
-                        </button>
-                        <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
-                          <Send size={18} />
-                        </button>
-                        <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
-                          <Download size={18} />
-                        </button>
-                        <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
-                          <MoreHorizontal size={18} />
-                        </button>
-                      </div>
-                    </td>
+                    </th>
+                    <th className="py-4 px-5 text-left font-medium">Client</th>
+                    <th className="py-4 px-5 text-left font-medium">Issue Date</th>
+                    <th className="py-4 px-5 text-left font-medium">Due Date</th>
+                    <th className="py-4 px-5 text-right font-medium">Amount</th>
+                    <th className="py-4 px-5 text-center font-medium">Status</th>
+                    <th className="py-4 px-5 text-center font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredInvoices.map((invoice) => (
+                    <tr key={invoice.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
+                      <td className="py-4 px-5 font-medium">{invoice.invoice_number}</td>
+                      <td className="py-4 px-5">
+                        {invoice.client ? (
+                          <div>
+                            <span>{invoice.client.name}</span>
+                            {invoice.client.company && (
+                              <span className="text-sm text-muted-foreground block">{invoice.client.company}</span>
+                            )}
+                          </div>
+                        ) : (
+                          "Unknown Client"
+                        )}
+                      </td>
+                      <td className="py-4 px-5">{formatDate(invoice.issue_date)}</td>
+                      <td className="py-4 px-5">{formatDate(invoice.due_date)}</td>
+                      <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.total_amount)}</td>
+                      <td className="py-4 px-5">
+                        <div className="flex justify-center">
+                          <span className={cn(
+                            "px-3 py-1 text-xs font-medium border rounded-full",
+                            getStatusColor(invoice.status)
+                          )}>
+                            {getStatusLabel(invoice.status)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <div className="flex justify-center gap-2">
+                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
+                            <Eye size={18} />
+                          </button>
+                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
+                            <Send size={18} />
+                          </button>
+                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
+                            <Download size={18} />
+                          </button>
+                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
+                            <MoreHorizontal size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CustomCard>
       </div>
     </MainLayout>
