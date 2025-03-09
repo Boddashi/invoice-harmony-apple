@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { PlusCircle, Settings } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../theme/ThemeToggle';
 
@@ -36,30 +37,7 @@ const Header = () => {
         <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">{getTitle()}</h1>
         
         <div className="flex items-center space-x-2">
-          {location.pathname === '/invoices' && (
-            <Link 
-              to="/invoices/new"
-              className={cn(
-                "apple-button flex items-center gap-2 animate-fade-in",
-                isCreatePage && "opacity-50 pointer-events-none"
-              )}
-            >
-              <PlusCircle size={18} />
-              <span>New Invoice</span>
-            </Link>
-          )}
-          
           <ThemeToggle />
-          
-          <Link 
-            to="/settings"
-            className={cn(
-              "ghost-button",
-              location.pathname === '/settings' && "bg-secondary/50"
-            )}
-          >
-            <Settings size={20} />
-          </Link>
         </div>
       </div>
     </header>
