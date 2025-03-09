@@ -70,6 +70,30 @@ const InvoiceForm = () => {
           </div>
           
           <div>
+            <label className="block text-sm font-medium text-foreground mb-1">Country</label>
+            <div className="relative">
+              <select className="input-field w-full appearance-none pr-10">
+                <option>Select a country</option>
+                <option>United States</option>
+                <option>United Kingdom</option>
+                <option>Canada</option>
+                <option>Australia</option>
+                <option>Germany</option>
+                <option>France</option>
+                <option>Japan</option>
+                <option>China</option>
+                <option>India</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1">VAT Number</label>
+            <input type="text" placeholder="e.g. GB123456789" className="input-field w-full" />
+          </div>
+          
+          <div>
             <label className="block text-sm font-medium text-foreground mb-1">Invoice Date</label>
             <input type="date" className="input-field w-full" />
           </div>
