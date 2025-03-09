@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 interface CustomCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  variant?: 'default' | 'glass' | 'elevated';
+  variant?: 'default' | 'glass' | 'elevated' | 'neon';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
@@ -20,9 +20,10 @@ const CustomCard = ({
       className={cn(
         "rounded-xl overflow-hidden",
         // Variants
-        variant === 'default' && "bg-white border border-border/40 shadow-apple-sm",
+        variant === 'default' && "bg-card border border-border/40 shadow-apple-sm dark:shadow-none",
         variant === 'glass' && "glass-card",
         variant === 'elevated' && "elevated-card",
+        variant === 'neon' && "bg-card border border-neon-purple shadow-neon-sm dark:shadow-neon-md",
         // Padding
         padding === 'none' && "p-0",
         padding === 'sm' && "p-3",
