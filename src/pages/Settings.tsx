@@ -2,13 +2,15 @@
 import React from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { User, Building, CreditCard, Shield, Bell } from 'lucide-react';
+import { User, Building, CreditCard, Shield, Bell, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = React.useState('profile');
   const { toast } = useToast();
+  const { currency, setCurrency, currencySymbol } = useCurrency();
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -18,11 +20,28 @@ const Settings = () => {
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
 
+  const currencies = [
+    { code: 'EUR', label: 'Euro (€)', symbol: '€' },
+    { code: 'USD', label: 'US Dollar ($)', symbol: '$' },
+    { code: 'GBP', label: 'British Pound (£)', symbol: '£' },
+    { code: 'JPY', label: 'Japanese Yen (¥)', symbol: '¥' },
+    { code: 'CNY', label: 'Chinese Yuan (¥)', symbol: '¥' },
+    { code: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
+  ];
+
   const handleSaveCompany = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
       title: "Company information saved",
       description: "Your company details have been updated successfully."
+    });
+  };
+
+  const handleCurrencyChange = (currencyCode: string) => {
+    setCurrency(currencyCode);
+    toast({
+      title: "Currency updated",
+      description: `Your default currency has been set to ${currencyCode}.`
     });
   };
 
@@ -135,9 +154,32 @@ const Settings = () => {
                         <input type="url" className="input-field w-full" defaultValue="https://acme.com" />
                       </div>
                       
-                      <div className="md:col-span-2">
+                      <div>
                         <label className="block text-sm font-medium text-foreground mb-1">VAT Number</label>
                         <input type="text" className="input-field w-full" defaultValue="EU123456789" />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Default Currency</label>
+                        <div className="flex flex-wrap gap-2">
+                          {currencies.map((curr) => (
+                            <button
+                              key={curr.code}
+                              type="button"
+                              onClick={() => handleCurrencyChange(curr.code)}
+                              className={cn(
+                                "px-3 py-2 border rounded-md flex items-center gap-2 transition-colors",
+                                currency === curr.code 
+                                  ? "bg-apple-blue text-white border-apple-blue" 
+                                  : "bg-background border-border hover:bg-secondary"
+                              )}
+                            >
+                              <span>{curr.symbol}</span>
+                              <span>{curr.code}</span>
+                              {currency === curr.code && <Check size={16} />}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     

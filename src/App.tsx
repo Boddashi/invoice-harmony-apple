@@ -1,41 +1,33 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Invoices from "./pages/Invoices";
-import Clients from "./pages/Clients";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import InvoiceForm from "./components/invoices/InvoiceForm";
-import { ThemeProvider } from "./components/theme/ThemeProvider";
-import MainLayout from "./components/layout/MainLayout";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Dashboard from './pages/Index';
+import NotFound from './pages/NotFound';
+import Clients from './pages/Clients';
+import Settings from './pages/Settings';
+import Invoices from './pages/Invoices';
+import { ThemeProvider } from './components/theme/ThemeProvider';
+import { Toaster } from './components/ui/sonner';
+import { CurrencyProvider } from './contexts/CurrencyContext';
+import './App.css';
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <ThemeProvider defaultTheme="light">
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light">
+      <CurrencyProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/invoices/new" element={
-              <MainLayout><InvoiceForm /></MainLayout>
-            } />
+            <Route path="/" element={<Dashboard />} />
             <Route path="/clients" element={<Clients />} />
+            <Route path="/invoices" element={<Invoices />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/404" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
         </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </ThemeProvider>
-);
+        <Toaster />
+      </CurrencyProvider>
+    </ThemeProvider>
+  );
+}
 
 export default App;

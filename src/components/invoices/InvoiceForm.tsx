@@ -3,8 +3,10 @@ import React, { useState } from 'react';
 import { ChevronDown, Plus, Trash2 } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 const InvoiceForm = () => {
+  const { currencySymbol } = useCurrency();
   const [items, setItems] = useState([
     { description: '', quantity: 1, rate: 0, amount: 0 }
   ]);
@@ -142,7 +144,7 @@ const InvoiceForm = () => {
                   </td>
                   <td className="p-2">
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2">$</span>
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2">{currencySymbol}</span>
                       <input
                         type="number"
                         value={item.rate}
@@ -154,7 +156,7 @@ const InvoiceForm = () => {
                     </div>
                   </td>
                   <td className="p-2 text-right font-medium">
-                    ${item.amount.toFixed(2)}
+                    {currencySymbol}{item.amount.toFixed(2)}
                   </td>
                   <td className="p-2">
                     <button 
@@ -183,11 +185,11 @@ const InvoiceForm = () => {
           <div className="text-right">
             <div className="flex justify-end gap-10 py-2">
               <span className="font-medium">Subtotal:</span>
-              <span className="font-medium">${calculateTotal().toFixed(2)}</span>
+              <span className="font-medium">{currencySymbol}{calculateTotal().toFixed(2)}</span>
             </div>
             <div className="flex justify-end gap-10 py-2 border-t border-border">
               <span className="font-semibold">Total:</span>
-              <span className="font-semibold">${calculateTotal().toFixed(2)}</span>
+              <span className="font-semibold">{currencySymbol}{calculateTotal().toFixed(2)}</span>
             </div>
           </div>
         </div>
