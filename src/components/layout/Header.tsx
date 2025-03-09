@@ -1,13 +1,14 @@
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PlusCircle, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../theme/ThemeToggle';
-import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Header = () => {
   const location = useLocation();
-  const { signOut } = useAuth();
+  const navigate = useNavigate();
   
   const getTitle = () => {
     switch (location.pathname) {
@@ -36,7 +37,8 @@ const Header = () => {
   const isLoginPage = location.pathname === '/login';
 
   const handleLogout = () => {
-    signOut();
+    toast.success('Logged out successfully');
+    navigate('/login');
   };
 
   if (isLoginPage) {
