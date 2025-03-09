@@ -4,9 +4,11 @@ import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { User, Building, CreditCard, Shield, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = React.useState('profile');
+  const { toast } = useToast();
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -15,6 +17,14 @@ const Settings = () => {
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
+
+  const handleSaveCompany = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: "Company information saved",
+      description: "Your company details have been updated successfully."
+    });
+  };
 
   return (
     <MainLayout>
@@ -99,7 +109,120 @@ const Settings = () => {
             {activeTab === 'company' && (
               <CustomCard>
                 <h2 className="text-xl font-semibold mb-6">Company Details</h2>
-                <p className="text-muted-foreground">Configure your company information for invoices.</p>
+                <p className="text-muted-foreground mb-6">Configure your company information for invoices.</p>
+                
+                <form onSubmit={handleSaveCompany}>
+                  <div className="space-y-6">
+                    {/* Company Basic Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-foreground mb-1">Company Name</label>
+                        <input type="text" className="input-field w-full" defaultValue="Acme Corporation" />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Company Email</label>
+                        <input type="email" className="input-field w-full" defaultValue="info@acme.com" />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-1">Company Phone</label>
+                        <input type="tel" className="input-field w-full" defaultValue="(123) 456-7890" />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-foreground mb-1">Company Website</label>
+                        <input type="url" className="input-field w-full" defaultValue="https://acme.com" />
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-foreground mb-1">VAT Number</label>
+                        <input type="text" className="input-field w-full" defaultValue="EU123456789" />
+                      </div>
+                    </div>
+                    
+                    {/* Address */}
+                    <div>
+                      <h3 className="text-base font-medium mb-4">Company Address</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-foreground mb-1">Street</label>
+                          <input type="text" className="input-field w-full" defaultValue="123 Innovation Way" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">Number</label>
+                          <input type="text" className="input-field w-full" defaultValue="42" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">Bus/Suite</label>
+                          <input type="text" className="input-field w-full" defaultValue="Suite 101" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">Postal Code</label>
+                          <input type="text" className="input-field w-full" defaultValue="94103" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">City</label>
+                          <input type="text" className="input-field w-full" defaultValue="San Francisco" />
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-foreground mb-1">Country</label>
+                          <input type="text" className="input-field w-full" defaultValue="United States" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Bank Information */}
+                    <div>
+                      <h3 className="text-base font-medium mb-4">Payment Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-foreground mb-1">Bank Name</label>
+                          <input type="text" className="input-field w-full" defaultValue="Global Bank" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">Account Number</label>
+                          <input type="text" className="input-field w-full" defaultValue="XXXX-XXXX-XXXX-1234" />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-foreground mb-1">SWIFT / BIC</label>
+                          <input type="text" className="input-field w-full" defaultValue="GLBKUS12345" />
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-foreground mb-1">IBAN</label>
+                          <input type="text" className="input-field w-full" defaultValue="US12 GLBK 1234 5678 9012 34" />
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Company Logo */}
+                    <div>
+                      <h3 className="text-base font-medium mb-4">Company Logo</h3>
+                      <div className="flex items-center gap-5">
+                        <div className="w-20 h-20 rounded bg-secondary flex items-center justify-center text-muted-foreground">
+                          <Building size={32} />
+                        </div>
+                        
+                        <div className="flex gap-3">
+                          <button type="button" className="secondary-button">Upload Logo</button>
+                          <button type="button" className="ghost-button text-apple-red">Remove</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                    <button type="submit" className="apple-button">Save Company Information</button>
+                  </div>
+                </form>
               </CustomCard>
             )}
             
