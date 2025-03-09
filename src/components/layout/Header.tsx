@@ -1,14 +1,11 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { PlusCircle, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../theme/ThemeToggle';
-import { toast } from 'sonner';
 
 const Header = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   
   const getTitle = () => {
     switch (location.pathname) {
@@ -36,11 +33,6 @@ const Header = () => {
   const isCreatePage = location.pathname === '/invoices/new';
   const isLoginPage = location.pathname === '/login';
 
-  const handleLogout = () => {
-    toast.success('Logged out successfully');
-    navigate('/login');
-  };
-
   if (isLoginPage) {
     return null; // Don't show header on login page
   }
@@ -52,14 +44,6 @@ const Header = () => {
         
         <div className="flex items-center space-x-3">
           <ThemeToggle />
-          
-          <button 
-            onClick={handleLogout}
-            className="ghost-button flex items-center gap-1.5 text-sm"
-          >
-            <LogOut size={16} />
-            <span>Sign Out</span>
-          </button>
         </div>
       </div>
     </header>

@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { LayoutGrid, FileText, Users, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
+import { toast } from 'sonner';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface MainLayoutProps {
 
 const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { icon: LayoutGrid, label: 'Dashboard', href: '/' },
@@ -19,13 +21,18 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 
+  const handleLogout = () => {
+    toast.success('Logged out successfully');
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
       <main className="flex-1 flex">
         {/* Navigation sidebar */}
-        <nav className="hidden md:flex w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-col">
+        <nav className="hidden md:flex w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-col justify-between">
           <div className="flex flex-col p-4 gap-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || 
@@ -48,6 +55,17 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 </Link>
               );
             })}
+          </div>
+          
+          {/* Sign out button at bottom of sidebar */}
+          <div className="p-4 mt-auto border-t border-border/40">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-foreground/70 hover:bg-secondary/80 hover:text-foreground transition-all duration-200"
+            >
+              <LogOut size={20} className="text-foreground/70" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </nav>
         
@@ -72,6 +90,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               </Link>
             );
           })}
+          
+          {/* Add sign out icon for mobile */}
+          <button
+            onClick={handleLogout}
+            className="flex flex-1 flex-col items-center justify-center gap-1 text-foreground/70"
+          >
+            <LogOut size={22} />
+            <span className="text-xs">Sign Out</span>
+          </button>
         </div>
         
         {/* Main content */}
