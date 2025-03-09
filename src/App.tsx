@@ -16,7 +16,7 @@ import MainLayout from "./components/layout/MainLayout";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="system">
+  <ThemeProvider defaultTheme="light">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
