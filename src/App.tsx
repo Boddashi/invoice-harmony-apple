@@ -9,6 +9,7 @@ import Login from './pages/Login';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { AuthProvider } from './contexts/AuthContext';
 import './App.css';
 
 function App() {
@@ -16,15 +17,17 @@ function App() {
     <ThemeProvider defaultTheme="light">
       <CurrencyProvider>
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/clients" element={<Clients />} />
-            <Route path="/invoices" element={<Invoices />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/404" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/404" replace />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
         <Toaster />
       </CurrencyProvider>

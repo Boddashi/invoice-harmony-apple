@@ -1,113 +1,90 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { Apple } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const { signIn, signUp, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate authentication process
-    setTimeout(() => {
-      setIsLoading(false);
-      // For demo purposes, any login works
-      toast.success('Login successful');
-      navigate('/');
-    }, 1500);
+    if (isSignUp) {
+      await signUp(email, password);
+    } else {
+      await signIn(email, password);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-950 p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Apple className="h-10 w-10 mx-auto mb-4 text-gray-900 dark:text-white" />
-          <h1 className="text-2xl font-medium text-gray-900 dark:text-white">Sign in with your ID</h1>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-apple-sm dark:shadow-neon-sm">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+            {isSignUp ? 'Create an account' : 'Sign in to your account'}
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            {isSignUp 
+              ? 'Already have an account?' 
+              : "Don't have an account?"} 
+            <button 
+              className="ml-1 text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+              onClick={() => setIsSignUp(!isSignUp)}
+            >
+              {isSignUp ? 'Sign in' : 'Sign up'}
+            </button>
+          </p>
         </div>
-        
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-apple-md p-8 mb-6">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Email
+                Email address
               </label>
-              <Input
+              <input
                 id="email"
+                name="email"
                 type="email"
+                autoComplete="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@example.com"
-                required
-                className="input-field w-full"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Email address"
               />
             </div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Password
-                </label>
-                <a 
-                  href="#" 
-                  className="text-sm font-medium text-apple-blue dark:text-neon-purple hover:underline"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toast.info('Password reset functionality would go here');
-                  }}
-                >
-                  Forgot password?
-                </a>
-              </div>
-              <Input
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Password
+              </label>
+              <input
                 id="password"
+                name="password"
                 type="password"
+                autoComplete="current-password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="input-field w-full"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Password"
               />
             </div>
-            
-            <Button 
-              type="submit" 
-              className="apple-button w-full"
+          </div>
+
+          <div>
+            <button
+              type="submit"
               disabled={isLoading}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
-            </Button>
-          </form>
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Don't have an Apple ID?{' '}
-            <a 
-              href="#" 
-              className="font-medium text-apple-blue dark:text-neon-purple hover:underline"
-              onClick={(e) => {
-                e.preventDefault();
-                toast.info('Create account functionality would go here');
-              }}
-            >
-              Create one now
-            </a>
-          </p>
-        </div>
-        
-        <div className="mt-10 text-center">
-          <p className="text-xs text-gray-500 dark:text-gray-500">
-            This app and your Apple ID are protected by Apple's security terms.
-          </p>
-        </div>
+              {isLoading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutGrid, FileText, Users, Settings, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface MainLayoutProps {
@@ -13,6 +14,15 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!user) {
+      toast.error('Please log in to access this page');
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const navItems = [
     { icon: LayoutGrid, label: 'Dashboard', href: '/' },
@@ -22,9 +32,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   ];
 
   const handleLogout = () => {
-    toast.success('Logged out successfully');
-    navigate('/login');
+    signOut();
   };
+
+  // If we're still checking authentication or user is not authenticated, don't render the layout
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
