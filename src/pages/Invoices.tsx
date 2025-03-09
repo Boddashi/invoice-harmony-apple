@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { Check, ChevronDown, Download, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
@@ -30,6 +32,7 @@ interface Invoice {
 }
 
 const Invoices = () => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState<InvoiceStatus>('all');
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +129,7 @@ const Invoices = () => {
           <h2 className="text-xl font-semibold">Your Invoices</h2>
           <button 
             className="apple-button flex items-center gap-2"
-            onClick={() => {}}
+            onClick={() => navigate('/invoices/new')}
           >
             <Plus size={18} />
             <span>New Invoice</span>
