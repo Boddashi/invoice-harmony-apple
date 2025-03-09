@@ -5,8 +5,16 @@ import DashboardSummary from '../components/dashboard/DashboardSummary';
 import InvoiceList from '../components/dashboard/InvoiceList';
 import { BarChart4 } from 'lucide-react';
 import CustomCard from '../components/ui/CustomCard';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const Index = () => {
+  const { currencySymbol } = useCurrency();
+  
+  // Format amount with currency symbol
+  const formatAmount = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
+  
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto space-y-7">
@@ -73,15 +81,15 @@ const Index = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span>Apple Inc.</span>
-                    <span className="font-medium">$5,240</span>
+                    <span className="font-medium">{formatAmount(5240)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Microsoft Corp.</span>
-                    <span className="font-medium">$3,180</span>
+                    <span className="font-medium">{formatAmount(3180)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Google LLC</span>
-                    <span className="font-medium">$2,890</span>
+                    <span className="font-medium">{formatAmount(2890)}</span>
                   </div>
                 </div>
               </div>

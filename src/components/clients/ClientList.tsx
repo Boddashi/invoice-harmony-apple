@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { MoreHorizontal, Plus, Mail, Phone } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface Client {
   id: string;
@@ -19,11 +20,18 @@ interface Client {
   country?: string;
   vatNumber?: string;
   invoices: number;
-  totalSpent: string;
+  totalSpent: number;
 }
 
 const ClientList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { currencySymbol } = useCurrency();
+  
+  // Format amount with currency symbol
+  const formatAmount = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
+  
   // Mock data
   const [clients, setClients] = useState<Client[]>([
     {
@@ -39,7 +47,7 @@ const ClientList = () => {
       country: 'United States',
       vatNumber: 'US123456789',
       invoices: 5,
-      totalSpent: '$12,350'
+      totalSpent: 12350
     },
     {
       id: '2',
@@ -49,7 +57,7 @@ const ClientList = () => {
       email: 'satya@microsoft.com',
       phone: '(234) 567-8901',
       invoices: 3,
-      totalSpent: '$6,840'
+      totalSpent: 6840
     },
     {
       id: '3',
@@ -59,7 +67,7 @@ const ClientList = () => {
       email: 'sundar@google.com',
       phone: '(345) 678-9012',
       invoices: 4,
-      totalSpent: '$9,200'
+      totalSpent: 9200
     },
     {
       id: '4',
@@ -69,7 +77,7 @@ const ClientList = () => {
       email: 'andy@amazon.com',
       phone: '(456) 789-0123',
       invoices: 2,
-      totalSpent: '$4,500'
+      totalSpent: 4500
     },
     {
       id: '5',
@@ -79,7 +87,7 @@ const ClientList = () => {
       email: 'elon@tesla.com',
       phone: '(567) 890-1234',
       invoices: 1,
-      totalSpent: '$2,800'
+      totalSpent: 2800
     }
   ]);
 
@@ -153,7 +161,7 @@ const ClientList = () => {
                     </div>
                   </td>
                   <td className="p-4 text-right">{client.invoices}</td>
-                  <td className="p-4 text-right font-medium">{client.totalSpent}</td>
+                  <td className="p-4 text-right font-medium">{formatAmount(client.totalSpent)}</td>
                   <td className="p-4">
                     <button className="p-2 rounded-full hover:bg-secondary transition-colors">
                       <MoreHorizontal size={18} />

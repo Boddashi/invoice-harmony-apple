@@ -4,13 +4,14 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 type InvoiceStatus = 'paid' | 'pending' | 'overdue';
 
 interface Invoice {
   id: string;
   client: string;
-  amount: string;
+  amount: number;
   date: string;
   dueDate: string;
   status: InvoiceStatus;
@@ -40,12 +41,14 @@ const getStatusConfig = (status: InvoiceStatus) => {
 };
 
 const InvoiceList = () => {
+  const { currencySymbol } = useCurrency();
+  
   // Mock data
   const recentInvoices: Invoice[] = [
     {
       id: 'INV-001',
       client: 'Apple Inc.',
-      amount: '$3,250.00',
+      amount: 3250.00,
       date: 'June 15, 2023',
       dueDate: 'July 15, 2023',
       status: 'paid'
@@ -53,7 +56,7 @@ const InvoiceList = () => {
     {
       id: 'INV-002',
       client: 'Microsoft Corp.',
-      amount: '$1,840.00',
+      amount: 1840.00,
       date: 'June 25, 2023',
       dueDate: 'July 25, 2023',
       status: 'pending'
@@ -61,7 +64,7 @@ const InvoiceList = () => {
     {
       id: 'INV-003',
       client: 'Google LLC',
-      amount: '$5,600.00',
+      amount: 5600.00,
       date: 'June 28, 2023',
       dueDate: 'July 5, 2023',
       status: 'overdue'
@@ -69,7 +72,7 @@ const InvoiceList = () => {
     {
       id: 'INV-004',
       client: 'Amazon.com Inc.',
-      amount: '$2,100.00',
+      amount: 2100.00,
       date: 'July 2, 2023',
       dueDate: 'August 2, 2023',
       status: 'pending'
@@ -77,12 +80,17 @@ const InvoiceList = () => {
     {
       id: 'INV-005',
       client: 'Tesla Inc.',
-      amount: '$4,530.00',
+      amount: 4530.00,
       date: 'July 5, 2023',
       dueDate: 'August 5, 2023',
       status: 'paid'
     }
   ];
+
+  // Format amount with currency symbol
+  const formatAmount = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
 
   return (
     <CustomCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -120,7 +128,7 @@ const InvoiceList = () => {
               
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <p className="font-semibold">{invoice.amount}</p>
+                  <p className="font-semibold">{formatAmount(invoice.amount)}</p>
                   <p className="text-sm text-muted-foreground">Due {invoice.dueDate}</p>
                 </div>
                 

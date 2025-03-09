@@ -4,13 +4,14 @@ import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { Check, ChevronDown, Download, Eye, MoreHorizontal, Search, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 
 interface Invoice {
   id: string;
   client: string;
-  amount: string;
+  amount: number;
   date: string;
   dueDate: string;
   status: 'draft' | 'pending' | 'paid' | 'overdue';
@@ -18,13 +19,19 @@ interface Invoice {
 
 const Invoices = () => {
   const [filter, setFilter] = useState<InvoiceStatus>('all');
+  const { currencySymbol } = useCurrency();
+  
+  // Format amount with currency symbol
+  const formatAmount = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
   
   // Mock data
   const invoices: Invoice[] = [
     {
       id: 'INV-001',
       client: 'Apple Inc.',
-      amount: '$3,250.00',
+      amount: 3250.00,
       date: 'June 15, 2023',
       dueDate: 'July 15, 2023',
       status: 'paid'
@@ -32,7 +39,7 @@ const Invoices = () => {
     {
       id: 'INV-002',
       client: 'Microsoft Corp.',
-      amount: '$1,840.00',
+      amount: 1840.00,
       date: 'June 25, 2023',
       dueDate: 'July 25, 2023',
       status: 'pending'
@@ -40,7 +47,7 @@ const Invoices = () => {
     {
       id: 'INV-003',
       client: 'Google LLC',
-      amount: '$5,600.00',
+      amount: 5600.00,
       date: 'June 28, 2023',
       dueDate: 'July 5, 2023',
       status: 'overdue'
@@ -48,7 +55,7 @@ const Invoices = () => {
     {
       id: 'INV-004',
       client: 'Amazon.com Inc.',
-      amount: '$2,100.00',
+      amount: 2100.00,
       date: 'July 2, 2023',
       dueDate: 'August 2, 2023',
       status: 'pending'
@@ -56,7 +63,7 @@ const Invoices = () => {
     {
       id: 'INV-005',
       client: 'Tesla Inc.',
-      amount: '$4,530.00',
+      amount: 4530.00,
       date: 'July 5, 2023',
       dueDate: 'August 5, 2023',
       status: 'paid'
@@ -64,7 +71,7 @@ const Invoices = () => {
     {
       id: 'INV-006',
       client: 'Facebook, Inc.',
-      amount: '$2,750.00',
+      amount: 2750.00,
       date: 'July 10, 2023',
       dueDate: 'August 10, 2023',
       status: 'draft'
@@ -72,7 +79,7 @@ const Invoices = () => {
     {
       id: 'INV-007',
       client: 'Netflix, Inc.',
-      amount: '$3,100.00',
+      amount: 3100.00,
       date: 'July 12, 2023',
       dueDate: 'August 12, 2023',
       status: 'pending'
@@ -80,7 +87,7 @@ const Invoices = () => {
     {
       id: 'INV-008',
       client: 'Oracle Corporation',
-      amount: '$5,250.00',
+      amount: 5250.00,
       date: 'July 15, 2023',
       dueDate: 'August 15, 2023',
       status: 'overdue'
@@ -201,7 +208,7 @@ const Invoices = () => {
                     <td className="py-4 px-5">{invoice.client}</td>
                     <td className="py-4 px-5">{invoice.date}</td>
                     <td className="py-4 px-5">{invoice.dueDate}</td>
-                    <td className="py-4 px-5 text-right font-medium">{invoice.amount}</td>
+                    <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.amount)}</td>
                     <td className="py-4 px-5">
                       <div className="flex justify-center">
                         <span className={cn(

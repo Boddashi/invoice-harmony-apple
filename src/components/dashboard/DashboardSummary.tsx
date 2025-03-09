@@ -3,13 +3,21 @@ import React from 'react';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import { cn } from '@/lib/utils';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 const DashboardSummary = () => {
+  const { currencySymbol } = useCurrency();
+  
+  // Format amount with currency symbol
+  const formatAmount = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
+  
   // Mock data
   const summaryData = [
     { 
       title: 'Total Revenue', 
-      amount: '$12,456', 
+      amount: 12456, 
       change: '+12.5%', 
       isPositive: true,
       icon: DollarSign,
@@ -17,7 +25,7 @@ const DashboardSummary = () => {
     },
     { 
       title: 'Pending Invoices', 
-      amount: '$3,245', 
+      amount: 3245, 
       change: '4 invoices', 
       isPositive: false,
       icon: Clock,
@@ -25,7 +33,7 @@ const DashboardSummary = () => {
     },
     { 
       title: 'Paid Invoices', 
-      amount: '$9,211', 
+      amount: 9211, 
       change: '12 invoices', 
       isPositive: true,
       icon: CheckCircle,
@@ -33,7 +41,7 @@ const DashboardSummary = () => {
     },
     { 
       title: 'Overdue Invoices', 
-      amount: '$1,350', 
+      amount: 1350, 
       change: '2 invoices', 
       isPositive: false,
       icon: AlertCircle,
@@ -71,7 +79,7 @@ const DashboardSummary = () => {
             
             <div className="mt-3">
               <h3 className="text-sm font-medium text-muted-foreground">{item.title}</h3>
-              <p className="text-2xl font-semibold mt-1">{item.amount}</p>
+              <p className="text-2xl font-semibold mt-1">{formatAmount(item.amount)}</p>
             </div>
           </CustomCard>
         );
