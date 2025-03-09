@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Download, Eye, MoreHorizontal, Search, Send } from 'lucide-react';
+import { Check, ChevronDown, Download, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
@@ -123,6 +123,17 @@ const Invoices = () => {
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex justify-between items-center animate-fade-in">
+          <h2 className="text-xl font-semibold">Your Invoices</h2>
+          <button 
+            className="apple-button flex items-center gap-2"
+            onClick={() => {}}
+          >
+            <Plus size={18} />
+            <span>New Invoice</span>
+          </button>
+        </div>
+        
         <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
           <div className="relative w-full md:w-80">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
