@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MoreHorizontal, Plus, Mail, Phone } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
@@ -137,8 +138,19 @@ const ClientList = () => {
 
       if (data) {
         const clientWithInvoiceData = {
-          ...data,
-          vatNumber: data.vat_number,
+          id: data.id,
+          type: data.type,
+          name: data.name,
+          company: data.company || '',
+          email: data.email,
+          phone: data.phone || '',
+          street: data.street || undefined,
+          number: data.number || undefined,
+          bus: data.bus || undefined,
+          postcode: data.postcode || undefined,
+          city: data.city || undefined,
+          country: data.country || undefined,
+          vatNumber: data.vat_number || undefined,
           invoices: 0,
           totalSpent: 0
         };
