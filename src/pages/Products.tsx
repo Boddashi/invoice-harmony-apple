@@ -5,8 +5,9 @@ import CustomCard from '@/components/ui/CustomCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Plus } from 'lucide-react';
+import { Plus, Save, X } from 'lucide-react';
 import AddItemModal from '@/components/items/AddItemModal';
+import { toast } from 'sonner';
 
 interface InvoiceItem {
   id: string;
@@ -22,6 +23,11 @@ const Items = () => {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  
+  // State for editing
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Partial<InvoiceItem>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const fetchItems = async () => {
     if (!user) return;
@@ -66,6 +72,87 @@ const Items = () => {
     fetchItems();
   };
 
+  // Start editing an item
+  const startEditing = (item: InvoiceItem) => {
+    setEditingItemId(item.id);
+    setEditValues({
+      description: item.description,
+      unit_price: item.unit_price,
+      quantity: item.quantity
+    });
+  };
+
+  // Handle input change during editing
+  const handleEditChange = (field: keyof InvoiceItem, value: string | number) => {
+    setEditValues(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Calculate amount based on quantity and unit price
+  const calculateAmount = (quantity: number, unitPrice: number) => {
+    return quantity * unitPrice;
+  };
+
+  // Save the edited item
+  const saveItem = async () => {
+    if (!editingItemId || !editValues) return;
+    
+    try {
+      setIsSaving(true);
+      
+      // Calculate the new amount
+      const quantity = Number(editValues.quantity);
+      const unitPrice = Number(editValues.unit_price);
+      const amount = calculateAmount(quantity, unitPrice);
+      
+      // Update the item in the database
+      const { error } = await supabase
+        .from('invoice_items')
+        .update({
+          description: editValues.description,
+          unit_price: unitPrice,
+          quantity: quantity,
+          amount: amount
+        })
+        .eq('id', editingItemId);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setItems(items.map(item => 
+        item.id === editingItemId 
+          ? { 
+              ...item, 
+              description: editValues.description || item.description,
+              unit_price: unitPrice,
+              quantity: quantity,
+              amount: amount
+            } 
+          : item
+      ));
+      
+      toast.success('Item updated successfully');
+      
+      // Reset editing state
+      setEditingItemId(null);
+      setEditValues({});
+      
+    } catch (error: any) {
+      console.error('Error updating item:', error);
+      toast.error(error.message || 'Failed to update item');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingItemId(null);
+    setEditValues({});
+  };
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -97,15 +184,101 @@ const Items = () => {
                     <th className="py-3 px-4 font-medium text-right">Unit Price</th>
                     <th className="py-3 px-4 font-medium text-right">Quantity</th>
                     <th className="py-3 px-4 font-medium text-right">Total Amount</th>
+                    <th className="py-3 px-4 font-medium text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
                     <tr key={item.id} className="border-b border-border/50 hover:bg-muted/20">
-                      <td className="py-3 px-4">{item.description}</td>
-                      <td className="py-3 px-4 text-right">{currencySymbol}{item.unit_price.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-right">{item.quantity}</td>
-                      <td className="py-3 px-4 text-right font-medium">{currencySymbol}{item.amount.toFixed(2)}</td>
+                      <td className="py-3 px-4">
+                        {editingItemId === item.id ? (
+                          <input 
+                            type="text"
+                            value={editValues.description}
+                            onChange={(e) => handleEditChange('description', e.target.value)}
+                            className="input-field w-full"
+                          />
+                        ) : (
+                          <div onClick={() => startEditing(item)} className="cursor-pointer hover:text-apple-blue">
+                            {item.description}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {editingItemId === item.id ? (
+                          <input 
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editValues.unit_price}
+                            onChange={(e) => handleEditChange('unit_price', e.target.value)}
+                            className="input-field w-full text-right"
+                          />
+                        ) : (
+                          <div onClick={() => startEditing(item)} className="cursor-pointer hover:text-apple-blue">
+                            {currencySymbol}{item.unit_price.toFixed(2)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        {editingItemId === item.id ? (
+                          <input 
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={editValues.quantity}
+                            onChange={(e) => handleEditChange('quantity', e.target.value)}
+                            className="input-field w-full text-right"
+                          />
+                        ) : (
+                          <div onClick={() => startEditing(item)} className="cursor-pointer hover:text-apple-blue">
+                            {item.quantity}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right font-medium">
+                        {editingItemId === item.id ? (
+                          currencySymbol + (
+                            (Number(editValues.quantity) || 0) * 
+                            (Number(editValues.unit_price) || 0)
+                          ).toFixed(2)
+                        ) : (
+                          <div onClick={() => startEditing(item)} className="cursor-pointer hover:text-apple-blue">
+                            {currencySymbol}{item.amount.toFixed(2)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {editingItemId === item.id ? (
+                          <div className="flex justify-center gap-2">
+                            <button 
+                              onClick={saveItem}
+                              disabled={isSaving}
+                              className="p-1 text-green-600 hover:text-green-800 transition-colors"
+                              title="Save"
+                            >
+                              <Save size={18} />
+                            </button>
+                            <button 
+                              onClick={cancelEditing}
+                              className="p-1 text-red-600 hover:text-red-800 transition-colors"
+                              title="Cancel"
+                            >
+                              <X size={18} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center">
+                            <button 
+                              onClick={() => startEditing(item)}
+                              className="p-1 text-muted-foreground hover:text-apple-blue transition-colors"
+                              title="Edit"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
