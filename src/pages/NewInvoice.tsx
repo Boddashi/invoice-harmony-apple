@@ -8,6 +8,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '@/components/clients/AddClientModal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Client {
   id: string;
@@ -28,6 +35,11 @@ interface Item {
   title: string;
   price: number;
   vat: string;
+}
+
+interface Vat {
+  title: string;
+  amount: number | null;
 }
 
 const NewInvoice = () => {
@@ -60,6 +72,8 @@ const NewInvoice = () => {
   const [total, setTotal] = useState(0);
   
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
+  
+  const [vats, setVats] = useState<Vat[]>([]);
   
   useEffect(() => {
     const fetchClients = async () => {
@@ -191,6 +205,28 @@ const NewInvoice = () => {
     fetchInvoiceData();
   }, [id, isEditMode, user, navigate, toast]);
   
+  useEffect(() => {
+    const fetchVats = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('vats')
+          .select('*');
+          
+        if (error) throw error;
+        setVats(data || []);
+      } catch (error: any) {
+        console.error('Error fetching VAT rates:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch VAT rates."
+        });
+      }
+    };
+    
+    fetchVats();
+  }, [toast]);
+
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
     
@@ -317,6 +353,17 @@ const NewInvoice = () => {
     }
   };
   
+  const handleItemVatChange = (id: string, value: string) => {
+    setItems(prevItems =>
+      prevItems.map(item => {
+        if (item.id === id) {
+          return { ...item, vat_rate: value };
+        }
+        return item;
+      })
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -667,8 +714,22 @@ const NewInvoice = () => {
                     </div>
                   </div>
 
-                  <div className="col-span-1 text-muted-foreground text-sm">
-                    {item.vat_rate || '0%'}
+                  <div className="col-span-1">
+                    <Select
+                      value={item.vat_rate}
+                      onValueChange={(value) => handleItemVatChange(item.id, value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="VAT" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {vats.map((vat) => (
+                          <SelectItem key={vat.title} value={vat.title}>
+                            {vat.amount}%
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="col-span-2 font-medium">
