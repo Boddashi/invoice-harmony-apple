@@ -725,7 +725,7 @@ const NewInvoice = () => {
                       <SelectContent>
                         {vats.map((vat) => (
                           <SelectItem key={vat.title} value={vat.title}>
-                            {vat.amount}%
+                            {vat.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
