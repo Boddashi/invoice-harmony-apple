@@ -37,10 +37,13 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   const fetchVatRates = async () => {
     try {
       setFetchingVatRates(true);
+      
+      // Log that we're attempting to fetch VAT rates
+      console.log('Attempting to fetch VAT rates from the vats table');
+      
       const { data, error } = await supabase
         .from('vats')
-        .select('*')
-        .order('title', { ascending: true });
+        .select('*');
         
       if (error) {
         console.error('Error fetching VAT rates:', error);
@@ -52,13 +55,34 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
       if (data && data.length > 0) {
         setVatRates(data);
         setVat(data[0].title); // Set default vat to first option
+        console.log('Default VAT set to:', data[0].title);
       } else {
         console.warn('No VAT rates found in the database');
-        setVatRates([]);
+        
+        // Fallback to default VAT rates if none are found in the database
+        const defaultVats: VatRate[] = [
+          { title: '0%', amount: 0 },
+          { title: '6%', amount: 6 },
+          { title: '12%', amount: 12 },
+          { title: '21%', amount: 21 }
+        ];
+        setVatRates(defaultVats);
+        setVat(defaultVats[0].title);
+        console.log('Using fallback VAT rates:', defaultVats);
       }
     } catch (error) {
       console.error('Error fetching VAT rates:', error);
       toast.error('Failed to fetch VAT rates');
+      
+      // Fallback to default VAT rates on error
+      const defaultVats: VatRate[] = [
+        { title: '0%', amount: 0 },
+        { title: '6%', amount: 6 },
+        { title: '12%', amount: 12 },
+        { title: '21%', amount: 21 }
+      ];
+      setVatRates(defaultVats);
+      setVat(defaultVats[0].title);
     } finally {
       setFetchingVatRates(false);
     }
