@@ -5,10 +5,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+interface InvoiceItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+}
+
 interface AddItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemAdded: () => void;
+  onItemAdded: (item: InvoiceItem) => void;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdded }) => {
@@ -64,7 +72,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
       }
       
       // Insert the new item into the invoice_items table
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('invoice_items')
         .insert({
           invoice_id: invoiceData[0].id,
@@ -72,12 +80,16 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
           unit_price: parsedUnitPrice,
           quantity: parsedQuantity,
           amount: amount,
-        });
+        })
+        .select()
+        .single();
       
       if (error) throw error;
       
       toast.success('Item added successfully');
-      onItemAdded();
+      
+      // Pass the new item back to the parent component
+      onItemAdded(data);
       onClose();
       
       // Reset form

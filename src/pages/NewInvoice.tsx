@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash, UserPlus } from 'lucide-react';
@@ -9,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '@/components/clients/AddClientModal';
+import AddItemModal from '@/components/items/AddItemModal';
 
 interface Client {
   id: string;
@@ -30,11 +30,13 @@ const NewInvoice = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
+  const [savedItems, setSavedItems] = useState<InvoiceItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Add client modal state
+  // Add client and item modal states
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   
   // Invoice form state
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -87,6 +89,46 @@ const NewInvoice = () => {
     fetchClients();
   }, [user, toast]);
   
+  // Fetch saved items from Supabase
+  useEffect(() => {
+    const fetchSavedItems = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('invoice_items')
+          .select(`
+            id,
+            description,
+            quantity,
+            unit_price,
+            amount,
+            invoice_id,
+            invoices(user_id)
+          `)
+          .eq('invoices.user_id', user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Process the data
+        const filteredItems = (data || []).filter(item => item.invoices !== null);
+        setSavedItems(filteredItems);
+        
+      } catch (error: any) {
+        console.error('Error fetching saved items:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch saved items."
+        });
+      }
+    };
+    
+    fetchSavedItems();
+  }, [user, toast]);
+  
   // Handle adding a new client
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
@@ -127,6 +169,14 @@ const NewInvoice = () => {
     }
   };
   
+  // Handle adding a new item
+  const handleAddItem = (newItem: InvoiceItem) => {
+    setSavedItems([...savedItems, newItem]);
+    
+    // Add the new item to the current invoice items
+    setItems([...items.filter(item => item.description !== ''), newItem]);
+  };
+  
   // Generate a new invoice number
   useEffect(() => {
     // Simple invoice number generator (prefix + timestamp)
@@ -158,6 +208,29 @@ const NewInvoice = () => {
     
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, taxRate]);
+  
+  // Handle item selection from dropdown
+  const handleItemSelection = (itemId: string) => {
+    if (itemId === "add-new") {
+      setIsAddItemModalOpen(true);
+      return;
+    }
+    
+    const selectedItem = savedItems.find(item => item.id === itemId);
+    if (selectedItem) {
+      // Create a new item with a new ID but same properties
+      const newItem = {
+        id: crypto.randomUUID(),
+        description: selectedItem.description,
+        quantity: selectedItem.quantity,
+        unit_price: selectedItem.unit_price,
+        amount: selectedItem.quantity * selectedItem.unit_price
+      };
+      
+      // Add the selected item to the current items
+      setItems([...items.filter(item => item.description !== ''), newItem]);
+    }
+  };
   
   // Handle item description change
   const handleItemDescriptionChange = (id: string, value: string) => {
@@ -196,8 +269,8 @@ const NewInvoice = () => {
     );
   };
   
-  // Add a new item
-  const handleAddItem = () => {
+  // Add a new empty item row
+  const handleAddItemRow = () => {
     setItems([
       ...items,
       { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0 }
@@ -446,14 +519,32 @@ const NewInvoice = () => {
               {items.map((item, index) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-5">
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => handleItemDescriptionChange(item.id, e.target.value)}
-                      placeholder="Item description"
-                      className="input-field w-full"
-                      required
-                    />
+                    {item.description ? (
+                      <input
+                        type="text"
+                        value={item.description}
+                        onChange={(e) => handleItemDescriptionChange(item.id, e.target.value)}
+                        className="input-field w-full"
+                        required
+                        readOnly={index < items.length - 1 && items[items.length - 1].description === ''}
+                      />
+                    ) : (
+                      <select
+                        value=""
+                        onChange={(e) => handleItemSelection(e.target.value)}
+                        className="client-select-dropdown w-full"
+                      >
+                        <option value="">Select an item</option>
+                        {savedItems.map(savedItem => (
+                          <option key={savedItem.id} value={savedItem.id}>
+                            {savedItem.description} ({currencySymbol}{savedItem.unit_price.toFixed(2)})
+                          </option>
+                        ))}
+                        <option value="add-new" className="font-medium text-apple-blue">
+                          + Add New Item
+                        </option>
+                      </select>
+                    )}
                   </div>
                   
                   <div className="col-span-2">
@@ -504,7 +595,7 @@ const NewInvoice = () => {
               
               <button
                 type="button"
-                onClick={handleAddItem}
+                onClick={handleAddItemRow}
                 className="flex items-center gap-2 text-apple-blue hover:text-apple-blue/80 font-medium transition-colors"
               >
                 <Plus size={18} />
@@ -563,9 +654,17 @@ const NewInvoice = () => {
           onClose={() => setIsAddClientModalOpen(false)}
           onAddClient={handleAddClient}
         />
+        
+        {/* Add Item Modal */}
+        <AddItemModal
+          isOpen={isAddItemModalOpen}
+          onClose={() => setIsAddItemModalOpen(false)}
+          onItemAdded={handleAddItem}
+        />
       </div>
     </MainLayout>
   );
 };
 
 export default NewInvoice;
+
