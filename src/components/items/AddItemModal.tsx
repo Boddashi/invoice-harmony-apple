@@ -18,6 +18,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
   // Form state
   const [description, setDescription] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
+  const [quantity, setQuantity] = useState('1'); // Default to 1
 
   // Close modal when clicking outside
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -43,13 +44,34 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
     try {
       setIsSubmitting(true);
       
-      // Insert the new item into the products table
+      const parsedUnitPrice = parseFloat(unitPrice);
+      const parsedQuantity = parseFloat(quantity);
+      const amount = parsedUnitPrice * parsedQuantity;
+      
+      // Get the first invoice to associate the item with
+      // In a production app, you might want to let the user select an invoice
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+      
+      if (invoiceError) throw invoiceError;
+      
+      if (!invoiceData || invoiceData.length === 0) {
+        toast.error('You need to create an invoice first');
+        return;
+      }
+      
+      // Insert the new item into the invoice_items table
       const { error } = await supabase
-        .from('products')
+        .from('invoice_items')
         .insert({
-          user_id: user.id,
+          invoice_id: invoiceData[0].id,
           description: description,
-          unit_price: parseFloat(unitPrice),
+          unit_price: parsedUnitPrice,
+          quantity: parsedQuantity,
+          amount: amount,
         });
       
       if (error) throw error;
@@ -61,6 +83,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
       // Reset form
       setDescription('');
       setUnitPrice('');
+      setQuantity('1');
       
     } catch (error: any) {
       console.error('Error adding item:', error);
@@ -117,6 +140,23 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
               onChange={(e) => setUnitPrice(e.target.value)}
               className="input-field w-full"
               placeholder="0.00"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="quantity" className="block text-sm font-medium text-muted-foreground">
+              Quantity <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="quantity"
+              type="number"
+              min="1"
+              step="1"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="input-field w-full"
+              placeholder="1"
               required
             />
           </div>
