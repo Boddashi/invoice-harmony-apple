@@ -12,7 +12,6 @@ interface Client {
   id: string;
   type: string;
   name: string;
-  company: string | null;
   email: string;
   phone: string | null;
   street?: string | null;
@@ -98,7 +97,6 @@ const ClientList = () => {
         user_id: user.id,
         type: newClient.type,
         name: newClient.name,
-        company: newClient.company || null,
         email: newClient.email,
         phone: newClient.phone || null,
         street: newClient.street || null,
@@ -186,7 +184,6 @@ const ClientList = () => {
                     <td className="p-4">
                       <div className="flex flex-col">
                         <span className="font-medium">{client.name}</span>
-                        {client.company && <span className="text-sm text-muted-foreground">{client.company}</span>}
                         {client.type === 'business' && client.vat_number && (
                           <span className="text-xs text-muted-foreground mt-1">VAT: {client.vat_number}</span>
                         )}

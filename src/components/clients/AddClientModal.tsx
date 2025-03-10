@@ -17,7 +17,6 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
   const [formData, setFormData] = useState({
     type: 'business',
     name: '',
-    company: '',
     email: '',
     phone: '',
     street: '',
@@ -77,7 +76,6 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
     setFormData({
       type: 'business',
       name: '',
-      company: '',
       email: '',
       phone: '',
       street: '',
@@ -182,20 +180,6 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
                   required 
                 />
               </div>
-              
-              {formData.type === 'business' && (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">Company</label>
-                  <input 
-                    type="text" 
-                    name="company"
-                    value={formData.company}
-                    onChange={handleChange}
-                    className="input-field w-full" 
-                    placeholder="Company name" 
-                  />
-                </div>
-              )}
               
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">Email *</label>
@@ -337,12 +321,6 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
                     <span className="text-muted-foreground">Name:</span>
                     <span className="font-medium">{formData.name}</span>
                   </div>
-                  {formData.company && (
-                    <div className="grid grid-cols-2">
-                      <span className="text-muted-foreground">Company:</span>
-                      <span className="font-medium">{formData.company}</span>
-                    </div>
-                  )}
                   <div className="grid grid-cols-2">
                     <span className="text-muted-foreground">Email:</span>
                     <span className="font-medium">{formData.email}</span>
