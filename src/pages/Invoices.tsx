@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -27,7 +28,6 @@ interface Invoice {
   notes?: string;
   client?: {
     name: string;
-    company: string | null;
   };
 }
 
@@ -64,7 +64,7 @@ const Invoices = () => {
           .from('invoices')
           .select(`
             *,
-            client:clients(name, company)
+            client:clients(name)
           `)
           .eq('user_id', user.id);
         
@@ -102,7 +102,6 @@ const Invoices = () => {
       return (
         invoice.invoice_number.toLowerCase().includes(query) ||
         (invoice.client?.name && invoice.client.name.toLowerCase().includes(query)) ||
-        (invoice.client?.company && invoice.client.company.toLowerCase().includes(query)) ||
         formatDate(invoice.issue_date).toLowerCase().includes(query) ||
         formatDate(invoice.due_date).toLowerCase().includes(query) ||
         invoice.total_amount.toString().includes(query)
@@ -253,9 +252,6 @@ const Invoices = () => {
                           {invoice.client ? (
                             <div>
                               <span>{invoice.client.name}</span>
-                              {invoice.client.company && (
-                                <span className="text-sm text-muted-foreground block truncate max-w-[200px]">{invoice.client.company}</span>
-                              )}
                             </div>
                           ) : (
                             "Unknown Client"
@@ -310,7 +306,6 @@ const Invoices = () => {
                         <h3 className="font-medium truncate">{invoice.invoice_number}</h3>
                         <p className="text-sm text-muted-foreground truncate">
                           {invoice.client?.name || "Unknown Client"}
-                          {invoice.client?.company && ` • ${invoice.client.company}`}
                         </p>
                       </div>
                       <span className={cn(
