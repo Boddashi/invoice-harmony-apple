@@ -1,13 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash } from 'lucide-react';
+import { ArrowLeft, Plus, Trash, ChevronDown, UserPlus } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import AddClientModal from '@/components/clients/AddClientModal';
 
 interface Client {
   id: string;
@@ -31,10 +31,13 @@ const NewInvoice = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
   // Invoice form state
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedClientName, setSelectedClientName] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<'draft' | 'pending'>('draft');
@@ -260,6 +263,65 @@ const NewInvoice = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Handle adding a new client
+  const handleAddClient = async (clientData: any) => {
+    if (!user) return;
+    
+    try {
+      // Format the client data for Supabase
+      const newClient = {
+        user_id: user.id,
+        type: clientData.type,
+        name: clientData.name,
+        company: clientData.company || null,
+        email: clientData.email,
+        phone: clientData.phone || null,
+        street: clientData.street || null,
+        number: clientData.number || null,
+        bus: clientData.bus || null,
+        postcode: clientData.postcode || null,
+        city: clientData.city || null,
+        country: clientData.country || null,
+        vat_number: clientData.vatNumber || null
+      };
+      
+      // Insert the new client into Supabase
+      const { data, error } = await supabase
+        .from('clients')
+        .insert(newClient)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      // Add the new client to the clients list
+      setClients(prevClients => [...prevClients, data]);
+      
+      // Select the newly added client
+      setSelectedClientId(data.id);
+      setSelectedClientName(data.name + (data.company ? ` (${data.company})` : ''));
+      
+      toast({
+        title: "Success",
+        description: "Client added successfully."
+      });
+    } catch (error: any) {
+      console.error('Error adding client:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to add client."
+      });
+    }
+  };
+
+  // Select a client
+  const selectClient = (id: string, displayName: string) => {
+    setSelectedClientId(id);
+    setSelectedClientName(displayName);
+    setIsClientDropdownOpen(false);
+  };
   
   return (
     <MainLayout>
@@ -350,19 +412,55 @@ const NewInvoice = () => {
               
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-muted-foreground">Select Client</label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="input-field w-full"
-                  required
-                >
-                  <option value="">Select a client</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name} {client.company ? `(${client.company})` : ''}
-                    </option>
-                  ))}
-                </select>
+                
+                {/* Custom dropdown for client selection */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsClientDropdownOpen(!isClientDropdownOpen)}
+                    className="input-field w-full flex items-center justify-between text-left"
+                    aria-haspopup="listbox"
+                    aria-expanded={isClientDropdownOpen}
+                  >
+                    {selectedClientId ? selectedClientName : "Select a client"}
+                    <ChevronDown size={16} className="opacity-70" />
+                  </button>
+                  
+                  {isClientDropdownOpen && (
+                    <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-border rounded-md shadow-lg">
+                      <ul className="py-1" role="listbox">
+                        {clients.map(client => (
+                          <li
+                            key={client.id}
+                            role="option"
+                            onClick={() => selectClient(
+                              client.id, 
+                              client.name + (client.company ? ` (${client.company})` : '')
+                            )}
+                            className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            {client.name} {client.company && `(${client.company})`}
+                          </li>
+                        ))}
+                        
+                        {/* Add new client option */}
+                        <li className="border-t border-border">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsClientDropdownOpen(false);
+                              setIsAddClientModalOpen(true);
+                            }}
+                            className="w-full px-4 py-2 text-left flex items-center gap-2 text-apple-blue hover:bg-gray-100 dark:hover:bg-gray-700"
+                          >
+                            <UserPlus size={16} />
+                            <span>Add New Client</span>
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
             </CustomCard>
             
@@ -502,6 +600,13 @@ const NewInvoice = () => {
           </div>
         </form>
       </div>
+      
+      {/* Client Modal */}
+      <AddClientModal 
+        isOpen={isAddClientModalOpen} 
+        onClose={() => setIsAddClientModalOpen(false)}
+        onAddClient={handleAddClient}
+      />
     </MainLayout>
   );
 };
