@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -8,6 +7,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import InvoiceActions from '../invoices/InvoiceActions';
 
 type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'draft';
 
@@ -60,12 +60,10 @@ const InvoiceList = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
 
-  // Format date to readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -75,7 +73,6 @@ const InvoiceList = () => {
     });
   };
   
-  // Fetch recent invoices from Supabase
   useEffect(() => {
     const fetchInvoices = async () => {
       if (!user) return;
@@ -96,7 +93,6 @@ const InvoiceList = () => {
           throw error;
         }
         
-        // Cast the data to ensure status is treated as InvoiceStatus type
         const typedData = data?.map(invoice => ({
           ...invoice,
           status: invoice.status as InvoiceStatus
@@ -172,6 +168,10 @@ const InvoiceList = () => {
                     status.color
                   )}>
                     {status.label}
+                  </div>
+                  
+                  <div onClick={(e) => e.preventDefault()}>
+                    <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
                   </div>
                 </div>
               </Link>

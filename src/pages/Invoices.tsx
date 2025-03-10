@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Download, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
+import { Check, ChevronDown, Download, Eye, Plus, Search, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import InvoiceActions from '@/components/invoices/InvoiceActions';
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
@@ -288,9 +289,7 @@ const Invoices = () => {
                             <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
                               <Download size={16} />
                             </button>
-                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="More">
-                              <MoreHorizontal size={16} />
-                            </button>
+                            <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
                           </div>
                         </td>
                       </tr>
@@ -347,12 +346,7 @@ const Invoices = () => {
                       <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
                         <Download size={16} />
                       </button>
-                      <button 
-                        className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-                        title="More"
-                      >
-                        <MoreHorizontal size={16} />
-                      </button>
+                      <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
                     </div>
                   </div>
                 ))}
