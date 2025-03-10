@@ -23,6 +23,13 @@ interface InvoiceItem {
   amount: number;
 }
 
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  vat: string;
+}
+
 const NewInvoice = () => {
   const navigate = useNavigate();
   const { currencySymbol } = useCurrency();
@@ -49,6 +56,8 @@ const NewInvoice = () => {
   const [taxRate, setTaxRate] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
   const [total, setTotal] = useState(0);
+  
+  const [availableItems, setAvailableItems] = useState<Item[]>([]);
   
   useEffect(() => {
     const fetchClients = async () => {
@@ -80,6 +89,28 @@ const NewInvoice = () => {
     
     fetchClients();
   }, [user, toast]);
+  
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('items')
+          .select('*');
+          
+        if (error) throw error;
+        setAvailableItems(data || []);
+      } catch (error: any) {
+        console.error('Error fetching items:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch items."
+        });
+      }
+    };
+    
+    fetchItems();
+  }, [toast]);
   
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
@@ -249,21 +280,14 @@ const NewInvoice = () => {
       
       const invoiceItems = items.map(item => ({
         invoice_id: invoice.id,
-        item_id: item.description,
-        quantity: item.quantity,
-        total_amount: item.amount
-      }));
-      
-      const formattedInvoiceItems = invoiceItems.map(item => ({
-        invoice_id: invoice.id,
-        item_id: item.description,
+        item_id: item.id,
         quantity: item.quantity,
         total_amount: item.amount
       }));
       
       const { error: invoiceItemsError } = await supabase
         .from('invoice_items')
-        .insert(formattedInvoiceItems);
+        .insert(invoiceItems);
       
       if (invoiceItemsError) {
         throw invoiceItemsError;
@@ -419,7 +443,7 @@ const NewInvoice = () => {
             
             <div className="space-y-4">
               <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
-                <div className="col-span-5">Description</div>
+                <div className="col-span-5">Item</div>
                 <div className="col-span-2">Quantity</div>
                 <div className="col-span-2">Unit Price</div>
                 <div className="col-span-2">Amount</div>
@@ -429,14 +453,25 @@ const NewInvoice = () => {
               {items.map((item, index) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-5">
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => handleItemDescriptionChange(item.id, e.target.value)}
-                      placeholder="Item description"
+                    <select
                       className="input-field w-full"
+                      value={item.id}
+                      onChange={(e) => {
+                        const selectedItem = availableItems.find(i => i.id === e.target.value);
+                        if (selectedItem) {
+                          handleItemDescriptionChange(item.id, selectedItem.id);
+                          handleItemUnitPriceChange(item.id, selectedItem.price);
+                        }
+                      }}
                       required
-                    />
+                    >
+                      <option value="">Select an item</option>
+                      {availableItems.map(availableItem => (
+                        <option key={availableItem.id} value={availableItem.id}>
+                          {availableItem.title} - {currencySymbol}{availableItem.price}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   
                   <div className="col-span-2">
