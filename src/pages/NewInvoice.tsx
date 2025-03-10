@@ -458,16 +458,17 @@ const NewInvoice = () => {
             
             <div className="space-y-4">
               <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
-                <div className="col-span-5">Item</div>
+                <div className="col-span-4">Item</div>
                 <div className="col-span-2">Quantity</div>
                 <div className="col-span-2">Unit Price</div>
+                <div className="col-span-1">VAT</div>
                 <div className="col-span-2">Amount</div>
                 <div className="col-span-1"></div>
               </div>
               
               {items.map((item, index) => (
                 <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
-                  <div className="col-span-5">
+                  <div className="col-span-4">
                     <select
                       className="input-field w-full"
                       value={item.description}
@@ -512,6 +513,10 @@ const NewInvoice = () => {
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="col-span-1 text-muted-foreground text-sm">
+                    {item.vat_rate || '0%'}
                   </div>
                   
                   <div className="col-span-2 font-medium">
