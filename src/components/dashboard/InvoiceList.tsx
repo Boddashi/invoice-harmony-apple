@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -95,7 +96,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
           .from('invoices')
           .select(`
             *,
-            client:clients(name)
+            client:clients(id,name)
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -105,12 +106,21 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
           throw error;
         }
         
-        const typedData = data?.map(invoice => ({
-          ...invoice,
-          status: invoice.status as InvoiceStatus
+        // Transform data to ensure it matches the Invoice interface
+        const transformedData = data?.map((invoice: any) => ({
+          id: invoice.id,
+          invoice_number: invoice.invoice_number,
+          issue_date: invoice.issue_date,
+          due_date: invoice.due_date,
+          status: invoice.status as InvoiceStatus,
+          total_amount: invoice.total_amount,
+          client: invoice.client ? {
+            id: invoice.client.id,
+            name: invoice.client.name
+          } : undefined
         })) || [];
         
-        setRecentInvoices(typedData);
+        setRecentInvoices(transformedData);
       } catch (error: any) {
         console.error('Error fetching recent invoices:', error);
         toast({
