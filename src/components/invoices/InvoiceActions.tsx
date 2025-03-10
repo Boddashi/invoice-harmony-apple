@@ -36,11 +36,11 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
-  const handleDelete = async (event: React.MouseEvent) => {
-    event.preventDefault();
+  const handleDelete = async () => {
     if (isDeleting) return;
 
     setIsDeleting(true);
+    
     try {
       // First, delete related invoice items
       const { error: itemsError } = await supabase
@@ -68,13 +68,13 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         title: "Success",
         description: "Invoice deleted successfully"
       });
-
-      // Close dialog before navigation
-      setShowDeleteDialog(false);
-      setIsDeleting(false);
       
       // Use replace to prevent back navigation to a deleted invoice
-      navigate('/invoices', { replace: true });
+      // Important: navigate AFTER dialog is closed and state is reset
+      setTimeout(() => {
+        navigate('/invoices', { replace: true });
+      }, 100);
+      
     } catch (error: any) {
       console.error('Failed to delete invoice:', error);
       toast({
@@ -82,9 +82,20 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         title: "Error",
         description: error.message || "Failed to delete invoice"
       });
+    } finally {
+      // Always reset state and close dialog, regardless of success or failure
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
+  };
+
+  const handleOpenDeleteDialog = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setShowDeleteDialog(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setShowDeleteDialog(false);
   };
 
   if (status !== 'draft') {
@@ -109,7 +120,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem 
-            onClick={() => setShowDeleteDialog(true)} 
+            onClick={handleOpenDeleteDialog} 
             className="text-destructive"
             disabled={isDeleting}
           >
@@ -119,7 +130,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
