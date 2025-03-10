@@ -50,14 +50,16 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: "Invoice deleted successfully"
       });
 
-      // Refresh the page to update the list
-      window.location.reload();
+      // Navigate back to invoices list after successful deletion
+      navigate('/invoices', { replace: true });
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Failed to delete invoice"
       });
+    } finally {
+      setShowDeleteDialog(false);
     }
   };
 
