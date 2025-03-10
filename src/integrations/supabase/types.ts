@@ -13,7 +13,6 @@ export type Database = {
         Row: {
           bus: string | null
           city: string | null
-          company: string | null
           country: string | null
           created_at: string
           email: string
@@ -31,7 +30,6 @@ export type Database = {
         Insert: {
           bus?: string | null
           city?: string | null
-          company?: string | null
           country?: string | null
           created_at?: string
           email: string
@@ -49,7 +47,6 @@ export type Database = {
         Update: {
           bus?: string | null
           city?: string | null
-          company?: string | null
           country?: string | null
           created_at?: string
           email?: string

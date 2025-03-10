@@ -13,7 +13,6 @@ import AddClientModal from '@/components/clients/AddClientModal';
 interface Client {
   id: string;
   name: string;
-  company: string | null;
 }
 
 interface InvoiceItem {
@@ -71,7 +70,7 @@ const NewInvoice = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('clients')
-          .select('id, name, company')
+          .select('id, name')
           .eq('user_id', user.id);
         
         if (error) {
@@ -204,7 +203,6 @@ const NewInvoice = () => {
     try {
       const { data, error } = await supabase.from('clients').insert({
         name: newClient.name,
-        company: newClient.company,
         email: newClient.email,
         phone: newClient.phone,
         street: newClient.street,
@@ -222,7 +220,7 @@ const NewInvoice = () => {
         throw error;
       }
       
-      setClients([...clients, data]);
+      setClients([...clients, { id: data.id, name: data.name }]);
       setSelectedClientId(data.id);
     } catch (error: any) {
       console.error('Error saving client:', error);
@@ -598,7 +596,7 @@ const NewInvoice = () => {
                     <option value="">Select a client</option>
                     {clients.map(client => (
                       <option key={client.id} value={client.id}>
-                        {client.name} {client.company ? `(${client.company})` : ''}
+                        {client.name}
                       </option>
                     ))}
                     <option value="add-new" className="font-medium text-apple-blue">
