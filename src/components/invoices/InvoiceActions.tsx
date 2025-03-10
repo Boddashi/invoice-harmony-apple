@@ -36,9 +36,10 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
-  const handleDelete = async () => {
-    if (isDeleting) return; // Prevent multiple clicks
-    
+  const handleDelete = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    if (isDeleting) return;
+
     setIsDeleting(true);
     try {
       // First, delete related invoice items
@@ -68,7 +69,11 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: "Invoice deleted successfully"
       });
 
-      // Navigate back to invoices list after successful deletion
+      // Close dialog before navigation
+      setShowDeleteDialog(false);
+      setIsDeleting(false);
+      
+      // Use replace to prevent back navigation to a deleted invoice
       navigate('/invoices', { replace: true });
     } catch (error: any) {
       console.error('Failed to delete invoice:', error);
@@ -77,9 +82,8 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         title: "Error",
         description: error.message || "Failed to delete invoice"
       });
-    } finally {
       setIsDeleting(false);
-      setShowDeleteDialog(false); // Always close the dialog, even on error
+      setShowDeleteDialog(false);
     }
   };
 
@@ -104,7 +108,11 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setShowDeleteDialog(true)} className="text-destructive">
+          <DropdownMenuItem 
+            onClick={() => setShowDeleteDialog(true)} 
+            className="text-destructive"
+            disabled={isDeleting}
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -122,7 +130,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleDelete} 
+              onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
