@@ -40,15 +40,12 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
       setFetchingVatRates(true);
       setFetchError(null);
       
-      // Detailed logging
       console.log('Attempting to fetch VAT rates from the vats table');
       
-      // The query to fetch all VAT rates
       const { data, error, status } = await supabase
         .from('vats')
         .select('title, amount');
       
-      // Log the full response for debugging
       console.log('Supabase response status:', status);
       console.log('Supabase query result:', { data, error });
       
@@ -132,6 +129,17 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
     }
   };
   
+  // Helper function to display the VAT rate label
+  const formatVatRateLabel = (rate: VatRate) => {
+    // For regular percentage rates
+    if (rate.title.endsWith('%')) {
+      return rate.title;
+    }
+    
+    // For special VAT rates with 0 amount
+    return rate.title;
+  };
+  
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -194,7 +202,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
                 <SelectContent>
                   {vatRates.map((rate) => (
                     <SelectItem key={rate.title} value={rate.title}>
-                      {rate.title}
+                      {formatVatRateLabel(rate)}
                     </SelectItem>
                   ))}
                 </SelectContent>
