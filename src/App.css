@@ -1,4 +1,5 @@
 
+
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -44,3 +45,16 @@
 .apple-button {
   @apply rounded-lg bg-apple-blue px-4 py-2 text-white shadow-md transition-colors hover:bg-apple-blue/90 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
 }
+
+/* Client dropdown styling */
+.client-select-dropdown {
+  @apply rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  appearance: revert;
+  position: relative;
+  z-index: 30;
+}
+
+.client-select-dropdown option {
+  @apply bg-background text-foreground py-2 px-3;
+}
+

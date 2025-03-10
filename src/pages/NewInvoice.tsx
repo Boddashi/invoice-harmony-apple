@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash } from 'lucide-react';
+import { ArrowLeft, Plus, Trash, UserPlus } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import AddClientModal from '@/components/clients/AddClientModal';
 
 interface Client {
   id: string;
@@ -31,6 +32,9 @@ const NewInvoice = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Add client modal state
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
   // Invoice form state
   const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -82,6 +86,46 @@ const NewInvoice = () => {
     
     fetchClients();
   }, [user, toast]);
+  
+  // Handle adding a new client
+  const handleAddClient = async (newClient: any) => {
+    if (!user) return;
+    
+    try {
+      // Save the client to Supabase
+      const { data, error } = await supabase.from('clients').insert({
+        name: newClient.name,
+        company: newClient.company,
+        email: newClient.email,
+        phone: newClient.phone,
+        street: newClient.street,
+        number: newClient.number,
+        bus: newClient.bus,
+        postcode: newClient.postcode,
+        city: newClient.city,
+        country: newClient.country,
+        vat_number: newClient.vatNumber,
+        type: newClient.type,
+        user_id: user.id
+      }).select().single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add to clients list and select it
+      setClients([...clients, data]);
+      setSelectedClientId(data.id);
+      
+    } catch (error: any) {
+      console.error('Error saving client:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to save client."
+      });
+    }
+  };
   
   // Generate a new invoice number
   useEffect(() => {
@@ -350,19 +394,30 @@ const NewInvoice = () => {
               
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-muted-foreground">Select Client</label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="input-field w-full"
-                  required
-                >
-                  <option value="">Select a client</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.name} {client.company ? `(${client.company})` : ''}
+                <div className="relative">
+                  <select
+                    value={selectedClientId}
+                    onChange={(e) => {
+                      if (e.target.value === "add-new") {
+                        setIsAddClientModalOpen(true);
+                      } else {
+                        setSelectedClientId(e.target.value);
+                      }
+                    }}
+                    className="client-select-dropdown w-full"
+                    required
+                  >
+                    <option value="">Select a client</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.name} {client.company ? `(${client.company})` : ''}
+                      </option>
+                    ))}
+                    <option value="add-new" className="font-medium text-apple-blue">
+                      + Add New Client
                     </option>
-                  ))}
-                </select>
+                  </select>
+                </div>
               </div>
             </CustomCard>
             
@@ -501,6 +556,13 @@ const NewInvoice = () => {
             </CustomCard>
           </div>
         </form>
+        
+        {/* Add Client Modal */}
+        <AddClientModal 
+          isOpen={isAddClientModalOpen}
+          onClose={() => setIsAddClientModalOpen(false)}
+          onAddClient={handleAddClient}
+        />
       </div>
     </MainLayout>
   );
