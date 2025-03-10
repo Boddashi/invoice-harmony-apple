@@ -5,18 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
-interface InvoiceItem {
+interface Item {
   id: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
+  title: string;
+  price: number;
+  vat: string;
 }
 
 interface AddItemModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemAdded: (item: InvoiceItem) => void;
+  onItemAdded: (item: Item) => void;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdded }) => {
@@ -24,9 +23,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Form state
-  const [description, setDescription] = useState('');
-  const [unitPrice, setUnitPrice] = useState('');
-  const [quantity, setQuantity] = useState('1'); // Default to 1
+  const [title, setTitle] = useState('');
+  const [price, setPrice] = useState('');
+  const [vat, setVat] = useState('21'); // Default VAT percentage
 
   // Close modal when clicking outside
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -44,7 +43,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
       return;
     }
 
-    if (!description || !unitPrice) {
+    if (!title || !price) {
       toast.error('Please fill in all required fields');
       return;
     }
@@ -52,34 +51,15 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
     try {
       setIsSubmitting(true);
       
-      const parsedUnitPrice = parseFloat(unitPrice);
-      const parsedQuantity = parseFloat(quantity);
-      const amount = parsedUnitPrice * parsedQuantity;
+      const parsedPrice = parseFloat(price);
       
-      // Get the first invoice to associate the item with
-      // In a production app, you might want to let the user select an invoice
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-      
-      if (invoiceError) throw invoiceError;
-      
-      if (!invoiceData || invoiceData.length === 0) {
-        toast.error('You need to create an invoice first');
-        return;
-      }
-      
-      // Insert the new item into the invoice_items table
+      // Insert the new item into the items table
       const { data, error } = await supabase
-        .from('invoice_items')
+        .from('items')
         .insert({
-          invoice_id: invoiceData[0].id,
-          description: description,
-          unit_price: parsedUnitPrice,
-          quantity: parsedQuantity,
-          amount: amount,
+          title: title,
+          price: parsedPrice,
+          vat: vat
         })
         .select()
         .single();
@@ -93,9 +73,9 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
       onClose();
       
       // Reset form
-      setDescription('');
-      setUnitPrice('');
-      setQuantity('1');
+      setTitle('');
+      setPrice('');
+      setVat('21');
       
     } catch (error: any) {
       console.error('Error adding item:', error);
@@ -125,31 +105,31 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
         
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           <div className="space-y-2">
-            <label htmlFor="description" className="block text-sm font-medium text-muted-foreground">
-              Description <span className="text-red-500">*</span>
+            <label htmlFor="title" className="block text-sm font-medium text-muted-foreground">
+              Title <span className="text-red-500">*</span>
             </label>
             <input
-              id="description"
+              id="title"
               type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="input-field w-full"
-              placeholder="Item description"
+              placeholder="Item title"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="unitPrice" className="block text-sm font-medium text-muted-foreground">
-              Unit Price <span className="text-red-500">*</span>
+            <label htmlFor="price" className="block text-sm font-medium text-muted-foreground">
+              Price <span className="text-red-500">*</span>
             </label>
             <input
-              id="unitPrice"
+              id="price"
               type="number"
               min="0"
               step="0.01"
-              value={unitPrice}
-              onChange={(e) => setUnitPrice(e.target.value)}
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
               className="input-field w-full"
               placeholder="0.00"
               required
@@ -157,18 +137,16 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ isOpen, onClose, onItemAdde
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="quantity" className="block text-sm font-medium text-muted-foreground">
-              Quantity <span className="text-red-500">*</span>
+            <label htmlFor="vat" className="block text-sm font-medium text-muted-foreground">
+              VAT (%) <span className="text-red-500">*</span>
             </label>
             <input
-              id="quantity"
-              type="number"
-              min="1"
-              step="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              id="vat"
+              type="text"
+              value={vat}
+              onChange={(e) => setVat(e.target.value)}
               className="input-field w-full"
-              placeholder="1"
+              placeholder="21"
               required
             />
           </div>
