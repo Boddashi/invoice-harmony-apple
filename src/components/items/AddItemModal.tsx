@@ -29,8 +29,10 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   const [fetchingVatRates, setFetchingVatRates] = useState(true);
   
   useEffect(() => {
-    fetchVatRates();
-  }, []);
+    if (open) {
+      fetchVatRates();
+    }
+  }, [open]);
   
   const fetchVatRates = async () => {
     try {
@@ -41,6 +43,8 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
         .order('title', { ascending: true });
         
       if (error) throw error;
+      
+      console.log('VAT rates fetched:', data);
       
       setVatRates(data || []);
       if (data && data.length > 0) {
