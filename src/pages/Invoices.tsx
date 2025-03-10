@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Download, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
+import { Check, ChevronDown, Download, Edit, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -283,6 +283,15 @@ const Invoices = () => {
                           <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
                             <Download size={18} />
                           </button>
+                          {invoice.status === 'draft' && (
+                            <button 
+                              className="p-2 rounded-full hover:bg-secondary transition-colors" 
+                              title="Edit"
+                              onClick={() => navigate(`/invoices/edit/${invoice.id}`)}
+                            >
+                              <Edit size={18} />
+                            </button>
+                          )}
                           <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
                             <MoreHorizontal size={18} />
                           </button>
