@@ -43,7 +43,10 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         .delete()
         .eq('invoice_id', invoiceId);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error deleting invoice items:', itemsError);
+        throw itemsError;
+      }
 
       // Then delete the invoice
       const { error } = await supabase
@@ -51,7 +54,10 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         .delete()
         .eq('id', invoiceId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting invoice:', error);
+        throw error;
+      }
 
       toast({
         title: "Success",
@@ -61,6 +67,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       // Navigate back to invoices list after successful deletion
       navigate('/invoices', { replace: true });
     } catch (error: any) {
+      console.error('Failed to delete invoice:', error);
       toast({
         variant: "destructive",
         title: "Error",
