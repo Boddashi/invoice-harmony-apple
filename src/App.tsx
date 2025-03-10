@@ -6,6 +6,7 @@ import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
+import Items from './pages/Items';
 import Login from './pages/Login';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
@@ -26,6 +27,7 @@ function App() {
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/invoices/new" element={<NewInvoice />} />
+                <Route path="/items" element={<Items />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/404" element={<NotFound />} />
                 <Route path="*" element={<Navigate to="/404" replace />} />

@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings, LogOut } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Settings, LogOut, Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +28,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: LayoutGrid, label: 'Dashboard', href: '/' },
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
+    { icon: Package, label: 'Items', href: '/items' },
     { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 

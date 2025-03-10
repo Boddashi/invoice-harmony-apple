@@ -137,33 +137,27 @@ export type Database = {
       }
       invoice_items: {
         Row: {
-          amount: number
           created_at: string
-          description: string
-          id: string
           invoice_id: string
+          item_id: string
           quantity: number
-          unit_price: number
+          total_amount: number
           updated_at: string
         }
         Insert: {
-          amount: number
           created_at?: string
-          description: string
-          id?: string
           invoice_id: string
+          item_id: string
           quantity?: number
-          unit_price: number
+          total_amount: number
           updated_at?: string
         }
         Update: {
-          amount?: number
           created_at?: string
-          description?: string
-          id?: string
           invoice_id?: string
+          item_id?: string
           quantity?: number
-          unit_price?: number
+          total_amount?: number
           updated_at?: string
         }
         Relationships: [
@@ -172,6 +166,13 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
             referencedColumns: ["id"]
           },
         ]
@@ -234,6 +235,53 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      items: {
+        Row: {
+          created_at: string
+          id: string
+          price: number
+          title: string
+          vat: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price: number
+          title: string
+          vat: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price?: number
+          title?: string
+          vat?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_vat_fkey"
+            columns: ["vat"]
+            isOneToOne: false
+            referencedRelation: "vats"
+            referencedColumns: ["title"]
+          },
+        ]
+      }
+      vats: {
+        Row: {
+          amount: number | null
+          title: string
+        }
+        Insert: {
+          amount?: number | null
+          title: string
+        }
+        Update: {
+          amount?: number | null
+          title?: string
+        }
+        Relationships: []
       }
     }
     Views: {
