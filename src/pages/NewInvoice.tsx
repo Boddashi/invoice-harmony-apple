@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash, UserPlus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -21,6 +21,7 @@ interface InvoiceItem {
   quantity: number;
   unit_price: number;
   amount: number;
+  vat_rate: string;
 }
 
 interface Item {
@@ -49,7 +50,7 @@ const NewInvoice = () => {
   const [notes, setNotes] = useState('');
   
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0 }
+    { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0, vat_rate: '' }
   ]);
   
   const [subTotal, setSubTotal] = useState(0);
@@ -170,17 +171,31 @@ const NewInvoice = () => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
     setSubTotal(calculatedSubTotal);
     
-    const calculatedTaxAmount = (calculatedSubTotal * taxRate) / 100;
-    setTaxAmount(calculatedTaxAmount);
+    const calculatedTaxAmount = items.reduce((sum, item) => {
+      const vatRate = availableItems.find(i => i.id === item.description)?.vat || '0%';
+      const rate = parseFloat(vatRate) / 100;
+      return sum + (item.amount * rate);
+    }, 0);
     
+    setTaxAmount(calculatedTaxAmount);
     setTotal(calculatedSubTotal + calculatedTaxAmount);
-  }, [items, taxRate]);
+  }, [items, availableItems]);
   
   const handleItemDescriptionChange = (id: string, value: string) => {
     setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, description: value } : item
-      )
+      prevItems.map(item => {
+        if (item.id === id) {
+          const selectedItem = availableItems.find(i => i.id === value);
+          return {
+            ...item,
+            description: value,
+            unit_price: selectedItem?.price || 0,
+            amount: (selectedItem?.price || 0) * item.quantity,
+            vat_rate: selectedItem?.vat || '0%'
+          };
+        }
+        return item;
+      })
     );
   };
   
@@ -213,7 +228,7 @@ const NewInvoice = () => {
   const handleAddItem = () => {
     setItems([
       ...items,
-      { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0 }
+      { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0, vat_rate: '' }
     ]);
   };
   
@@ -455,13 +470,9 @@ const NewInvoice = () => {
                   <div className="col-span-5">
                     <select
                       className="input-field w-full"
-                      value={item.id}
+                      value={item.description}
                       onChange={(e) => {
-                        const selectedItem = availableItems.find(i => i.id === e.target.value);
-                        if (selectedItem) {
-                          handleItemDescriptionChange(item.id, selectedItem.id);
-                          handleItemUnitPriceChange(item.id, selectedItem.price);
-                        }
+                        handleItemDescriptionChange(item.id, e.target.value);
                       }}
                       required
                     >
@@ -552,18 +563,9 @@ const NewInvoice = () => {
                   <span className="font-medium">{currencySymbol}{subTotal.toFixed(2)}</span>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                  <span className="text-muted-foreground">Tax (%)</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.1"
-                    value={taxRate}
-                    onChange={(e) => setTaxRate(Number(e.target.value))}
-                    className="input-field w-20"
-                  />
-                  <span className="ml-auto font-medium">{currencySymbol}{taxAmount.toFixed(2)}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Tax</span>
+                  <span className="font-medium">{currencySymbol}{taxAmount.toFixed(2)}</span>
                 </div>
                 
                 <div className="border-t border-border pt-4 flex justify-between">
