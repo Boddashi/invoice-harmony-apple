@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, DollarSign, Tag } from 'lucide-react';
+import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, DollarSign } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -90,7 +89,6 @@ const Items = () => {
     }
   };
 
-  // Format price to currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -98,7 +96,6 @@ const Items = () => {
     }).format(amount);
   };
 
-  // Handle sorting
   const handleSort = (field: 'title' | 'price' | 'vat') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -108,7 +105,6 @@ const Items = () => {
     }
   };
 
-  // Get sorted items
   const getSortedItems = () => {
     return [...items].sort((a, b) => {
       if (sortField === 'title') {
@@ -127,7 +123,6 @@ const Items = () => {
     });
   };
 
-  // Get VAT badge color
   const getVatBadgeColor = (vat: string) => {
     switch(vat) {
       case '0%': return 'bg-gray-500';
@@ -149,10 +144,6 @@ const Items = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Tag className="mr-2 h-4 w-4" />
-              Categories
-            </Button>
             <AddItemModal onItemAdded={fetchItems} />
           </div>
         </div>
