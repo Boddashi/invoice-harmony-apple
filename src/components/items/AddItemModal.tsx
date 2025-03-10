@@ -27,6 +27,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   const [loading, setLoading] = useState(false);
   const [vatRates, setVatRates] = useState<VatRate[]>([]);
   const [fetchingVatRates, setFetchingVatRates] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   
   useEffect(() => {
     if (open) {
@@ -37,27 +38,33 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   const fetchVatRates = async () => {
     try {
       setFetchingVatRates(true);
+      setFetchError(null);
       
-      // Log that we're attempting to fetch VAT rates
+      // Detailed logging
       console.log('Attempting to fetch VAT rates from the vats table');
       
-      const { data, error } = await supabase
+      // The query to fetch all VAT rates
+      const { data, error, status } = await supabase
         .from('vats')
-        .select('*');
-        
+        .select('title, amount');
+      
+      // Log the full response for debugging
+      console.log('Supabase response status:', status);
+      console.log('Supabase query result:', { data, error });
+      
       if (error) {
         console.error('Error fetching VAT rates:', error);
+        setFetchError(`Query error: ${error.message}`);
         throw error;
       }
       
-      console.log('VAT rates fetched:', data);
-      
       if (data && data.length > 0) {
+        console.log('VAT rates fetched successfully:', data);
         setVatRates(data);
         setVat(data[0].title); // Set default vat to first option
-        console.log('Default VAT set to:', data[0].title);
       } else {
-        console.warn('No VAT rates found in the database');
+        console.warn('No VAT rates found in the database. Response was:', data);
+        setFetchError('No VAT rates found in the database');
         
         // Fallback to default VAT rates if none are found in the database
         const defaultVats: VatRate[] = [
@@ -71,8 +78,10 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
         console.log('Using fallback VAT rates:', defaultVats);
       }
     } catch (error) {
-      console.error('Error fetching VAT rates:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Exception during VAT rates fetch:', errorMessage);
       toast.error('Failed to fetch VAT rates');
+      setFetchError(`Exception: ${errorMessage}`);
       
       // Fallback to default VAT rates on error
       const defaultVats: VatRate[] = [
@@ -170,6 +179,13 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="text-sm text-muted-foreground">Loading VAT rates...</span>
               </div>
+            ) : fetchError ? (
+              <div className="text-sm text-destructive py-2">
+                Error: {fetchError}
+                <pre className="mt-1 p-2 bg-muted rounded-md text-xs overflow-auto">
+                  {JSON.stringify(vatRates, null, 2)}
+                </pre>
+              </div>
             ) : vatRates.length > 0 ? (
               <Select value={vat} onValueChange={setVat}>
                 <SelectTrigger>
@@ -178,7 +194,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
                 <SelectContent>
                   {vatRates.map((rate) => (
                     <SelectItem key={rate.title} value={rate.title}>
-                      {rate.title}{rate.amount !== null ? ` (${rate.amount}%)` : ''}
+                      {rate.title}
                     </SelectItem>
                   ))}
                 </SelectContent>
