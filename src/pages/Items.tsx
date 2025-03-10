@@ -14,6 +14,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import AddItemModal from '@/components/items/AddItemModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Item {
   id: string;
@@ -26,6 +38,7 @@ interface Item {
 const Items = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -56,6 +69,23 @@ const Items = () => {
     }
   };
 
+  const handleDeleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setItems(items.filter(item => item.id !== id));
+      toast.success('Item deleted successfully');
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error('Failed to delete item');
+    }
+  };
+
   // Format price to currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -74,9 +104,7 @@ const Items = () => {
               Manage your inventory and products
             </p>
           </div>
-          <Button className="bg-apple-blue hover:bg-apple-blue/90">
-            <Plus className="mr-2 h-4 w-4" /> Add Item
-          </Button>
+          <AddItemModal onItemAdded={fetchItems} />
         </div>
         
         {loading ? (
@@ -91,9 +119,14 @@ const Items = () => {
               <p className="text-muted-foreground mb-4">
                 You haven't added any items to your inventory yet.
               </p>
-              <Button className="bg-apple-blue hover:bg-apple-blue/90">
-                Add Your First Item
-              </Button>
+              <AddItemModal
+                trigger={
+                  <Button className="bg-apple-blue hover:bg-apple-blue/90">
+                    Add Your First Item
+                  </Button>
+                }
+                onItemAdded={fetchItems}
+              />
             </div>
           </div>
         ) : (
@@ -118,9 +151,30 @@ const Items = () => {
                         <Button variant="outline" size="icon">
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button variant="destructive" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Item</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{item.title}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="bg-destructive hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
                     </TableCell>
                   </TableRow>

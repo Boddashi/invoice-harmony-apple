@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash, UserPlus } from 'lucide-react';
@@ -33,10 +32,8 @@ const NewInvoice = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Add client modal state
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
-  // Invoice form state
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
@@ -44,18 +41,15 @@ const NewInvoice = () => {
   const [status, setStatus] = useState<'draft' | 'pending'>('draft');
   const [notes, setNotes] = useState('');
   
-  // Invoice items state
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0 }
   ]);
   
-  // Calculated totals
   const [subTotal, setSubTotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
   const [total, setTotal] = useState(0);
   
-  // Fetch clients from Supabase
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -87,12 +81,10 @@ const NewInvoice = () => {
     fetchClients();
   }, [user, toast]);
   
-  // Handle adding a new client
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
     
     try {
-      // Save the client to Supabase
       const { data, error } = await supabase.from('clients').insert({
         name: newClient.name,
         company: newClient.company,
@@ -113,10 +105,8 @@ const NewInvoice = () => {
         throw error;
       }
       
-      // Add to clients list and select it
       setClients([...clients, data]);
       setSelectedClientId(data.id);
-      
     } catch (error: any) {
       console.error('Error saving client:', error);
       toast({
@@ -127,9 +117,7 @@ const NewInvoice = () => {
     }
   };
   
-  // Generate a new invoice number
   useEffect(() => {
-    // Simple invoice number generator (prefix + timestamp)
     const generateInvoiceNumber = () => {
       const prefix = 'INV';
       const timestamp = Date.now().toString().slice(-6);
@@ -139,7 +127,6 @@ const NewInvoice = () => {
     setInvoiceNumber(generateInvoiceNumber());
   }, []);
   
-  // Set due date to 30 days from issue date by default
   useEffect(() => {
     if (issueDate) {
       const date = new Date(issueDate);
@@ -148,7 +135,6 @@ const NewInvoice = () => {
     }
   }, [issueDate]);
   
-  // Calculate totals whenever items or tax rate change
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
     setSubTotal(calculatedSubTotal);
@@ -159,7 +145,6 @@ const NewInvoice = () => {
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, taxRate]);
   
-  // Handle item description change
   const handleItemDescriptionChange = (id: string, value: string) => {
     setItems(prevItems =>
       prevItems.map(item =>
@@ -168,7 +153,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Handle item quantity change
   const handleItemQuantityChange = (id: string, value: number) => {
     setItems(prevItems =>
       prevItems.map(item => {
@@ -182,7 +166,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Handle item unit price change
   const handleItemUnitPriceChange = (id: string, value: number) => {
     setItems(prevItems =>
       prevItems.map(item => {
@@ -196,7 +179,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Add a new item
   const handleAddItem = () => {
     setItems([
       ...items,
@@ -204,14 +186,12 @@ const NewInvoice = () => {
     ]);
   };
   
-  // Remove an item
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
   
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -245,7 +225,6 @@ const NewInvoice = () => {
     try {
       setIsSubmitting(true);
       
-      // Create the invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
@@ -268,21 +247,26 @@ const NewInvoice = () => {
         throw invoiceError;
       }
       
-      // Add invoice items
       const invoiceItems = items.map(item => ({
         invoice_id: invoice.id,
-        description: item.description,
+        item_id: item.description,
         quantity: item.quantity,
-        unit_price: item.unit_price,
-        amount: item.amount
+        total_amount: item.amount
       }));
       
-      const { error: itemsError } = await supabase
-        .from('invoice_items')
-        .insert(invoiceItems);
+      const formattedInvoiceItems = invoiceItems.map(item => ({
+        invoice_id: invoice.id,
+        item_id: item.description,
+        quantity: item.quantity,
+        total_amount: item.amount
+      }));
       
-      if (itemsError) {
-        throw itemsError;
+      const { error: invoiceItemsError } = await supabase
+        .from('invoice_items')
+        .insert(formattedInvoiceItems);
+      
+      if (invoiceItemsError) {
+        throw invoiceItemsError;
       }
       
       toast({
@@ -290,7 +274,6 @@ const NewInvoice = () => {
         description: "Invoice created successfully."
       });
       
-      // Navigate back to invoices page
       navigate('/invoices');
       
     } catch (error: any) {
@@ -557,7 +540,6 @@ const NewInvoice = () => {
           </div>
         </form>
         
-        {/* Add Client Modal */}
         <AddClientModal 
           isOpen={isAddClientModalOpen}
           onClose={() => setIsAddClientModalOpen(false)}
