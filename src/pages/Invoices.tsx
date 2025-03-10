@@ -138,11 +138,12 @@ const Invoices = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-between items-center animate-fade-in">
+      <div className="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
+        {/* Header section with title and new invoice button */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
           <h2 className="text-xl font-semibold">Your Invoices</h2>
           <button 
-            className="apple-button flex items-center gap-2"
+            className="apple-button flex items-center gap-2 w-full sm:w-auto"
             onClick={() => navigate('/invoices/new')}
           >
             <Plus size={18} />
@@ -150,8 +151,10 @@ const Invoices = () => {
           </button>
         </div>
         
-        <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
-          <div className="relative w-full md:w-80">
+        {/* Search and filters section */}
+        <div className="flex flex-col gap-4">
+          {/* Search input */}
+          <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <input
               type="text"
@@ -162,55 +165,59 @@ const Invoices = () => {
             />
           </div>
           
-          <div className="flex gap-2 w-full md:w-auto">
-            <button 
-              onClick={() => setFilter('all')} 
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                filter === 'all' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
-              )}
-            >
-              All
-            </button>
-            <button 
-              onClick={() => setFilter('draft')} 
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                filter === 'draft' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
-              )}
-            >
-              Draft
-            </button>
-            <button 
-              onClick={() => setFilter('pending')} 
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                filter === 'pending' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
-              )}
-            >
-              Pending
-            </button>
-            <button 
-              onClick={() => setFilter('paid')} 
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                filter === 'paid' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
-              )}
-            >
-              Paid
-            </button>
-            <button 
-              onClick={() => setFilter('overdue')} 
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                filter === 'overdue' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
-              )}
-            >
-              Overdue
-            </button>
+          {/* Filter buttons - scrollable on mobile */}
+          <div className="overflow-x-auto pb-2">
+            <div className="flex gap-2 min-w-max">
+              <button 
+                onClick={() => setFilter('all')} 
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === 'all' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
+                )}
+              >
+                All
+              </button>
+              <button 
+                onClick={() => setFilter('draft')} 
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === 'draft' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
+                )}
+              >
+                Draft
+              </button>
+              <button 
+                onClick={() => setFilter('pending')} 
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === 'pending' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
+                )}
+              >
+                Pending
+              </button>
+              <button 
+                onClick={() => setFilter('paid')} 
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === 'paid' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
+                )}
+              >
+                Paid
+              </button>
+              <button 
+                onClick={() => setFilter('overdue')} 
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === 'overdue' ? 'bg-apple-blue text-white' : 'hover:bg-secondary'
+                )}
+              >
+                Overdue
+              </button>
+            </div>
           </div>
         </div>
         
+        {/* Invoices table/list */}
         <CustomCard padding="none" className="animate-fade-in">
           {isLoading ? (
             <div className="p-8 text-center">
@@ -225,74 +232,146 @@ const Invoices = () => {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px]">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/50">
-                    <th className="py-4 px-5 text-left font-medium">
-                      <div className="flex items-center gap-1">
-                        Invoice #
-                        <ChevronDown size={16} />
-                      </div>
-                    </th>
-                    <th className="py-4 px-5 text-left font-medium">Client</th>
-                    <th className="py-4 px-5 text-left font-medium">Issue Date</th>
-                    <th className="py-4 px-5 text-left font-medium">Due Date</th>
-                    <th className="py-4 px-5 text-right font-medium">Amount</th>
-                    <th className="py-4 px-5 text-center font-medium">Status</th>
-                    <th className="py-4 px-5 text-center font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredInvoices.map((invoice) => (
-                    <tr key={invoice.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
-                      <td className="py-4 px-5 font-medium">{invoice.invoice_number}</td>
-                      <td className="py-4 px-5">
-                        {invoice.client ? (
-                          <div>
-                            <span>{invoice.client.name}</span>
-                            {invoice.client.company && (
-                              <span className="text-sm text-muted-foreground block">{invoice.client.company}</span>
-                            )}
-                          </div>
-                        ) : (
-                          "Unknown Client"
-                        )}
-                      </td>
-                      <td className="py-4 px-5">{formatDate(invoice.issue_date)}</td>
-                      <td className="py-4 px-5">{formatDate(invoice.due_date)}</td>
-                      <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.total_amount)}</td>
-                      <td className="py-4 px-5">
-                        <div className="flex justify-center">
-                          <span className={cn(
-                            "px-3 py-1 text-xs font-medium border rounded-full",
-                            getStatusColor(invoice.status)
-                          )}>
-                            {getStatusLabel(invoice.status)}
-                          </span>
+            <>
+              {/* Desktop table view */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[900px]">
+                  <thead>
+                    <tr className="border-b border-border bg-secondary/50">
+                      <th className="py-4 px-5 text-left font-medium">
+                        <div className="flex items-center gap-1">
+                          Invoice #
+                          <ChevronDown size={16} />
                         </div>
-                      </td>
-                      <td className="py-4 px-5">
-                        <div className="flex justify-center gap-2">
-                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
-                            <Eye size={18} />
-                          </button>
-                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
-                            <Send size={18} />
-                          </button>
-                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
-                            <Download size={18} />
-                          </button>
-                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
-                            <MoreHorizontal size={18} />
-                          </button>
-                        </div>
-                      </td>
+                      </th>
+                      <th className="py-4 px-5 text-left font-medium">Client</th>
+                      <th className="py-4 px-5 text-left font-medium">Issue Date</th>
+                      <th className="py-4 px-5 text-left font-medium">Due Date</th>
+                      <th className="py-4 px-5 text-right font-medium">Amount</th>
+                      <th className="py-4 px-5 text-center font-medium">Status</th>
+                      <th className="py-4 px-5 text-center font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredInvoices.map((invoice) => (
+                      <tr key={invoice.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
+                        <td className="py-4 px-5 font-medium">{invoice.invoice_number}</td>
+                        <td className="py-4 px-5">
+                          {invoice.client ? (
+                            <div>
+                              <span>{invoice.client.name}</span>
+                              {invoice.client.company && (
+                                <span className="text-sm text-muted-foreground block">{invoice.client.company}</span>
+                              )}
+                            </div>
+                          ) : (
+                            "Unknown Client"
+                          )}
+                        </td>
+                        <td className="py-4 px-5">{formatDate(invoice.issue_date)}</td>
+                        <td className="py-4 px-5">{formatDate(invoice.due_date)}</td>
+                        <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.total_amount)}</td>
+                        <td className="py-4 px-5">
+                          <div className="flex justify-center">
+                            <span className={cn(
+                              "px-3 py-1 text-xs font-medium border rounded-full",
+                              getStatusColor(invoice.status)
+                            )}>
+                              {getStatusLabel(invoice.status)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-5">
+                          <div className="flex justify-center gap-2">
+                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
+                              <Eye size={18} />
+                            </button>
+                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
+                              <Send size={18} />
+                            </button>
+                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
+                              <Download size={18} />
+                            </button>
+                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
+                              <MoreHorizontal size={18} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile list view */}
+              <div className="md:hidden divide-y divide-border">
+                {filteredInvoices.map((invoice) => (
+                  <div 
+                    key={invoice.id} 
+                    className="p-4 hover:bg-secondary/30 transition-colors"
+                    onClick={() => navigate(`/invoices/${invoice.id}`)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h3 className="font-medium">{invoice.invoice_number}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {invoice.client?.name || "Unknown Client"}
+                          {invoice.client?.company && ` • ${invoice.client.company}`}
+                        </p>
+                      </div>
+                      <span className={cn(
+                        "px-3 py-1 text-xs font-medium border rounded-full",
+                        getStatusColor(invoice.status)
+                      )}>
+                        {getStatusLabel(invoice.status)}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-2">
+                      <div>
+                        <span className="text-muted-foreground">Issue Date:</span>
+                      </div>
+                      <div className="text-right">
+                        {formatDate(invoice.issue_date)}
+                      </div>
+                      
+                      <div>
+                        <span className="text-muted-foreground">Due Date:</span>
+                      </div>
+                      <div className="text-right">
+                        {formatDate(invoice.due_date)}
+                      </div>
+                      
+                      <div>
+                        <span className="text-muted-foreground">Amount:</span>
+                      </div>
+                      <div className="text-right font-medium">
+                        {formatAmount(invoice.total_amount)}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 mt-3">
+                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
+                        <Eye size={18} />
+                      </button>
+                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
+                        <Send size={18} />
+                      </button>
+                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
+                        <Download size={18} />
+                      </button>
+                      <button 
+                        className="p-2 rounded-full hover:bg-secondary transition-colors" 
+                        title="More"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </CustomCard>
       </div>
