@@ -1,37 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, BarChart } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  BarChart as RechartsBarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
-import { Skeleton } from '@/components/ui/skeleton';
+import CustomCard from '@/components/ui/CustomCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useCurrency } from '@/contexts/CurrencyContext';
+import { Plus } from 'lucide-react';
+import AddItemModal from '@/components/items/AddItemModal';
 
 interface InvoiceItem {
   id: string;
@@ -41,188 +18,182 @@ interface InvoiceItem {
   amount: number;
 }
 
-interface ChartData {
-  name: string;
-  value: number;
-  count: number;
-}
-
 const Items = () => {
-  const [activeTab, setActiveTab] = useState<string>('items');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [productUsage, setProductUsage] = useState<ChartData[]>([]);
-  const [productItems, setProductItems] = useState<InvoiceItem[]>([]);
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<InvoiceItem[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
 
-  useEffect(() => {
-    fetchItemsData();
-  }, []);
-
-  const fetchItemsData = async () => {
+  const fetchItems = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
       
-      // Query invoice_items table to get items usage
+      // Fetch items from invoice_items
       const { data, error } = await supabase
         .from('invoice_items')
-        .select('id, description, quantity, unit_price, amount')
-        .order('description');
+        .select(`
+          id,
+          description,
+          quantity,
+          unit_price,
+          amount,
+          invoice_id,
+          invoices(user_id)
+        `)
+        .eq('invoices.user_id', user.id);
       
       if (error) {
         throw error;
       }
       
-      // Store the raw items for the table
-      setProductItems(data);
+      // Process the data
+      const filteredItems = (data || []).filter(item => item.invoices !== null);
+      setItems(filteredItems);
       
-      // Process data for the chart
-      const productStats: Record<string, { value: number, count: number }> = {};
-      
-      data.forEach((item: InvoiceItem) => {
-        const productName = item.description;
-        
-        if (!productStats[productName]) {
-          productStats[productName] = { value: 0, count: 0 };
+      // Process data for chart
+      const itemMap = new Map();
+      filteredItems.forEach(item => {
+        if (itemMap.has(item.description)) {
+          const existing = itemMap.get(item.description);
+          itemMap.set(item.description, {
+            description: item.description,
+            amount: existing.amount + item.amount,
+            quantity: existing.quantity + item.quantity
+          });
+        } else {
+          itemMap.set(item.description, {
+            description: item.description,
+            amount: item.amount,
+            quantity: item.quantity
+          });
         }
-        
-        productStats[productName].value += Number(item.amount);
-        productStats[productName].count += Number(item.quantity);
       });
       
-      // Convert to chart data format
-      const chartData = Object.keys(productStats).map(name => ({
-        name,
-        value: Number(productStats[name].value.toFixed(2)),
-        count: productStats[name].count
-      }));
+      setChartData(Array.from(itemMap.values()));
       
-      setProductUsage(chartData);
-    } catch (error: any) {
-      toast.error('Error loading items data: ' + error.message);
-      console.error('Error fetching items data:', error);
+    } catch (error) {
+      console.error('Error fetching items:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value);
+  
+  useEffect(() => {
+    fetchItems();
+  }, [user]);
+  
+  const handleItemAdded = () => {
+    fetchItems();
   };
 
   return (
     <MainLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Package size={24} className="text-apple-blue" />
-            <h1 className="text-2xl font-semibold">Items</h1>
-          </div>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Items</h1>
+          <button 
+            onClick={() => setIsAddItemModalOpen(true)}
+            className="apple-button flex items-center gap-2"
+          >
+            <Plus size={20} />
+            <span>Add Item</span>
+          </button>
         </div>
         
-        <Tabs defaultValue="items" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="items">Items</TabsTrigger>
+        <Tabs defaultValue="table" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="table">Items Table</TabsTrigger>
             <TabsTrigger value="chart">Usage Chart</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="items">
-            <Card>
-              <CardHeader>
-                <CardTitle>Item Inventory</CardTitle>
-                <CardDescription>
-                  View and manage your items
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="w-full h-[400px] flex items-center justify-center">
-                    <Skeleton className="w-full h-full" />
-                  </div>
-                ) : productItems.length > 0 ? (
-                  <div className="border rounded-md">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Description</TableHead>
-                          <TableHead className="text-right">Unit Price</TableHead>
-                          <TableHead className="text-right">Quantity</TableHead>
-                          <TableHead className="text-right">Total Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {productItems.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">{item.description}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-[300px] text-center">
-                    <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No items available</h3>
-                    <p className="text-muted-foreground mt-2">
-                      Items will appear here once you've created invoices with items.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <TabsContent value="table" className="mt-4">
+            <CustomCard>
+              {loading ? (
+                <div className="py-12 text-center">Loading items...</div>
+              ) : items.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">No items found.</p>
+                  <p className="mt-2">Create an invoice with items to see them here.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full table-auto">
+                    <thead>
+                      <tr className="text-left border-b border-border">
+                        <th className="py-3 px-4 font-medium">Description</th>
+                        <th className="py-3 px-4 font-medium text-right">Unit Price</th>
+                        <th className="py-3 px-4 font-medium text-right">Quantity</th>
+                        <th className="py-3 px-4 font-medium text-right">Total Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item) => (
+                        <tr key={item.id} className="border-b border-border/50 hover:bg-muted/20">
+                          <td className="py-3 px-4">{item.description}</td>
+                          <td className="py-3 px-4 text-right">{currencySymbol}{item.unit_price.toFixed(2)}</td>
+                          <td className="py-3 px-4 text-right">{item.quantity}</td>
+                          <td className="py-3 px-4 text-right font-medium">{currencySymbol}{item.amount.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CustomCard>
           </TabsContent>
           
-          <TabsContent value="chart">
-            <Card>
-              <CardHeader>
-                <CardTitle>Item Usage</CardTitle>
-                <CardDescription>
-                  Visualize how your items are being used across invoices
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="w-full h-[400px] flex items-center justify-center">
-                    <Skeleton className="w-full h-full" />
-                  </div>
-                ) : productUsage.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
-                    <RechartsBarChart data={productUsage} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+          <TabsContent value="chart" className="mt-4">
+            <CustomCard>
+              {loading ? (
+                <div className="py-12 text-center">Loading chart data...</div>
+              ) : chartData.length === 0 ? (
+                <div className="py-12 text-center">
+                  <p className="text-muted-foreground">No data available for chart.</p>
+                  <p className="mt-2">Create an invoice with items to see usage data.</p>
+                </div>
+              ) : (
+                <div className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{
+                        top: 20,
+                        right: 30,
+                        left: 20,
+                        bottom: 70,
+                      }}
+                    >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
-                        dataKey="name" 
+                        dataKey="description" 
                         angle={-45} 
-                        textAnchor="end"
+                        textAnchor="end" 
                         height={80}
                         interval={0}
                       />
-                      <YAxis />
-                      <Tooltip formatter={(value) => [`${value}`, 'Total Amount']} />
+                      <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+                      <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+                      <Tooltip formatter={(value: number) => `${currencySymbol}${value.toFixed(2)}`} />
                       <Legend />
-                      <Bar dataKey="value" name="Total Amount" fill="#0066CC" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="count" name="Quantity" fill="#4CAF50" radius={[4, 4, 0, 0]} />
-                    </RechartsBarChart>
+                      <Bar yAxisId="left" dataKey="amount" name="Total Amount" fill="#8884d8" />
+                      <Bar yAxisId="right" dataKey="quantity" name="Quantity" fill="#82ca9d" />
+                    </BarChart>
                   </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-[300px] text-center">
-                    <BarChart className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No item data available</h3>
-                    <p className="text-muted-foreground mt-2">
-                      Item usage data will appear here once you've created invoices with items.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </CustomCard>
           </TabsContent>
         </Tabs>
+        
+        <AddItemModal
+          isOpen={isAddItemModalOpen}
+          onClose={() => setIsAddItemModalOpen(false)}
+          onItemAdded={handleItemAdded}
+        />
       </div>
     </MainLayout>
   );
