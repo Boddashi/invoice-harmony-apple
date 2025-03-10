@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash } from 'lucide-react';
@@ -13,7 +12,8 @@ import AddClientModal from '@/components/clients/AddClientModal';
 interface Client {
   id: string;
   name: string;
-  company: string | null;
+  email?: string;
+  phone?: string | null;
 }
 
 interface InvoiceItem {
@@ -71,7 +71,7 @@ const NewInvoice = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('clients')
-          .select('id, name, company')
+          .select('id, name, email, phone')
           .eq('user_id', user.id);
         
         if (error) {
@@ -116,7 +116,6 @@ const NewInvoice = () => {
     fetchItems();
   }, [toast]);
 
-  // Fetch invoice data when in edit mode
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!isEditMode || !id || !user) return;
@@ -124,7 +123,6 @@ const NewInvoice = () => {
       try {
         setIsLoading(true);
         
-        // Fetch the invoice data
         const { data: invoiceData, error: invoiceError } = await supabase
           .from('invoices')
           .select('*')
@@ -144,7 +142,6 @@ const NewInvoice = () => {
           return;
         }
         
-        // Fetch invoice items
         const { data: invoiceItems, error: itemsError } = await supabase
           .from('invoice_items')
           .select(`
@@ -155,7 +152,6 @@ const NewInvoice = () => {
         
         if (itemsError) throw itemsError;
         
-        // Set invoice data
         setInvoiceNumber(invoiceData.invoice_number);
         setSelectedClientId(invoiceData.client_id);
         setIssueDate(invoiceData.issue_date);
@@ -167,7 +163,6 @@ const NewInvoice = () => {
         setTaxAmount(invoiceData.tax_amount || 0);
         setTotal(invoiceData.total_amount);
         
-        // Set invoice items
         if (invoiceItems && invoiceItems.length > 0) {
           const formattedItems = invoiceItems.map(item => {
             const itemData = item.items as unknown as Item;
@@ -202,9 +197,8 @@ const NewInvoice = () => {
     if (!user) return;
     
     try {
-      const { data, error } = await supabase.from('clients').insert({
+      const clientData = {
         name: newClient.name,
-        company: newClient.company,
         email: newClient.email,
         phone: newClient.phone,
         street: newClient.street,
@@ -216,13 +210,26 @@ const NewInvoice = () => {
         vat_number: newClient.vatNumber,
         type: newClient.type,
         user_id: user.id
-      }).select().single();
+      };
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select()
+        .single();
       
       if (error) {
         throw error;
       }
       
-      setClients([...clients, data]);
+      const newClientData: Client = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone
+      };
+      
+      setClients([...clients, newClientData]);
       setSelectedClientId(data.id);
     } catch (error: any) {
       console.error('Error saving client:', error);
@@ -241,7 +248,6 @@ const NewInvoice = () => {
       return `${prefix}-${timestamp}`;
     };
     
-    // Only generate a new invoice number if not in edit mode
     if (!isEditMode && !invoiceNumber) {
       setInvoiceNumber(generateInvoiceNumber());
     }
@@ -360,7 +366,6 @@ const NewInvoice = () => {
       setIsSubmitting(true);
       
       if (isEditMode) {
-        // Update existing invoice
         const { error: invoiceError } = await supabase
           .from('invoices')
           .update({
@@ -381,7 +386,6 @@ const NewInvoice = () => {
           throw invoiceError;
         }
         
-        // Delete existing invoice items
         const { error: deleteError } = await supabase
           .from('invoice_items')
           .delete()
@@ -391,7 +395,6 @@ const NewInvoice = () => {
           throw deleteError;
         }
         
-        // Add new invoice items
         const invoiceItems = items.map(item => ({
           invoice_id: id,
           item_id: item.description,
@@ -412,7 +415,6 @@ const NewInvoice = () => {
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'updated'} successfully.`
         });
       } else {
-        // Create new invoice
         const { data: invoice, error: invoiceError } = await supabase
           .from('invoices')
           .insert({
@@ -482,7 +484,6 @@ const NewInvoice = () => {
     handleSubmit(e as unknown as React.FormEvent);
   };
 
-  // Show loading state while fetching invoice data
   if (isLoading && isEditMode) {
     return (
       <MainLayout>
