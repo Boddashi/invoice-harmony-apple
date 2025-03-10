@@ -295,7 +295,7 @@ const NewInvoice = () => {
       
       const invoiceItems = items.map(item => ({
         invoice_id: invoice.id,
-        item_id: item.id,
+        item_id: item.description,
         quantity: item.quantity,
         total_amount: item.amount
       }));
@@ -310,7 +310,7 @@ const NewInvoice = () => {
       
       toast({
         title: "Success",
-        description: "Invoice created successfully."
+        description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
       });
       
       navigate('/invoices');
@@ -327,18 +327,16 @@ const NewInvoice = () => {
     }
   };
   
-  const handleSaveAsDraft = (e: React.MouseEvent) => {
+  const handleSaveAsDraft = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('draft');
-    const form = document.getElementById('invoice-form') as HTMLFormElement;
-    if (form) form.submit();
+    handleSubmit(e as unknown as React.FormEvent);
   };
 
-  const handleCreateAndSend = (e: React.MouseEvent) => {
+  const handleCreateAndSend = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('pending');
-    const form = document.getElementById('invoice-form') as HTMLFormElement;
-    if (form) form.submit();
+    handleSubmit(e as unknown as React.FormEvent);
   };
 
   return (
