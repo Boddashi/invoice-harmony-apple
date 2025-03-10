@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -41,12 +40,10 @@ const Invoices = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
 
-  // Format date to readable format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -56,7 +53,6 @@ const Invoices = () => {
     });
   };
   
-  // Fetch invoices from Supabase
   useEffect(() => {
     const fetchInvoices = async () => {
       if (!user) return;
@@ -75,7 +71,6 @@ const Invoices = () => {
           throw error;
         }
         
-        // Cast the data to ensure status is treated as InvoiceDBStatus type
         const typedData = data?.map(invoice => ({
           ...invoice,
           status: invoice.status as InvoiceDBStatus
@@ -97,7 +92,6 @@ const Invoices = () => {
     fetchInvoices();
   }, [user, toast]);
   
-  // Filter invoices based on status filter and search query
   const filteredInvoices = invoices
     .filter(invoice => filter === 'all' || invoice.status === filter)
     .filter(invoice => {
@@ -138,9 +132,8 @@ const Invoices = () => {
 
   return (
     <MainLayout>
-      <div className="w-full max-w-6xl mx-auto space-y-4 md:space-y-6">
-        {/* Header section with title and new invoice button */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
+      <div className="w-full max-w-6xl mx-auto px-2 md:px-0 space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
           <h2 className="text-xl font-semibold">Your Invoices</h2>
           <button 
             className="apple-button flex items-center gap-2 w-full sm:w-auto"
@@ -151,9 +144,7 @@ const Invoices = () => {
           </button>
         </div>
         
-        {/* Search and filters section */}
-        <div className="flex flex-col gap-4">
-          {/* Search input */}
+        <div className="flex flex-col gap-3">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <input
@@ -165,8 +156,7 @@ const Invoices = () => {
             />
           </div>
           
-          {/* Filter buttons - scrollable on mobile */}
-          <div className="overflow-x-auto pb-2">
+          <div className="flex overflow-x-auto pb-1 -mx-2 px-2 md:mx-0 md:px-0 scrollbar-none">
             <div className="flex gap-2 min-w-max">
               <button 
                 onClick={() => setFilter('all')} 
@@ -217,8 +207,7 @@ const Invoices = () => {
           </div>
         </div>
         
-        {/* Invoices table/list */}
-        <CustomCard padding="none" className="animate-fade-in">
+        <CustomCard padding="none" className="animate-fade-in w-full overflow-hidden">
           {isLoading ? (
             <div className="p-8 text-center">
               <p className="text-muted-foreground">Loading invoices...</p>
@@ -233,45 +222,48 @@ const Invoices = () => {
             </div>
           ) : (
             <>
-              {/* Desktop table view */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full min-w-[900px]">
+              <div className="hidden md:block overflow-x-auto w-full">
+                <table className="w-full min-w-full table-fixed">
                   <thead>
                     <tr className="border-b border-border bg-secondary/50">
-                      <th className="py-4 px-5 text-left font-medium">
+                      <th className="py-3 px-4 text-left font-medium">
                         <div className="flex items-center gap-1">
                           Invoice #
                           <ChevronDown size={16} />
                         </div>
                       </th>
-                      <th className="py-4 px-5 text-left font-medium">Client</th>
-                      <th className="py-4 px-5 text-left font-medium">Issue Date</th>
-                      <th className="py-4 px-5 text-left font-medium">Due Date</th>
-                      <th className="py-4 px-5 text-right font-medium">Amount</th>
-                      <th className="py-4 px-5 text-center font-medium">Status</th>
-                      <th className="py-4 px-5 text-center font-medium">Actions</th>
+                      <th className="py-3 px-4 text-left font-medium">Client</th>
+                      <th className="py-3 px-4 text-left font-medium">Issue Date</th>
+                      <th className="py-3 px-4 text-left font-medium">Due Date</th>
+                      <th className="py-3 px-4 text-right font-medium">Amount</th>
+                      <th className="py-3 px-4 text-center font-medium">Status</th>
+                      <th className="py-3 px-4 text-center font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredInvoices.map((invoice) => (
-                      <tr key={invoice.id} className="border-b border-border hover:bg-secondary/30 transition-colors">
-                        <td className="py-4 px-5 font-medium">{invoice.invoice_number}</td>
-                        <td className="py-4 px-5">
+                      <tr 
+                        key={invoice.id} 
+                        className="border-b border-border hover:bg-secondary/30 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                      >
+                        <td className="py-3 px-4 font-medium">{invoice.invoice_number}</td>
+                        <td className="py-3 px-4">
                           {invoice.client ? (
                             <div>
                               <span>{invoice.client.name}</span>
                               {invoice.client.company && (
-                                <span className="text-sm text-muted-foreground block">{invoice.client.company}</span>
+                                <span className="text-sm text-muted-foreground block truncate max-w-[200px]">{invoice.client.company}</span>
                               )}
                             </div>
                           ) : (
                             "Unknown Client"
                           )}
                         </td>
-                        <td className="py-4 px-5">{formatDate(invoice.issue_date)}</td>
-                        <td className="py-4 px-5">{formatDate(invoice.due_date)}</td>
-                        <td className="py-4 px-5 text-right font-medium">{formatAmount(invoice.total_amount)}</td>
-                        <td className="py-4 px-5">
+                        <td className="py-3 px-4">{formatDate(invoice.issue_date)}</td>
+                        <td className="py-3 px-4">{formatDate(invoice.due_date)}</td>
+                        <td className="py-3 px-4 text-right font-medium">{formatAmount(invoice.total_amount)}</td>
+                        <td className="py-3 px-4">
                           <div className="flex justify-center">
                             <span className={cn(
                               "px-3 py-1 text-xs font-medium border rounded-full",
@@ -281,19 +273,23 @@ const Invoices = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="py-4 px-5">
-                          <div className="flex justify-center gap-2">
-                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
-                              <Eye size={18} />
+                        <td className="py-3 px-4">
+                          <div className="flex justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <button 
+                              className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+                              title="View"
+                              onClick={() => navigate(`/invoices/${invoice.id}`)}
+                            >
+                              <Eye size={16} />
                             </button>
-                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
-                              <Send size={18} />
+                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Send">
+                              <Send size={16} />
                             </button>
-                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
-                              <Download size={18} />
+                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
+                              <Download size={16} />
                             </button>
-                            <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
-                              <MoreHorizontal size={18} />
+                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="More">
+                              <MoreHorizontal size={16} />
                             </button>
                           </div>
                         </td>
@@ -303,69 +299,59 @@ const Invoices = () => {
                 </table>
               </div>
 
-              {/* Mobile list view */}
               <div className="md:hidden divide-y divide-border">
                 {filteredInvoices.map((invoice) => (
                   <div 
                     key={invoice.id} 
-                    className="p-4 hover:bg-secondary/30 transition-colors"
+                    className="p-4 hover:bg-secondary/30 transition-colors active:bg-secondary/50"
                     onClick={() => navigate(`/invoices/${invoice.id}`)}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="font-medium">{invoice.invoice_number}</h3>
-                        <p className="text-sm text-muted-foreground">
+                      <div className="mr-2 flex-1">
+                        <h3 className="font-medium truncate">{invoice.invoice_number}</h3>
+                        <p className="text-sm text-muted-foreground truncate">
                           {invoice.client?.name || "Unknown Client"}
                           {invoice.client?.company && ` • ${invoice.client.company}`}
                         </p>
                       </div>
                       <span className={cn(
-                        "px-3 py-1 text-xs font-medium border rounded-full",
+                        "px-2.5 py-0.5 text-xs font-medium border rounded-full shrink-0",
                         getStatusColor(invoice.status)
                       )}>
                         {getStatusLabel(invoice.status)}
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-2">
-                      <div>
-                        <span className="text-muted-foreground">Issue Date:</span>
-                      </div>
-                      <div className="text-right">
-                        {formatDate(invoice.issue_date)}
-                      </div>
+                    <div className="grid grid-cols-2 gap-y-1 text-sm mb-3">
+                      <div className="text-muted-foreground">Issue Date:</div>
+                      <div className="text-right truncate">{formatDate(invoice.issue_date)}</div>
                       
-                      <div>
-                        <span className="text-muted-foreground">Due Date:</span>
-                      </div>
-                      <div className="text-right">
-                        {formatDate(invoice.due_date)}
-                      </div>
+                      <div className="text-muted-foreground">Due Date:</div>
+                      <div className="text-right truncate">{formatDate(invoice.due_date)}</div>
                       
-                      <div>
-                        <span className="text-muted-foreground">Amount:</span>
-                      </div>
-                      <div className="text-right font-medium">
-                        {formatAmount(invoice.total_amount)}
-                      </div>
+                      <div className="text-muted-foreground">Amount:</div>
+                      <div className="text-right font-medium">{formatAmount(invoice.total_amount)}</div>
                     </div>
                     
-                    <div className="flex justify-end gap-2 mt-3">
-                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="View">
-                        <Eye size={18} />
+                    <div className="flex justify-end gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                      <button 
+                        className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+                        title="View"
+                        onClick={() => navigate(`/invoices/${invoice.id}`)}
+                      >
+                        <Eye size={16} />
                       </button>
-                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Send">
-                        <Send size={18} />
+                      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Send">
+                        <Send size={16} />
                       </button>
-                      <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="Download">
-                        <Download size={18} />
+                      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
+                        <Download size={16} />
                       </button>
                       <button 
-                        className="p-2 rounded-full hover:bg-secondary transition-colors" 
+                        className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
                         title="More"
-                        onClick={(e) => e.stopPropagation()}
                       >
-                        <MoreHorizontal size={18} />
+                        <MoreHorizontal size={16} />
                       </button>
                     </div>
                   </div>
