@@ -327,6 +327,18 @@ const NewInvoice = () => {
     }
   };
   
+  const handleSaveAsDraft = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStatus('draft');
+    document.getElementById('invoice-form')?.requestSubmit();
+  };
+
+  const handleCreateAndSend = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStatus('pending');
+    document.getElementById('invoice-form')?.requestSubmit();
+  };
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -344,28 +356,24 @@ const NewInvoice = () => {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setStatus('draft')}
+              onClick={handleSaveAsDraft}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 status === 'draft' 
                   ? 'bg-gray-100 text-gray-700' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
+              disabled={isSubmitting}
             >
-              Save as Draft
+              {isSubmitting && status === 'draft' ? 'Saving...' : 'Save as Draft'}
             </button>
             
             <button
               type="button"
-              onClick={() => {
-                setStatus('pending');
-                document.getElementById('invoice-form')?.dispatchEvent(
-                  new Event('submit', { cancelable: true, bubbles: true })
-                );
-              }}
+              onClick={handleCreateAndSend}
               className="apple-button flex items-center gap-2"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create & Send'}
+              {isSubmitting && status === 'pending' ? 'Creating...' : 'Create & Send'}
             </button>
           </div>
         </div>
