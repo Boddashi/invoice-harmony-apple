@@ -28,7 +28,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: LayoutGrid, label: 'Dashboard', href: '/' },
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
-    { icon: Package, label: 'Items', href: '/products' },
+    { icon: Package, label: 'Products', href: '/products' },
     { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 

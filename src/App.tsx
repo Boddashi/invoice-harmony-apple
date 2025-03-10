@@ -6,9 +6,8 @@ import Clients from './pages/Clients';
 import Settings from './pages/Settings';
 import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
-import EditInvoice from './pages/EditInvoice';
 import Login from './pages/Login';
-import Items from './pages/Products';
+import Products from './pages/Products';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -28,8 +27,7 @@ function App() {
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/invoices/new" element={<NewInvoice />} />
-                <Route path="/invoices/edit/:invoiceId" element={<EditInvoice />} />
-                <Route path="/products" element={<Items />} />
+                <Route path="/products" element={<Products />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/404" element={<NotFound />} />
                 <Route path="*" element={<Navigate to="/404" replace />} />

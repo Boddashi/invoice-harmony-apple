@@ -15,8 +15,6 @@ const Header = () => {
         return 'Invoices';
       case '/clients':
         return 'Clients';
-      case '/products':
-        return 'Items';
       case '/settings':
         return 'Settings';
       case '/login':
