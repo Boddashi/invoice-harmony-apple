@@ -413,8 +413,8 @@ const NewInvoice = () => {
                   </button>
                   
                   {isClientDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-border rounded-md shadow-lg">
-                      <div className="sticky top-0 p-2 border-b border-border bg-white dark:bg-gray-800">
+                    <div className="client-dropdown">
+                      <div className="client-dropdown-search">
                         <div className="relative">
                           <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                           <input
@@ -437,7 +437,7 @@ const NewInvoice = () => {
                                   client.id, 
                                   client.name + (client.company ? ` (${client.company})` : '')
                                 )}
-                                className="px-4 py-2 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                className="client-dropdown-item"
                               >
                                 <div className="font-medium">{client.name}</div>
                                 {client.company && (
@@ -452,7 +452,7 @@ const NewInvoice = () => {
                           </div>
                         )}
                       </div>
-                      <div className="border-t border-border">
+                      <div className="client-dropdown-footer">
                         <button
                           type="button"
                           onClick={() => {
