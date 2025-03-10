@@ -42,13 +42,19 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
         .select('*')
         .order('title', { ascending: true });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching VAT rates:', error);
+        throw error;
+      }
       
       console.log('VAT rates fetched:', data);
       
-      setVatRates(data || []);
       if (data && data.length > 0) {
+        setVatRates(data);
         setVat(data[0].title); // Set default vat to first option
+      } else {
+        console.warn('No VAT rates found in the database');
+        setVatRates([]);
       }
     } catch (error) {
       console.error('Error fetching VAT rates:', error);
