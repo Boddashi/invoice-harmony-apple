@@ -33,7 +33,8 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const handleEdit = () => {
-    navigate(`/invoices/${invoiceId}/edit`);
+    // Fix: Use the correct route for editing an invoice
+    navigate(`/invoices/edit/${invoiceId}`);
   };
 
   const handleDelete = async () => {

@@ -27,6 +27,8 @@ function App() {
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/invoices/new" element={<NewInvoice />} />
+                <Route path="/invoices/:id" element={<NewInvoice />} />
+                <Route path="/invoices/edit/:id" element={<NewInvoice />} />
                 <Route path="/items" element={<Items />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/404" element={<NotFound />} />
