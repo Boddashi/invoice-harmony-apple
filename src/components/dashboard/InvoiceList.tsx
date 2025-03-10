@@ -13,15 +13,21 @@ type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'draft';
 
 interface Invoice {
   id: string;
-  client_id: string;
+  client_id?: string;
   invoice_number: string;
   issue_date: string;
   due_date: string;
   status: InvoiceStatus;
   total_amount: number;
   client?: {
+    id: string;
     name: string;
   };
+}
+
+interface InvoiceListProps {
+  invoices?: Invoice[];
+  isLoading?: boolean;
 }
 
 const getStatusConfig = (status: InvoiceStatus) => {
@@ -53,7 +59,7 @@ const getStatusConfig = (status: InvoiceStatus) => {
   }
 };
 
-const InvoiceList = () => {
+const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoading: propIsLoading }) => {
   const { currencySymbol } = useCurrency();
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +80,12 @@ const InvoiceList = () => {
   };
   
   useEffect(() => {
+    if (propInvoices) {
+      setRecentInvoices(propInvoices);
+      setIsLoading(propIsLoading || false);
+      return;
+    }
+    
     const fetchInvoices = async () => {
       if (!user) return;
       
@@ -112,7 +124,7 @@ const InvoiceList = () => {
     };
     
     fetchInvoices();
-  }, [user, toast]);
+  }, [user, toast, propInvoices, propIsLoading]);
 
   return (
     <CustomCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>

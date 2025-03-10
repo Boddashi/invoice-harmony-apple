@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import InvoiceList from '../components/dashboard/InvoiceList';
+import InvoiceList from '@/components/dashboard/InvoiceList';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
