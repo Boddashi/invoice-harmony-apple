@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -14,21 +13,15 @@ type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'draft';
 
 interface Invoice {
   id: string;
-  client_id?: string;
+  client_id: string;
   invoice_number: string;
   issue_date: string;
   due_date: string;
   status: InvoiceStatus;
   total_amount: number;
   client?: {
-    id: string;
     name: string;
   };
-}
-
-interface InvoiceListProps {
-  invoices?: Invoice[];
-  isLoading?: boolean;
 }
 
 const getStatusConfig = (status: InvoiceStatus) => {
@@ -60,7 +53,7 @@ const getStatusConfig = (status: InvoiceStatus) => {
   }
 };
 
-const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoading: propIsLoading }) => {
+const InvoiceList = () => {
   const { currencySymbol } = useCurrency();
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -81,12 +74,6 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
   };
   
   useEffect(() => {
-    if (propInvoices) {
-      setRecentInvoices(propInvoices);
-      setIsLoading(propIsLoading || false);
-      return;
-    }
-    
     const fetchInvoices = async () => {
       if (!user) return;
       
@@ -96,7 +83,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
           .from('invoices')
           .select(`
             *,
-            client:clients(id,name)
+            client:clients(name)
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
@@ -106,21 +93,12 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
           throw error;
         }
         
-        // Transform data to ensure it matches the Invoice interface
-        const transformedData = data?.map((invoice: any) => ({
-          id: invoice.id,
-          invoice_number: invoice.invoice_number,
-          issue_date: invoice.issue_date,
-          due_date: invoice.due_date,
-          status: invoice.status as InvoiceStatus,
-          total_amount: invoice.total_amount,
-          client: invoice.client ? {
-            id: invoice.client.id,
-            name: invoice.client.name
-          } : undefined
+        const typedData = data?.map(invoice => ({
+          ...invoice,
+          status: invoice.status as InvoiceStatus
         })) || [];
         
-        setRecentInvoices(transformedData);
+        setRecentInvoices(typedData);
       } catch (error: any) {
         console.error('Error fetching recent invoices:', error);
         toast({
@@ -134,7 +112,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ invoices: propInvoices, isLoa
     };
     
     fetchInvoices();
-  }, [user, toast, propInvoices, propIsLoading]);
+  }, [user, toast]);
 
   return (
     <CustomCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
