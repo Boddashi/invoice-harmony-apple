@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash, ChevronDown, UserPlus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash, ChevronDown, UserPlus, Search } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -34,7 +34,6 @@ const NewInvoice = () => {
   const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
-  // Invoice form state
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [selectedClientName, setSelectedClientName] = useState('');
@@ -43,18 +42,17 @@ const NewInvoice = () => {
   const [status, setStatus] = useState<'draft' | 'pending'>('draft');
   const [notes, setNotes] = useState('');
   
-  // Invoice items state
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: crypto.randomUUID(), description: '', quantity: 1, unit_price: 0, amount: 0 }
   ]);
   
-  // Calculated totals
   const [subTotal, setSubTotal] = useState(0);
   const [taxRate, setTaxRate] = useState(0);
   const [taxAmount, setTaxAmount] = useState(0);
   const [total, setTotal] = useState(0);
   
-  // Fetch clients from Supabase
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -86,9 +84,7 @@ const NewInvoice = () => {
     fetchClients();
   }, [user, toast]);
   
-  // Generate a new invoice number
   useEffect(() => {
-    // Simple invoice number generator (prefix + timestamp)
     const generateInvoiceNumber = () => {
       const prefix = 'INV';
       const timestamp = Date.now().toString().slice(-6);
@@ -98,7 +94,6 @@ const NewInvoice = () => {
     setInvoiceNumber(generateInvoiceNumber());
   }, []);
   
-  // Set due date to 30 days from issue date by default
   useEffect(() => {
     if (issueDate) {
       const date = new Date(issueDate);
@@ -107,7 +102,6 @@ const NewInvoice = () => {
     }
   }, [issueDate]);
   
-  // Calculate totals whenever items or tax rate change
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
     setSubTotal(calculatedSubTotal);
@@ -118,7 +112,6 @@ const NewInvoice = () => {
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, taxRate]);
   
-  // Handle item description change
   const handleItemDescriptionChange = (id: string, value: string) => {
     setItems(prevItems =>
       prevItems.map(item =>
@@ -127,7 +120,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Handle item quantity change
   const handleItemQuantityChange = (id: string, value: number) => {
     setItems(prevItems =>
       prevItems.map(item => {
@@ -141,7 +133,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Handle item unit price change
   const handleItemUnitPriceChange = (id: string, value: number) => {
     setItems(prevItems =>
       prevItems.map(item => {
@@ -155,7 +146,6 @@ const NewInvoice = () => {
     );
   };
   
-  // Add a new item
   const handleAddItem = () => {
     setItems([
       ...items,
@@ -163,14 +153,12 @@ const NewInvoice = () => {
     ]);
   };
   
-  // Remove an item
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
   
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -204,7 +192,6 @@ const NewInvoice = () => {
     try {
       setIsSubmitting(true);
       
-      // Create the invoice
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .insert({
@@ -227,7 +214,6 @@ const NewInvoice = () => {
         throw invoiceError;
       }
       
-      // Add invoice items
       const invoiceItems = items.map(item => ({
         invoice_id: invoice.id,
         description: item.description,
@@ -249,7 +235,6 @@ const NewInvoice = () => {
         description: "Invoice created successfully."
       });
       
-      // Navigate back to invoices page
       navigate('/invoices');
       
     } catch (error: any) {
@@ -264,12 +249,10 @@ const NewInvoice = () => {
     }
   };
 
-  // Handle adding a new client
   const handleAddClient = async (clientData: any) => {
     if (!user) return;
     
     try {
-      // Format the client data for Supabase
       const newClient = {
         user_id: user.id,
         type: clientData.type,
@@ -286,7 +269,6 @@ const NewInvoice = () => {
         vat_number: clientData.vatNumber || null
       };
       
-      // Insert the new client into Supabase
       const { data, error } = await supabase
         .from('clients')
         .insert(newClient)
@@ -295,10 +277,8 @@ const NewInvoice = () => {
       
       if (error) throw error;
       
-      // Add the new client to the clients list
       setClients(prevClients => [...prevClients, data]);
       
-      // Select the newly added client
       setSelectedClientId(data.id);
       setSelectedClientName(data.name + (data.company ? ` (${data.company})` : ''));
       
@@ -316,13 +296,20 @@ const NewInvoice = () => {
     }
   };
 
-  // Select a client
   const selectClient = (id: string, displayName: string) => {
     setSelectedClientId(id);
     setSelectedClientName(displayName);
     setIsClientDropdownOpen(false);
   };
   
+  const filteredClients = clients.filter(client => {
+    const searchTerm = clientSearchQuery.toLowerCase();
+    const clientName = client.name.toLowerCase();
+    const clientCompany = client.company?.toLowerCase() || '';
+    
+    return clientName.includes(searchTerm) || clientCompany.includes(searchTerm);
+  });
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -413,7 +400,6 @@ const NewInvoice = () => {
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-muted-foreground">Select Client</label>
                 
-                {/* Custom dropdown for client selection */}
                 <div className="relative">
                   <button
                     type="button"
@@ -427,37 +413,58 @@ const NewInvoice = () => {
                   </button>
                   
                   {isClientDropdownOpen && (
-                    <div className="absolute z-10 mt-1 w-full max-h-60 overflow-auto bg-white dark:bg-gray-800 border border-border rounded-md shadow-lg">
-                      <ul className="py-1" role="listbox">
-                        {clients.map(client => (
-                          <li
-                            key={client.id}
-                            role="option"
-                            onClick={() => selectClient(
-                              client.id, 
-                              client.name + (client.company ? ` (${client.company})` : '')
-                            )}
-                            className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            {client.name} {client.company && `(${client.company})`}
-                          </li>
-                        ))}
-                        
-                        {/* Add new client option */}
-                        <li className="border-t border-border">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIsClientDropdownOpen(false);
-                              setIsAddClientModalOpen(true);
-                            }}
-                            className="w-full px-4 py-2 text-left flex items-center gap-2 text-apple-blue hover:bg-gray-100 dark:hover:bg-gray-700"
-                          >
-                            <UserPlus size={16} />
-                            <span>Add New Client</span>
-                          </button>
-                        </li>
-                      </ul>
+                    <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-border rounded-md shadow-lg">
+                      <div className="sticky top-0 p-2 border-b border-border bg-white dark:bg-gray-800">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                          <input
+                            type="text"
+                            placeholder="Search clients..."
+                            value={clientSearchQuery}
+                            onChange={(e) => setClientSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-2 py-2 input-field text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-auto">
+                        {filteredClients.length > 0 ? (
+                          <ul className="py-1" role="listbox">
+                            {filteredClients.map(client => (
+                              <li
+                                key={client.id}
+                                role="option"
+                                onClick={() => selectClient(
+                                  client.id, 
+                                  client.name + (client.company ? ` (${client.company})` : '')
+                                )}
+                                className="px-4 py-2 text-foreground hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                              >
+                                <div className="font-medium">{client.name}</div>
+                                {client.company && (
+                                  <div className="text-sm text-muted-foreground">{client.company}</div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-muted-foreground">
+                            No clients found
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-t border-border">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsClientDropdownOpen(false);
+                            setIsAddClientModalOpen(true);
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-2 text-apple-blue hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <UserPlus size={16} />
+                          <span>Add New Client</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -601,7 +608,6 @@ const NewInvoice = () => {
         </form>
       </div>
       
-      {/* Client Modal */}
       <AddClientModal 
         isOpen={isAddClientModalOpen} 
         onClose={() => setIsAddClientModalOpen(false)}
