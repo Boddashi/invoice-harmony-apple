@@ -330,13 +330,15 @@ const NewInvoice = () => {
   const handleSaveAsDraft = (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('draft');
-    document.getElementById('invoice-form')?.requestSubmit();
+    const form = document.getElementById('invoice-form') as HTMLFormElement;
+    if (form) form.submit();
   };
 
   const handleCreateAndSend = (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('pending');
-    document.getElementById('invoice-form')?.requestSubmit();
+    const form = document.getElementById('invoice-form') as HTMLFormElement;
+    if (form) form.submit();
   };
 
   return (
