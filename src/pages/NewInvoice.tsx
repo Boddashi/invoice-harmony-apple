@@ -28,7 +28,6 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Textarea } from '@/components/ui/textarea';
 import AddClientModal from '@/components/clients/AddClientModal';
 
-// Define interfaces
 interface Client {
   id: string;
   name: string;
@@ -208,7 +207,6 @@ const NewInvoice = () => {
     const updatedItems = [...invoiceData.items];
     updatedItems[index][field] = value;
     
-    // Calculate total for the item
     if (field === 'quantity' || field === 'price') {
       const quantity = field === 'quantity' ? value : updatedItems[index].quantity;
       const price = field === 'price' ? value : updatedItems[index].price;
@@ -606,16 +604,15 @@ const NewInvoice = () => {
       
       {showAddClientModal && (
         <AddClientModal
-          open={showAddClientModal}
+          isOpen={showAddClientModal}
           onClose={() => setShowAddClientModal(false)}
-          onClientAdded={handleAddNewClient}
+          onAddClient={handleAddNewClient}
         />
       )}
     </MainLayout>
   );
 };
 
-// Helper function for formatting currency
 const currencyFormat = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
