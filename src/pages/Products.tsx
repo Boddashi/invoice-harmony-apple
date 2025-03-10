@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, BarChart, Plus } from 'lucide-react';
+import { Package, BarChart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Card, 
@@ -47,24 +47,24 @@ interface ChartData {
   count: number;
 }
 
-const Products = () => {
-  const [activeTab, setActiveTab] = useState<string>('products');
+const Items = () => {
+  const [activeTab, setActiveTab] = useState<string>('items');
   const [loading, setLoading] = useState<boolean>(true);
   const [productUsage, setProductUsage] = useState<ChartData[]>([]);
   const [productItems, setProductItems] = useState<InvoiceItem[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchProductData();
+    fetchItemsData();
   }, []);
 
-  const fetchProductData = async () => {
+  const fetchItemsData = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
       
-      // Query invoice_items table to get product usage
+      // Query invoice_items table to get items usage
       const { data, error } = await supabase
         .from('invoice_items')
         .select('id, description, quantity, unit_price, amount')
@@ -100,8 +100,8 @@ const Products = () => {
       
       setProductUsage(chartData);
     } catch (error: any) {
-      toast.error('Error loading product data: ' + error.message);
-      console.error('Error fetching product data:', error);
+      toast.error('Error loading items data: ' + error.message);
+      console.error('Error fetching items data:', error);
     } finally {
       setLoading(false);
     }
@@ -120,22 +120,22 @@ const Products = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Package size={24} className="text-apple-blue" />
-            <h1 className="text-2xl font-semibold">Products</h1>
+            <h1 className="text-2xl font-semibold">Items</h1>
           </div>
         </div>
         
-        <Tabs defaultValue="products" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="items" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="items">Items</TabsTrigger>
             <TabsTrigger value="chart">Usage Chart</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="products">
+          <TabsContent value="items">
             <Card>
               <CardHeader>
-                <CardTitle>Product Inventory</CardTitle>
+                <CardTitle>Item Inventory</CardTitle>
                 <CardDescription>
-                  View and manage your products
+                  View and manage your items
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -155,12 +155,12 @@ const Products = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {productItems.map((product) => (
-                          <TableRow key={product.id}>
-                            <TableCell className="font-medium">{product.description}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(product.unit_price)}</TableCell>
-                            <TableCell className="text-right">{product.quantity}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(product.amount)}</TableCell>
+                        {productItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-medium">{item.description}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
+                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(item.amount)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -169,9 +169,9 @@ const Products = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[300px] text-center">
                     <Package className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No products available</h3>
+                    <h3 className="text-lg font-medium">No items available</h3>
                     <p className="text-muted-foreground mt-2">
-                      Products will appear here once you've created invoices with products.
+                      Items will appear here once you've created invoices with items.
                     </p>
                   </div>
                 )}
@@ -182,9 +182,9 @@ const Products = () => {
           <TabsContent value="chart">
             <Card>
               <CardHeader>
-                <CardTitle>Product Usage</CardTitle>
+                <CardTitle>Item Usage</CardTitle>
                 <CardDescription>
-                  Visualize how your products are being used across invoices
+                  Visualize how your items are being used across invoices
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -213,9 +213,9 @@ const Products = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[300px] text-center">
                     <BarChart className="h-12 w-12 text-muted-foreground mb-4" />
-                    <h3 className="text-lg font-medium">No product data available</h3>
+                    <h3 className="text-lg font-medium">No item data available</h3>
                     <p className="text-muted-foreground mt-2">
-                      Product usage data will appear here once you've created invoices with products.
+                      Item usage data will appear here once you've created invoices with items.
                     </p>
                   </div>
                 )}
@@ -228,4 +228,4 @@ const Products = () => {
   );
 };
 
-export default Products;
+export default Items;

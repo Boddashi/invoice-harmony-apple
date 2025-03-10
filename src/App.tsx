@@ -7,7 +7,7 @@ import Settings from './pages/Settings';
 import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
 import Login from './pages/Login';
-import Products from './pages/Products';
+import Items from './pages/Products';
 import { ThemeProvider } from './components/theme/ThemeProvider';
 import { Toaster } from './components/ui/sonner';
 import { CurrencyProvider } from './contexts/CurrencyContext';
@@ -27,7 +27,7 @@ function App() {
                 <Route path="/clients" element={<Clients />} />
                 <Route path="/invoices" element={<Invoices />} />
                 <Route path="/invoices/new" element={<NewInvoice />} />
-                <Route path="/products" element={<Products />} />
+                <Route path="/products" element={<Items />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/404" element={<NotFound />} />
                 <Route path="*" element={<Navigate to="/404" replace />} />
