@@ -5,7 +5,7 @@ import CustomCard from '@/components/ui/CustomCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { Plus, Save, X } from 'lucide-react';
+import { Plus, Save, X, Pencil, Trash2 } from 'lucide-react';
 import AddItemModal from '@/components/items/AddItemModal';
 import { toast } from 'sonner';
 
@@ -28,6 +28,7 @@ const Items = () => {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<InvoiceItem>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchItems = async () => {
     if (!user) return;
@@ -153,6 +154,34 @@ const Items = () => {
     setEditValues({});
   };
 
+  // Delete an item
+  const deleteItem = async (id: string) => {
+    if (!id) return;
+    
+    try {
+      setIsDeleting(true);
+      
+      // Delete the item from the database
+      const { error } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setItems(items.filter(item => item.id !== id));
+      
+      toast.success('Item deleted successfully');
+      
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      toast.error(error.message || 'Failed to delete item');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -268,13 +297,21 @@ const Items = () => {
                             </button>
                           </div>
                         ) : (
-                          <div className="flex justify-center">
+                          <div className="flex justify-center gap-3">
                             <button 
                               onClick={() => startEditing(item)}
                               className="p-1 text-muted-foreground hover:text-apple-blue transition-colors"
-                              title="Edit"
+                              title="Edit item"
                             >
-                              Edit
+                              <Pencil size={18} />
+                            </button>
+                            <button 
+                              onClick={() => deleteItem(item.id)}
+                              disabled={isDeleting}
+                              className="p-1 text-muted-foreground hover:text-red-600 transition-colors"
+                              title="Delete item"
+                            >
+                              <Trash2 size={18} />
                             </button>
                           </div>
                         )}
