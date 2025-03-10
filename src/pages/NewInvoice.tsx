@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
@@ -33,6 +34,8 @@ interface Item {
 
 const NewInvoice = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -112,6 +115,88 @@ const NewInvoice = () => {
     
     fetchItems();
   }, [toast]);
+
+  // Fetch invoice data when in edit mode
+  useEffect(() => {
+    const fetchInvoiceData = async () => {
+      if (!isEditMode || !id || !user) return;
+      
+      try {
+        setIsLoading(true);
+        
+        // Fetch the invoice data
+        const { data: invoiceData, error: invoiceError } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+        
+        if (invoiceError) throw invoiceError;
+        
+        if (!invoiceData) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Invoice not found"
+          });
+          navigate('/invoices');
+          return;
+        }
+        
+        // Fetch invoice items
+        const { data: invoiceItems, error: itemsError } = await supabase
+          .from('invoice_items')
+          .select(`
+            *,
+            items:item_id(id, title, price, vat)
+          `)
+          .eq('invoice_id', id);
+        
+        if (itemsError) throw itemsError;
+        
+        // Set invoice data
+        setInvoiceNumber(invoiceData.invoice_number);
+        setSelectedClientId(invoiceData.client_id);
+        setIssueDate(invoiceData.issue_date);
+        setDueDate(invoiceData.due_date);
+        setStatus(invoiceData.status as 'draft' | 'pending');
+        setNotes(invoiceData.notes || '');
+        setSubTotal(invoiceData.amount);
+        setTaxRate(invoiceData.tax_rate || 0);
+        setTaxAmount(invoiceData.tax_amount || 0);
+        setTotal(invoiceData.total_amount);
+        
+        // Set invoice items
+        if (invoiceItems && invoiceItems.length > 0) {
+          const formattedItems = invoiceItems.map(item => {
+            const itemData = item.items as unknown as Item;
+            return {
+              id: crypto.randomUUID(),
+              description: itemData.id,
+              quantity: item.quantity,
+              unit_price: item.total_amount / item.quantity,
+              amount: item.total_amount,
+              vat_rate: itemData.vat
+            };
+          });
+          
+          setItems(formattedItems);
+        }
+      } catch (error: any) {
+        console.error('Error fetching invoice data:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch invoice data."
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchInvoiceData();
+  }, [id, isEditMode, user, navigate, toast]);
   
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
@@ -156,16 +241,19 @@ const NewInvoice = () => {
       return `${prefix}-${timestamp}`;
     };
     
-    setInvoiceNumber(generateInvoiceNumber());
-  }, []);
+    // Only generate a new invoice number if not in edit mode
+    if (!isEditMode && !invoiceNumber) {
+      setInvoiceNumber(generateInvoiceNumber());
+    }
+  }, [isEditMode, invoiceNumber]);
   
   useEffect(() => {
-    if (issueDate) {
+    if (issueDate && !dueDate) {
       const date = new Date(issueDate);
       date.setDate(date.getDate() + 30);
       setDueDate(date.toISOString().split('T')[0]);
     }
-  }, [issueDate]);
+  }, [issueDate, dueDate]);
   
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -271,56 +359,111 @@ const NewInvoice = () => {
     try {
       setIsSubmitting(true);
       
-      const { data: invoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert({
-          user_id: user.id,
-          client_id: selectedClientId,
-          invoice_number: invoiceNumber,
-          issue_date: issueDate,
-          due_date: dueDate,
-          status: status,
-          amount: subTotal,
-          tax_rate: taxRate,
-          tax_amount: taxAmount,
-          total_amount: total,
-          notes: notes
-        })
-        .select()
-        .single();
-      
-      if (invoiceError) {
-        throw invoiceError;
+      if (isEditMode) {
+        // Update existing invoice
+        const { error: invoiceError } = await supabase
+          .from('invoices')
+          .update({
+            client_id: selectedClientId,
+            invoice_number: invoiceNumber,
+            issue_date: issueDate,
+            due_date: dueDate,
+            status: status,
+            amount: subTotal,
+            tax_rate: taxRate,
+            tax_amount: taxAmount,
+            total_amount: total,
+            notes: notes
+          })
+          .eq('id', id);
+        
+        if (invoiceError) {
+          throw invoiceError;
+        }
+        
+        // Delete existing invoice items
+        const { error: deleteError } = await supabase
+          .from('invoice_items')
+          .delete()
+          .eq('invoice_id', id);
+        
+        if (deleteError) {
+          throw deleteError;
+        }
+        
+        // Add new invoice items
+        const invoiceItems = items.map(item => ({
+          invoice_id: id,
+          item_id: item.description,
+          quantity: item.quantity,
+          total_amount: item.amount
+        }));
+        
+        const { error: invoiceItemsError } = await supabase
+          .from('invoice_items')
+          .insert(invoiceItems);
+        
+        if (invoiceItemsError) {
+          throw invoiceItemsError;
+        }
+        
+        toast({
+          title: "Success",
+          description: `Invoice ${status === 'draft' ? 'saved as draft' : 'updated'} successfully.`
+        });
+      } else {
+        // Create new invoice
+        const { data: invoice, error: invoiceError } = await supabase
+          .from('invoices')
+          .insert({
+            user_id: user.id,
+            client_id: selectedClientId,
+            invoice_number: invoiceNumber,
+            issue_date: issueDate,
+            due_date: dueDate,
+            status: status,
+            amount: subTotal,
+            tax_rate: taxRate,
+            tax_amount: taxAmount,
+            total_amount: total,
+            notes: notes
+          })
+          .select()
+          .single();
+        
+        if (invoiceError) {
+          throw invoiceError;
+        }
+        
+        const invoiceItems = items.map(item => ({
+          invoice_id: invoice.id,
+          item_id: item.description,
+          quantity: item.quantity,
+          total_amount: item.amount
+        }));
+        
+        const { error: invoiceItemsError } = await supabase
+          .from('invoice_items')
+          .insert(invoiceItems);
+        
+        if (invoiceItemsError) {
+          throw invoiceItemsError;
+        }
+        
+        toast({
+          title: "Success",
+          description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
+        });
       }
-      
-      const invoiceItems = items.map(item => ({
-        invoice_id: invoice.id,
-        item_id: item.description,
-        quantity: item.quantity,
-        total_amount: item.amount
-      }));
-      
-      const { error: invoiceItemsError } = await supabase
-        .from('invoice_items')
-        .insert(invoiceItems);
-      
-      if (invoiceItemsError) {
-        throw invoiceItemsError;
-      }
-      
-      toast({
-        title: "Success",
-        description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
-      });
       
       navigate('/invoices');
       
     } catch (error: any) {
-      console.error('Error creating invoice:', error);
+      console.error('Error saving invoice:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to create invoice."
+        description: error.message || "Failed to save invoice."
       });
     } finally {
       setIsSubmitting(false);
@@ -339,6 +482,17 @@ const NewInvoice = () => {
     handleSubmit(e as unknown as React.FormEvent);
   };
 
+  // Show loading state while fetching invoice data
+  if (isLoading && isEditMode) {
+    return (
+      <MainLayout>
+        <div className="max-w-5xl mx-auto p-8 text-center">
+          <p className="text-muted-foreground">Loading invoice data...</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
@@ -350,7 +504,9 @@ const NewInvoice = () => {
             >
               <ArrowLeft size={20} />
             </button>
-            <h1 className="text-xl font-semibold">Create New Invoice</h1>
+            <h1 className="text-xl font-semibold">
+              {isEditMode ? 'Edit Invoice' : 'Create New Invoice'}
+            </h1>
           </div>
           
           <div className="flex gap-3">
@@ -373,7 +529,9 @@ const NewInvoice = () => {
               className="apple-button flex items-center gap-2"
               disabled={isSubmitting}
             >
-              {isSubmitting && status === 'pending' ? 'Creating...' : 'Create & Send'}
+              {isSubmitting && status === 'pending' 
+                ? 'Saving...' 
+                : isEditMode ? 'Update & Send' : 'Create & Send'}
             </button>
           </div>
         </div>

@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,12 +32,20 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const handleEdit = () => {
-    // Fix: Use the correct route for editing an invoice
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
   const handleDelete = async () => {
     try {
+      // First, delete related invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', invoiceId);
+
+      if (itemsError) throw itemsError;
+
+      // Then delete the invoice
       const { error } = await supabase
         .from('invoices')
         .delete()
