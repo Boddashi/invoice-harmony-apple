@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
-import InvoiceList from '../components/invoices/InvoiceList';
+import InvoiceList from '../components/dashboard/InvoiceList';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +35,6 @@ const Invoices = () => {
       try {
         setIsLoading(true);
         
-        // Fetch invoices with client information
         const { data, error } = await supabase
           .from('invoices')
           .select(`
@@ -49,7 +47,6 @@ const Invoices = () => {
           throw error;
         }
         
-        // Transform data to match Invoice interface
         const transformedData = data.map((invoice: any) => ({
           id: invoice.id,
           invoice_number: invoice.invoice_number,
