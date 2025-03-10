@@ -30,12 +30,16 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
 
   const handleEdit = () => {
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
   const handleDelete = async () => {
+    if (isDeleting) return; // Prevent multiple clicks
+    
+    setIsDeleting(true);
     try {
       // First, delete related invoice items
       const { error: itemsError } = await supabase
@@ -74,7 +78,8 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: error.message || "Failed to delete invoice"
       });
     } finally {
-      setShowDeleteDialog(false);
+      setIsDeleting(false);
+      setShowDeleteDialog(false); // Always close the dialog, even on error
     }
   };
 
@@ -115,9 +120,13 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
