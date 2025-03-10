@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Download, Edit, Eye, MoreHorizontal, Plus, Search, Send } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Check, ChevronDown, Download, Edit, Eye, MoreHorizontal, Plus, Search, Send, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,10 @@ const Invoices = () => {
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Delete confirmation dialog state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   
   // Format amount with currency symbol
   const formatAmount = (amount: number) => {
@@ -134,6 +139,59 @@ const Invoices = () => {
       case 'paid': return 'Paid';
       case 'overdue': return 'Overdue';
     }
+  };
+
+  // Handle delete invoice
+  const handleDeleteInvoice = async () => {
+    if (!invoiceToDelete || !user) return;
+    
+    try {
+      // First delete all invoice items
+      const { error: itemsError } = await supabase
+        .from('invoice_items')
+        .delete()
+        .eq('invoice_id', invoiceToDelete.id);
+      
+      if (itemsError) {
+        throw itemsError;
+      }
+      
+      // Then delete the invoice
+      const { error: invoiceError } = await supabase
+        .from('invoices')
+        .delete()
+        .eq('id', invoiceToDelete.id)
+        .eq('user_id', user.id);
+      
+      if (invoiceError) {
+        throw invoiceError;
+      }
+      
+      // Update local state
+      setInvoices(invoices.filter(invoice => invoice.id !== invoiceToDelete.id));
+      
+      toast({
+        title: "Success",
+        description: `Invoice #${invoiceToDelete.invoice_number} has been deleted.`
+      });
+      
+    } catch (error: any) {
+      console.error('Error deleting invoice:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to delete invoice."
+      });
+    } finally {
+      setInvoiceToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
+
+  // Open delete confirmation dialog
+  const openDeleteDialog = (invoice: Invoice) => {
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
   };
 
   return (
@@ -292,8 +350,12 @@ const Invoices = () => {
                               <Edit size={18} />
                             </button>
                           )}
-                          <button className="p-2 rounded-full hover:bg-secondary transition-colors" title="More">
-                            <MoreHorizontal size={18} />
+                          <button 
+                            className="p-2 rounded-full hover:bg-secondary transition-colors text-apple-red" 
+                            title="Delete"
+                            onClick={() => openDeleteDialog(invoice)}
+                          >
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </td>
@@ -304,6 +366,28 @@ const Invoices = () => {
             </div>
           )}
         </CustomCard>
+        
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete invoice #{invoiceToDelete?.invoice_number} and all of its items. 
+                This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteInvoice}
+                className="bg-apple-red hover:bg-apple-red/90 text-white"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </MainLayout>
   );
