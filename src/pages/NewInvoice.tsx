@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash } from 'lucide-react';
+import { ArrowLeft, Plus, Trash, FileDown } from 'lucide-react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -10,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { generateInvoicePDF, InvoiceData } from '@/utils/pdfGenerator';
 
 interface Client {
   id: string;
@@ -45,9 +45,11 @@ const NewInvoice = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [selectedClient, setSelectedClient] = useState<{ name: string } | null>(null);
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<'draft' | 'pending'>('draft');
@@ -66,6 +68,7 @@ const NewInvoice = () => {
   const [total, setTotal] = useState(0);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [vats, setVats] = useState<Vat[]>([]);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -284,12 +287,13 @@ const NewInvoice = () => {
   }, [isEditMode, invoiceNumber, user]);
 
   useEffect(() => {
-    if (issueDate && !dueDate) {
-      const date = new Date(issueDate);
-      date.setDate(date.getDate() + 30);
-      setDueDate(date.toISOString().split('T')[0]);
+    if (selectedClientId) {
+      const client = clients.find(c => c.id === selectedClientId);
+      setSelectedClient(client || null);
+    } else {
+      setSelectedClient(null);
     }
-  }, [issueDate, dueDate]);
+  }, [selectedClientId, clients]);
 
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
@@ -416,6 +420,61 @@ const NewInvoice = () => {
     }));
   };
 
+  const generatePDF = async (invoiceId: string) => {
+    if (!selectedClient || !user) return null;
+    
+    setIsGeneratingPDF(true);
+    try {
+      const itemsWithTitles = items.map(item => {
+        const foundItem = availableItems.find(i => i.id === item.description);
+        return {
+          ...item,
+          description: foundItem?.title || item.description
+        };
+      });
+
+      const invoiceData: InvoiceData = {
+        id: invoiceId,
+        invoice_number: invoiceNumber,
+        issue_date: issueDate,
+        due_date: dueDate,
+        client_name: selectedClient.name,
+        user_email: user.email || '',
+        items: itemsWithTitles,
+        subTotal,
+        taxAmount,
+        total,
+        notes,
+        currencySymbol
+      };
+
+      const pdfBase64 = await generateInvoicePDF(invoiceData);
+      return pdfBase64;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate PDF."
+      });
+      return null;
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!pdfUrl) return;
+    
+    // Create a link and trigger download
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `invoice-${invoiceNumber}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -444,6 +503,8 @@ const NewInvoice = () => {
     }
     try {
       setIsSubmitting(true);
+      let invoiceId = id;
+
       if (isEditMode) {
         const {
           error: invoiceError
@@ -504,6 +565,7 @@ const NewInvoice = () => {
         if (invoiceError) {
           throw invoiceError;
         }
+        invoiceId = invoice.id;
         const invoiceItems = items.map(item => ({
           invoice_id: invoice.id,
           item_id: item.description,
@@ -521,6 +583,23 @@ const NewInvoice = () => {
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
         });
       }
+
+      // Generate PDF after successful save
+      if (invoiceId) {
+        const pdfBase64 = await generatePDF(invoiceId);
+        if (pdfBase64) {
+          setPdfUrl(pdfBase64);
+          setTimeout(() => {
+            const shouldDownload = window.confirm('Invoice saved successfully. Do you want to download the PDF?');
+            if (shouldDownload) {
+              handleDownloadPDF();
+            }
+            navigate('/invoices');
+          }, 100);
+          return; // Don't navigate yet, wait for user confirmation
+        }
+      }
+      
       navigate('/invoices');
     } catch (error: any) {
       console.error('Error saving invoice:', error);
@@ -591,11 +670,22 @@ const NewInvoice = () => {
           </div>
           
           <div className="flex gap-3">
-            <button type="button" onClick={handleSaveAsDraft} className={`px-4 py-2 rounded-lg font-medium transition-colors ${status === 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-50'}`} disabled={isSubmitting}>
+            {pdfUrl && (
+              <button 
+                type="button" 
+                onClick={handleDownloadPDF} 
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+              >
+                <FileDown size={18} />
+                <span>Download PDF</span>
+              </button>
+            )}
+            
+            <button type="button" onClick={handleSaveAsDraft} className={`px-4 py-2 rounded-lg font-medium transition-colors ${status === 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-50'}`} disabled={isSubmitting || isGeneratingPDF}>
               {isSubmitting && status === 'draft' ? 'Saving...' : 'Save as Draft'}
             </button>
             
-            <button type="button" onClick={handleCreateAndSend} className="apple-button flex items-center gap-2" disabled={isSubmitting}>
+            <button type="button" onClick={handleCreateAndSend} className="apple-button flex items-center gap-2" disabled={isSubmitting || isGeneratingPDF}>
               {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
             </button>
           </div>
