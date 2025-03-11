@@ -1,12 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { MoreHorizontal, Plus, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
+import ClientActions from './ClientActions';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -30,6 +33,7 @@ const ClientList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const { currencySymbol } = useCurrency();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -43,78 +47,78 @@ const ClientList = () => {
   };
   
   // Fetch clients and their invoice data from Supabase
-  useEffect(() => {
-    const fetchClientsWithInvoiceData = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        
-        // First, fetch all clients
-        const { data: clientsData, error: clientsError } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('user_id', user.id);
-        
-        if (clientsError) {
-          throw clientsError;
-        }
-        
-        // Then fetch invoice data for all clients
-        const { data: invoicesData, error: invoicesError } = await supabase
-          .from('invoices')
-          .select('client_id, total_amount')
-          .eq('user_id', user.id);
-        
-        if (invoicesError) {
-          throw invoicesError;
-        }
-        
-        // Calculate the invoice counts and total spent for each client
-        const clientInvoiceMap = new Map();
-        
-        invoicesData.forEach(invoice => {
-          const clientId = invoice.client_id;
-          if (!clientInvoiceMap.has(clientId)) {
-            clientInvoiceMap.set(clientId, {
-              count: 0,
-              total: 0
-            });
-          }
-          
-          const clientData = clientInvoiceMap.get(clientId);
-          clientData.count += 1;
-          // Fix: Parse the total_amount as a number before adding it
-          clientData.total += Number(invoice.total_amount);
-          clientInvoiceMap.set(clientId, clientData);
-        });
-        
-        // Transform the clients data to include invoice information
-        const transformedData = clientsData.map(client => {
-          const invoiceData = clientInvoiceMap.get(client.id) || { count: 0, total: 0 };
-          
-          return {
-            ...client,
-            vatNumber: client.vat_number,
-            invoices: invoiceData.count,
-            totalSpent: invoiceData.total
-          };
-        });
-        
-        setClients(transformedData);
-      } catch (error: any) {
-        console.error('Error fetching clients with invoice data:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Failed to fetch clients."
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchClients = async () => {
+    if (!user) return;
     
-    fetchClientsWithInvoiceData();
+    try {
+      setIsLoading(true);
+      
+      // First, fetch all clients
+      const { data: clientsData, error: clientsError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (clientsError) {
+        throw clientsError;
+      }
+      
+      // Then fetch invoice data for all clients
+      const { data: invoicesData, error: invoicesError } = await supabase
+        .from('invoices')
+        .select('client_id, total_amount')
+        .eq('user_id', user.id);
+      
+      if (invoicesError) {
+        throw invoicesError;
+      }
+      
+      // Calculate the invoice counts and total spent for each client
+      const clientInvoiceMap = new Map();
+      
+      invoicesData.forEach(invoice => {
+        const clientId = invoice.client_id;
+        if (!clientInvoiceMap.has(clientId)) {
+          clientInvoiceMap.set(clientId, {
+            count: 0,
+            total: 0
+          });
+        }
+        
+        const clientData = clientInvoiceMap.get(clientId);
+        clientData.count += 1;
+        // Fix: Parse the total_amount as a number before adding it
+        clientData.total += Number(invoice.total_amount);
+        clientInvoiceMap.set(clientId, clientData);
+      });
+      
+      // Transform the clients data to include invoice information
+      const transformedData = clientsData.map(client => {
+        const invoiceData = clientInvoiceMap.get(client.id) || { count: 0, total: 0 };
+        
+        return {
+          ...client,
+          vatNumber: client.vat_number,
+          invoices: invoiceData.count,
+          totalSpent: invoiceData.total
+        };
+      });
+      
+      setClients(transformedData);
+    } catch (error: any) {
+      console.error('Error fetching clients with invoice data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to fetch clients."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    fetchClients();
   }, [user, toast]);
 
   const handleAddClient = async (newClient: any) => {
@@ -178,17 +182,102 @@ const ClientList = () => {
     }
   };
 
+  const handleUpdateClient = async (updatedClient: any) => {
+    try {
+      if (!user) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "You must be logged in to update clients."
+        });
+        return;
+      }
+      
+      const clientData = {
+        user_id: user.id,
+        type: updatedClient.type,
+        name: updatedClient.name,
+        email: updatedClient.email,
+        phone: updatedClient.phone || null,
+        street: updatedClient.street || null,
+        number: updatedClient.number || null,
+        bus: updatedClient.bus || null,
+        postcode: updatedClient.postcode || null,
+        city: updatedClient.city || null,
+        country: updatedClient.country || null,
+        vat_number: updatedClient.vatNumber || null
+      };
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .update(clientData)
+        .eq('id', updatedClient.id)
+        .select()
+        .single();
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        // Find the updated client's invoice data
+        const existingClient = clients.find(c => c.id === updatedClient.id);
+        const clientWithInvoiceData = {
+          ...data,
+          vatNumber: data.vat_number,
+          invoices: existingClient?.invoices || 0,
+          totalSpent: existingClient?.totalSpent || 0
+        };
+        
+        // Update the clients list
+        setClients(clients.map(client => 
+          client.id === updatedClient.id ? clientWithInvoiceData : client
+        ));
+      }
+      
+      toast({
+        title: "Success",
+        description: "Client updated successfully."
+      });
+    } catch (error: any) {
+      console.error('Error updating client:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update client."
+      });
+    }
+  };
+
+  const handleEditClient = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    if (client) {
+      setClientToEdit(client);
+      setIsModalOpen(true);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setClientToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setClientToEdit(null);
+    setIsModalOpen(false);
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Your Clients</h2>
-        <button 
-          className="apple-button flex items-center gap-2"
-          onClick={() => setIsModalOpen(true)}
+        <Button 
+          className="gap-2"
+          onClick={handleOpenModal}
         >
           <Plus size={18} />
           <span>Add Client</span>
-        </button>
+        </Button>
       </div>
       
       <CustomCard padding="none">
@@ -256,9 +345,11 @@ const ClientList = () => {
                       {client.totalSpent !== undefined ? formatAmount(client.totalSpent) : '$0.00'}
                     </td>
                     <td className="p-4">
-                      <button className="p-2 rounded-full hover:bg-secondary transition-colors">
-                        <MoreHorizontal size={18} />
-                      </button>
+                      <ClientActions 
+                        clientId={client.id} 
+                        onEditClient={handleEditClient}
+                        onClientDeleted={fetchClients}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -270,8 +361,10 @@ const ClientList = () => {
 
       <AddClientModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onAddClient={handleAddClient} 
+        onClose={handleCloseModal} 
+        onAddClient={handleAddClient}
+        onUpdateClient={handleUpdateClient}
+        clientToEdit={clientToEdit}
       />
     </div>
   );

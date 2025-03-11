@@ -1,16 +1,41 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+
+interface Client {
+  id?: string;
+  type: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  street?: string | null;
+  number?: string | null;
+  bus?: string | null;
+  postcode?: string | null;
+  city?: string | null;
+  country?: string;
+  vatNumber?: string | null;
+  vat_number?: string | null;
+}
 
 interface AddClientModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddClient: (client: any) => void;
+  onUpdateClient?: (client: any) => void;
+  clientToEdit?: Client | null;
 }
 
-const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) => {
+const AddClientModal = ({ 
+  isOpen, 
+  onClose, 
+  onAddClient, 
+  onUpdateClient,
+  clientToEdit
+}: AddClientModalProps) => {
   const { toast } = useToast();
+  const isEditMode = !!clientToEdit;
   
   const [formData, setFormData] = useState({
     type: 'business',
@@ -25,6 +50,25 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
     country: 'Belgium',
     vatNumber: ''
   });
+
+  // Initialize form data when editing a client
+  useEffect(() => {
+    if (clientToEdit) {
+      setFormData({
+        type: clientToEdit.type || 'business',
+        name: clientToEdit.name || '',
+        email: clientToEdit.email || '',
+        phone: clientToEdit.phone || '',
+        street: clientToEdit.street || '',
+        number: clientToEdit.number || '',
+        bus: clientToEdit.bus || '',
+        postcode: clientToEdit.postcode || '',
+        city: clientToEdit.city || '',
+        country: clientToEdit.country || 'Belgium',
+        vatNumber: clientToEdit.vatNumber || clientToEdit.vat_number || ''
+      });
+    }
+  }, [clientToEdit]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -47,7 +91,15 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
       return;
     }
 
-    onAddClient(formData);
+    if (isEditMode && onUpdateClient && clientToEdit) {
+      onUpdateClient({
+        id: clientToEdit.id,
+        ...formData
+      });
+    } else {
+      onAddClient(formData);
+    }
+
     setFormData({
       type: 'business',
       name: '',
@@ -64,7 +116,7 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
     
     toast({
       title: "Success",
-      description: "Client added successfully.",
+      description: isEditMode ? "Client updated successfully." : "Client added successfully.",
     });
     
     onClose();
@@ -76,7 +128,7 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card border border-border/40 rounded-xl shadow-lg w-full max-w-md max-h-[90vh] flex flex-col animate-in fade-in slide-in-from-bottom-10">
         <div className="flex items-center justify-between p-4 border-b border-border/40">
-          <h2 className="text-lg font-semibold">Add New Client</h2>
+          <h2 className="text-lg font-semibold">{isEditMode ? 'Edit Client' : 'Add New Client'}</h2>
           <button 
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors rounded-full p-1"
@@ -264,10 +316,10 @@ const AddClientModal = ({ isOpen, onClose, onAddClient }: AddClientModalProps) =
             </button>
             <button 
               type="submit"
-              form="new-client-form"
+              onClick={handleSubmit}
               className="apple-button"
             >
-              Add Client
+              {isEditMode ? 'Update Client' : 'Add Client'}
             </button>
           </div>
         </div>
