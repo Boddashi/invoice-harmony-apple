@@ -287,6 +287,27 @@ const NewInvoice = () => {
   }, [isEditMode, invoiceNumber, user]);
 
   useEffect(() => {
+    const fetchVats = async () => {
+      try {
+        const {
+          data,
+          error
+        } = await supabase.from('vats').select('*');
+        if (error) throw error;
+        setVats(data || []);
+      } catch (error: any) {
+        console.error('Error fetching VAT rates:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to fetch VAT rates."
+        });
+      }
+    };
+    fetchVats();
+  }, [toast]);
+
+  useEffect(() => {
     if (selectedClientId) {
       const client = clients.find(c => c.id === selectedClientId);
       setSelectedClient(client || null);
@@ -306,6 +327,15 @@ const NewInvoice = () => {
     setTaxAmount(calculatedTaxAmount);
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, availableItems]);
+
+  useEffect(() => {
+    if (issueDate && !dueDate) {
+      const issueDateTime = new Date(issueDate);
+      const nextMonth = new Date(issueDateTime);
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      setDueDate(nextMonth.toISOString().split('T')[0]);
+    }
+  }, [issueDate, dueDate]);
 
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
@@ -477,6 +507,7 @@ const NewInvoice = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!user) {
       toast({
         variant: "destructive",
@@ -485,6 +516,7 @@ const NewInvoice = () => {
       });
       return;
     }
+    
     if (!selectedClientId) {
       toast({
         variant: "destructive",
@@ -493,6 +525,7 @@ const NewInvoice = () => {
       });
       return;
     }
+    
     if (items.some(item => !item.description || item.amount === 0)) {
       toast({
         variant: "destructive",
@@ -501,6 +534,16 @@ const NewInvoice = () => {
       });
       return;
     }
+    
+    if (!dueDate) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select a due date for this invoice."
+      });
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       let invoiceId = id;
@@ -511,7 +554,7 @@ const NewInvoice = () => {
         } = await supabase.from('invoices').update({
           client_id: selectedClientId,
           invoice_number: invoiceNumber,
-          issue_date: issueDate,
+          issue_date: issueDate || new Date().toISOString().split('T')[0],
           due_date: dueDate,
           status: status,
           amount: subTotal,
@@ -523,6 +566,7 @@ const NewInvoice = () => {
         if (invoiceError) {
           throw invoiceError;
         }
+        
         const {
           error: deleteError
         } = await supabase.from('invoice_items').delete().eq('invoice_id', id);
@@ -553,7 +597,7 @@ const NewInvoice = () => {
           user_id: user.id,
           client_id: selectedClientId,
           invoice_number: invoiceNumber,
-          issue_date: issueDate,
+          issue_date: issueDate || new Date().toISOString().split('T')[0],
           due_date: dueDate,
           status: status,
           amount: subTotal,
@@ -856,3 +900,4 @@ const NewInvoice = () => {
 };
 
 export default NewInvoice;
+
