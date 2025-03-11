@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Euro } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -167,7 +167,9 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="price">Price ({currencySymbol})</Label>
+            <Label htmlFor="price" className="flex items-center gap-1">
+              Price <Euro className="h-4 w-4" />
+            </Label>
             <Input
               id="price"
               type="number"

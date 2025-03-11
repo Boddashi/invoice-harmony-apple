@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, EuroIcon } from 'lucide-react';
+import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -103,7 +103,8 @@ const Items = () => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
-    }).format(amount);
+      currencyDisplay: 'code',
+    }).format(amount).replace('EUR', '').trim();
   };
 
   const handleSort = (field: 'title' | 'price' | 'vat') => {
@@ -242,7 +243,7 @@ const Items = () => {
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <EuroIcon className="h-4 w-4 text-muted-foreground" />
+                          <Euro className="h-4 w-4 text-muted-foreground" />
                           <span>{formatCurrency(item.price)}</span>
                         </div>
                       </TableCell>
