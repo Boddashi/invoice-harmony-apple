@@ -84,7 +84,8 @@ const ClientList = () => {
           
           const clientData = clientInvoiceMap.get(clientId);
           clientData.count += 1;
-          clientData.total += parseFloat(invoice.total_amount);
+          // Fix: Parse the total_amount as a number before adding it
+          clientData.total += Number(invoice.total_amount);
           clientInvoiceMap.set(clientId, clientData);
         });
         
@@ -277,4 +278,3 @@ const ClientList = () => {
 };
 
 export default ClientList;
-
