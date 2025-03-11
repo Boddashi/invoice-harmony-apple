@@ -162,6 +162,36 @@
   .neon-glow {
     @apply animate-glow;
   }
+
+  /* Custom scrollbar styles */
+  /* For Webkit browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-background/50;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+  
+  /* For Firefox */
+  * {
+    scrollbar-color: hsl(var(--muted)) transparent;
+    scrollbar-width: thin;
+  }
+  
+  /* Dark mode mobile bottom navbar fix */
+  .dark .fixed.bottom-0.left-0.right-0.h-16 {
+    @apply bg-sidebar/90 backdrop-blur-apple border-sidebar-border;
+  }
 }
 
 /* Transition Group Animations */
