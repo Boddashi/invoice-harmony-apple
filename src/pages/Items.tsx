@@ -136,11 +136,11 @@ const Items = () => {
 
   const getVatBadgeColor = (vat: string) => {
     switch(vat) {
-      case '0%': return 'bg-gray-500';
-      case '6%': return 'bg-green-500';
-      case '12%': return 'bg-blue-500';
-      case '21%': return 'bg-purple-500';
-      default: return 'bg-gray-500';
+      case '0%': return 'text-gray-500';
+      case '6%': return 'text-green-500';
+      case '12%': return 'text-blue-500';
+      case '21%': return 'text-purple-500';
+      default: return 'text-gray-500';
     }
   };
 
@@ -250,7 +250,7 @@ const Items = () => {
                       <TableCell>
                         <Badge 
                           className={getVatBadgeColor(item.vat)}
-                          variant="secondary"
+                          variant="ghost"
                         >
                           {item.vat}
                         </Badge>
