@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, Download, Eye } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Eye, Send } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +44,13 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     toast({
       title: "Info",
       description: "Download feature is not implemented yet."
+    });
+  };
+
+  const handleSend = () => {
+    toast({
+      title: "Info",
+      description: "Send feature is not implemented yet."
     });
   };
 
@@ -142,6 +149,10 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleSend}>
+              <Send className="mr-2 h-4 w-4" />
+              Send
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleEdit}>
               <Pencil className="mr-2 h-4 w-4" />
               Edit
