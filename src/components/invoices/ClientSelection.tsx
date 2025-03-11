@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 interface Client {
   id: string;
@@ -58,13 +59,16 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
                   {client.name}
                 </SelectItem>
               ))}
-              <SelectItem 
-                value="add-new" 
-                className="text-apple-blue font-medium cursor-pointer hover:bg-accent flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-1" /> Add New Client
-              </SelectItem>
             </SelectGroup>
+            <div className="px-2 py-1.5">
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start text-apple-blue hover:text-apple-blue hover:bg-accent/50"
+                onClick={() => setIsAddClientModalOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add New Client
+              </Button>
+            </div>
           </SelectContent>
         </Select>
       </div>
