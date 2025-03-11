@@ -680,7 +680,7 @@ const NewInvoice = () => {
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground pl-4">VAT {group.rate} ({currencySymbol}{group.vat.toFixed(2)})</span>
+                      <span className="text-muted-foreground pl-4">VAT {group.rate}</span>
                       <span className="font-medium">{currencySymbol}{group.vat.toFixed(2)}</span>
                     </div>
                   </div>
