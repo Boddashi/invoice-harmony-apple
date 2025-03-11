@@ -604,6 +604,23 @@ const NewInvoice = () => {
         if (invoiceItemsError) {
           throw invoiceItemsError;
         }
+
+        // Generate PDF for edited invoice when status is changed to pending
+        if (status === 'pending') {
+          const pdfBase64 = await generatePDF(id);
+          if (pdfBase64) {
+            setPdfUrl(pdfBase64);
+            setTimeout(() => {
+              const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
+              if (shouldDownload) {
+                handleDownloadPDF();
+              }
+              navigate('/invoices');
+            }, 100);
+            return;
+          }
+        }
+
         toast({
           title: "Success",
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'updated'} successfully.`
@@ -645,22 +662,6 @@ const NewInvoice = () => {
           title: "Success",
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
         });
-      }
-
-      // Only generate PDF if status is 'pending'
-      if (invoiceId && status === 'pending') {
-        const pdfBase64 = await generatePDF(invoiceId);
-        if (pdfBase64) {
-          setPdfUrl(pdfBase64);
-          setTimeout(() => {
-            const shouldDownload = window.confirm('Invoice saved successfully. Do you want to download the PDF?');
-            if (shouldDownload) {
-              handleDownloadPDF();
-            }
-            navigate('/invoices');
-          }, 100);
-          return; // Don't navigate yet, wait for user confirmation
-        }
       }
       
       navigate('/invoices');
