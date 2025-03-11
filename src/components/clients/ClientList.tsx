@@ -42,33 +42,67 @@ const ClientList = () => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
   
-  // Fetch clients from Supabase
+  // Fetch clients and their invoice data from Supabase
   useEffect(() => {
-    const fetchClients = async () => {
+    const fetchClientsWithInvoiceData = async () => {
       if (!user) return;
       
       try {
         setIsLoading(true);
-        const { data, error } = await supabase
+        
+        // First, fetch all clients
+        const { data: clientsData, error: clientsError } = await supabase
           .from('clients')
           .select('*')
           .eq('user_id', user.id);
         
-        if (error) {
-          throw error;
+        if (clientsError) {
+          throw clientsError;
         }
         
-        // Transform data to include invoices and totalSpent fields
-        const transformedData = data.map(client => ({
-          ...client,
-          vatNumber: client.vat_number,
-          invoices: 0, // Will be populated from invoices table in the future
-          totalSpent: 0 // Will be populated from invoices table in the future
-        }));
+        // Then fetch invoice data for all clients
+        const { data: invoicesData, error: invoicesError } = await supabase
+          .from('invoices')
+          .select('client_id, total_amount')
+          .eq('user_id', user.id);
+        
+        if (invoicesError) {
+          throw invoicesError;
+        }
+        
+        // Calculate the invoice counts and total spent for each client
+        const clientInvoiceMap = new Map();
+        
+        invoicesData.forEach(invoice => {
+          const clientId = invoice.client_id;
+          if (!clientInvoiceMap.has(clientId)) {
+            clientInvoiceMap.set(clientId, {
+              count: 0,
+              total: 0
+            });
+          }
+          
+          const clientData = clientInvoiceMap.get(clientId);
+          clientData.count += 1;
+          clientData.total += parseFloat(invoice.total_amount);
+          clientInvoiceMap.set(clientId, clientData);
+        });
+        
+        // Transform the clients data to include invoice information
+        const transformedData = clientsData.map(client => {
+          const invoiceData = clientInvoiceMap.get(client.id) || { count: 0, total: 0 };
+          
+          return {
+            ...client,
+            vatNumber: client.vat_number,
+            invoices: invoiceData.count,
+            totalSpent: invoiceData.total
+          };
+        });
         
         setClients(transformedData);
       } catch (error: any) {
-        console.error('Error fetching clients:', error);
+        console.error('Error fetching clients with invoice data:', error);
         toast({
           variant: "destructive",
           title: "Error",
@@ -79,7 +113,7 @@ const ClientList = () => {
       }
     };
     
-    fetchClients();
+    fetchClientsWithInvoiceData();
   }, [user, toast]);
 
   const handleAddClient = async (newClient: any) => {
@@ -243,3 +277,4 @@ const ClientList = () => {
 };
 
 export default ClientList;
+
