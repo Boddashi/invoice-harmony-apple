@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro } from 'lucide-react';
@@ -238,7 +239,7 @@ const Items = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="ghost">
+                        <Badge variant="ghost" className="text-base font-normal px-0">
                           {item.vat}
                         </Badge>
                       </TableCell>
