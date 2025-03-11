@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Eye } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,13 +35,23 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
+  const handleView = () => {
+    navigate(`/invoices/${invoiceId}`);
+  };
+
+  const handleDownload = () => {
+    toast({
+      title: "Info",
+      description: "Download feature is not implemented yet."
+    });
+  };
+
   const handleDelete = async () => {
     if (isDeleting) return;
 
     setIsDeleting(true);
     
     try {
-      // First, delete related invoice items
       const { error: itemsError } = await supabase
         .from('invoice_items')
         .delete()
@@ -53,7 +62,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         throw itemsError;
       }
 
-      // Then delete the invoice
       const { error } = await supabase
         .from('invoices')
         .delete()
@@ -69,8 +77,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: "Invoice deleted successfully"
       });
       
-      // Use replace to prevent back navigation to a deleted invoice
-      // Important: navigate AFTER dialog is closed and state is reset
       setTimeout(() => {
         navigate('/invoices', { replace: true });
       }, 100);
@@ -83,14 +89,13 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: error.message || "Failed to delete invoice"
       });
     } finally {
-      // Always reset state and close dialog, regardless of success or failure
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
   };
 
   const handleOpenDeleteDialog = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
     setShowDeleteDialog(true);
   };
 
@@ -100,9 +105,22 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
 
   if (status !== 'draft') {
     return (
-      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-        <MoreHorizontal size={16} />
-      </button>
+      <div className="flex items-center gap-1">
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="View"
+          onClick={handleView}
+        >
+          <Eye size={16} />
+        </button>
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="Download"
+          onClick={handleDownload}
+        >
+          <Download size={16} />
+        </button>
+      </div>
     );
   }
 
