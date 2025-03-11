@@ -584,8 +584,8 @@ const NewInvoice = () => {
         });
       }
 
-      // Generate PDF after successful save
-      if (invoiceId) {
+      // Only generate PDF if status is 'pending'
+      if (invoiceId && status === 'pending') {
         const pdfBase64 = await generatePDF(invoiceId);
         if (pdfBase64) {
           setPdfUrl(pdfBase64);

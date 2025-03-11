@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Eye, Send } from 'lucide-react';
@@ -40,11 +39,45 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     navigate(`/invoices/${invoiceId}`);
   };
 
-  const handleDownload = () => {
-    toast({
-      title: "Info",
-      description: "Download feature is not implemented yet."
-    });
+  const handleDownload = async () => {
+    try {
+      // Only pending/paid invoices should have PDFs
+      if (status === 'draft') {
+        toast({
+          title: "Info",
+          description: "Draft invoices don't have PDF versions. Send the invoice first to generate a PDF."
+        });
+        return;
+      }
+      
+      // Get the public URL for the PDF
+      const { data } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(`${invoiceId}/invoice.pdf`);
+      
+      if (data && data.publicUrl) {
+        // Create a link and trigger download
+        const link = document.createElement('a');
+        link.href = data.publicUrl;
+        link.download = `invoice-${invoiceId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "PDF not found. Please try regenerating the invoice."
+        });
+      }
+    } catch (error: any) {
+      console.error('Error downloading invoice PDF:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to download PDF."
+      });
+    }
   };
 
   const handleSend = () => {
