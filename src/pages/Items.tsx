@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, DollarSign } from 'lucide-react';
@@ -15,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import AddItemModal from '@/components/items/AddItemModal';
+import EditItemModal from '@/components/items/EditItemModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -254,9 +254,10 @@ const Items = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="outline" size="icon">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
+                          <EditItemModal 
+                            item={item}
+                            onItemUpdated={fetchItems}
+                          />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="destructive" size="icon">
