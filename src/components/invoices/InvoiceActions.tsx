@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Eye, Send } from 'lucide-react';
@@ -175,31 +176,41 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         >
           <Eye size={16} />
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-              <MoreHorizontal size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem onClick={handleSend}>
-              <Send className="mr-2 h-4 w-4" />
-              Send
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={handleOpenDeleteDialog} 
-              className="text-destructive"
-              disabled={isDeleting}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {status === 'draft' ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
+                <MoreHorizontal size={16} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={handleSend}>
+                <Send className="mr-2 h-4 w-4" />
+                Send
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={handleOpenDeleteDialog} 
+                className="text-destructive"
+                disabled={isDeleting}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <button 
+            className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+            title="Download"
+            onClick={handleDownload}
+          >
+            <Download size={16} />
+          </button>
+        )}
       </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>

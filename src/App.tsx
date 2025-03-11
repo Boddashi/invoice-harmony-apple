@@ -1,45 +1,44 @@
-
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Dashboard from './pages/Index';
-import NotFound from './pages/NotFound';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { AuthProvider } from './contexts/AuthContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
+import Index from './pages/Index';
+import Login from './pages/Login';
 import Clients from './pages/Clients';
-import Settings from './pages/Settings';
+import Items from './pages/Items';
 import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
-import Items from './pages/Items';
-import Login from './pages/Login';
-import { ThemeProvider } from './components/theme/ThemeProvider';
-import { Toaster } from './components/ui/sonner';
-import { CurrencyProvider } from './contexts/CurrencyContext';
-import { AuthProvider } from './contexts/AuthContext';
-import './App.css';
+import Settings from './pages/Settings';
+import NotFound from './pages/NotFound';
+import { Toaster } from "@/components/ui/toaster"
+import ViewInvoice from './pages/ViewInvoice';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light">
-      <CurrencyProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <div className="w-full">
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/invoices" element={<Invoices />} />
-                <Route path="/invoices/new" element={<NewInvoice />} />
-                <Route path="/invoices/:id" element={<NewInvoice />} />
-                <Route path="/invoices/edit/:id" element={<NewInvoice />} />
-                <Route path="/items" element={<Items />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<Navigate to="/404" replace />} />
-              </Routes>
-            </div>
-          </AuthProvider>
-        </BrowserRouter>
-        <Toaster />
-      </CurrencyProvider>
-    </ThemeProvider>
+    <Router>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CurrencyProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/items" element={<Items />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/invoices/new" element={<NewInvoice />} />
+              <Route path="/invoices/edit/:id" element={<NewInvoice />} />
+              <Route path="/invoices/:id" element={<ViewInvoice />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+          </CurrencyProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </Router>
   );
 }
 
