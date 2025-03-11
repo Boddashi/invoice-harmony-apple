@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
@@ -9,6 +8,15 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings, defaultCompanySettings } from '@/models/CompanySettings';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const Settings = () => {
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -36,7 +44,6 @@ const Settings = () => {
     { code: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
   ];
 
-  // Load company settings from database
   useEffect(() => {
     if (!user) return;
     
@@ -56,11 +63,13 @@ const Settings = () => {
         
         if (data) {
           setCompanySettings({
+            ...defaultCompanySettings,
             ...data,
-            postal_code: data.postal_code || ''
+            postal_code: data.postal_code || '',
+            invoice_prefix: data.invoice_prefix || '',
+            invoice_number_type: data.invoice_number_type || 'date'
           });
           
-          // Update currency context if default_currency is set
           if (data.default_currency) {
             setCurrency(data.default_currency);
           }
@@ -96,6 +105,13 @@ const Settings = () => {
     }));
   };
 
+  const handleSelectChange = (value: string, name: string) => {
+    setCompanySettings(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -111,14 +127,12 @@ const Settings = () => {
     try {
       setSaving(true);
       
-      // Prepare the data
       const settingsData = {
         ...companySettings,
         user_id: user.id,
         default_currency: currency
       };
       
-      // Check if settings already exist for this user
       const { data: existingSettings, error: checkError } = await supabase
         .from('company_settings')
         .select('id')
@@ -133,7 +147,6 @@ const Settings = () => {
       let saveError;
       
       if (existingSettings) {
-        // Update existing settings
         const { error } = await supabase
           .from('company_settings')
           .update(settingsData)
@@ -141,7 +154,6 @@ const Settings = () => {
         
         saveError = error;
       } else {
-        // Insert new settings
         const { error } = await supabase
           .from('company_settings')
           .insert(settingsData);
@@ -176,7 +188,6 @@ const Settings = () => {
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* Sidebar */}
           <div className="md:col-span-1">
             <CustomCard className="overflow-hidden">
               <div className="divide-y divide-border">
@@ -202,7 +213,6 @@ const Settings = () => {
             </CustomCard>
           </div>
           
-          {/* Content */}
           <div className="md:col-span-3 animate-fade-in">
             {activeTab === 'profile' && (
               <CustomCard>
@@ -262,7 +272,6 @@ const Settings = () => {
                 ) : (
                   <form onSubmit={handleSaveCompany}>
                     <div className="space-y-6">
-                      {/* Company Basic Info */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-foreground mb-1">Company Name</label>
@@ -343,7 +352,6 @@ const Settings = () => {
                         </div>
                       </div>
                       
-                      {/* Address */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Company Address</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -415,7 +423,6 @@ const Settings = () => {
                         </div>
                       </div>
                       
-                      {/* Bank Information */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Payment Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -465,7 +472,6 @@ const Settings = () => {
                         </div>
                       </div>
                       
-                      {/* Company Logo */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Company Logo</h3>
                         <div className="flex items-center gap-5">
@@ -502,8 +508,127 @@ const Settings = () => {
             
             {activeTab === 'billing' && (
               <CustomCard>
-                <h2 className="text-xl font-semibold mb-6">Billing & Subscription</h2>
-                <p className="text-muted-foreground">Manage your billing information and subscription plan.</p>
+                <h2 className="text-xl font-semibold mb-6">Billing Settings</h2>
+                <p className="text-muted-foreground mb-6">Configure your invoice settings and payment methods.</p>
+                
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveCompany}>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-base font-medium mb-4">Invoice Numbering</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div>
+                            <Label htmlFor="invoice_prefix">Invoice Prefix</Label>
+                            <div className="flex items-center mt-1">
+                              <Input
+                                id="invoice_prefix"
+                                name="invoice_prefix"
+                                placeholder="e.g. INV"
+                                value={companySettings.invoice_prefix}
+                                onChange={handleInputChange}
+                                className="input-field w-full"
+                              />
+                              <span className="mx-2 text-muted-foreground">-</span>
+                              <div className="bg-secondary text-muted-foreground px-3 py-2 rounded border border-input">
+                                {companySettings.invoice_number_type === 'date' ? 'YYYYMMDD' : '00001'}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Example: {companySettings.invoice_prefix || 'INV'}-{companySettings.invoice_number_type === 'date' ? '20240701' : '00001'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="invoice_number_type">Numbering Type</Label>
+                            <Select
+                              value={companySettings.invoice_number_type}
+                              onValueChange={(value) => handleSelectChange(value, 'invoice_number_type')}
+                            >
+                              <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Select numbering type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="date">Date-based (YYYYMMDD)</SelectItem>
+                                <SelectItem value="incremental">Incremental (00001, 00002...)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Choose how invoice numbers will be generated
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-base font-medium mb-4">Payment Information</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-foreground mb-1">Bank Name</label>
+                            <input 
+                              type="text" 
+                              name="bank_name"
+                              className="input-field w-full" 
+                              value={companySettings.bank_name} 
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-1">Account Number</label>
+                            <input 
+                              type="text" 
+                              name="account_number"
+                              className="input-field w-full" 
+                              value={companySettings.account_number} 
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-foreground mb-1">SWIFT / BIC</label>
+                            <input 
+                              type="text" 
+                              name="swift"
+                              className="input-field w-full" 
+                              value={companySettings.swift} 
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          
+                          <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-foreground mb-1">IBAN</label>
+                            <input 
+                              type="text" 
+                              name="iban"
+                              className="input-field w-full" 
+                              value={companySettings.iban} 
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                      <button 
+                        type="submit" 
+                        className="apple-button"
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : 'Save Billing Settings'}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </CustomCard>
             )}
             
