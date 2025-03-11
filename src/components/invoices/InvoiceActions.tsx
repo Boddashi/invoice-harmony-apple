@@ -127,27 +127,36 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-            <MoreHorizontal size={16} />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={handleEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem 
-            onClick={handleOpenDeleteDialog} 
-            className="text-destructive"
-            disabled={isDeleting}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="flex items-center gap-1">
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="View"
+          onClick={handleView}
+        >
+          <Eye size={16} />
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
+              <MoreHorizontal size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={handleOpenDeleteDialog} 
+              className="text-destructive"
+              disabled={isDeleting}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <AlertDialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>
         <AlertDialogContent>
