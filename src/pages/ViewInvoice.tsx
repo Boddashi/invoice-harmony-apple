@@ -117,7 +117,7 @@ const ViewInvoice = () => {
           const formattedItems = invoiceItems.map(item => {
             const itemData = item.items as unknown as Item;
             return {
-              id: item.id,
+              id: item.id || crypto.randomUUID(),
               description: itemData.id,
               quantity: item.quantity,
               unit_price: item.total_amount / item.quantity,
