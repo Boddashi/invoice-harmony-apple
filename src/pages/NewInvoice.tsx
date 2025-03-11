@@ -558,7 +558,7 @@ const NewInvoice = () => {
                 <div className="col-span-2">Quantity</div>
                 <div className="col-span-2">Unit Price</div>
                 <div className="col-span-1">VAT</div>
-                <div className="col-span-2">Amount</div>
+                <div className="col-span-1">Amount</div>
                 <div className="col-span-1"></div>
               </div>
               
