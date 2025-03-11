@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, DollarSign } from 'lucide-react';
+import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, EuroIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 import AddItemModal from '@/components/items/AddItemModal';
 import EditItemModal from '@/components/items/EditItemModal';
 import {
@@ -44,6 +45,7 @@ const Items = () => {
   const [sortField, setSortField] = useState<'title' | 'price' | 'vat'>('title');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
 
   useEffect(() => {
     if (user) {
@@ -98,9 +100,9 @@ const Items = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('de-DE', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'EUR',
     }).format(amount);
   };
 
@@ -240,7 +242,7 @@ const Items = () => {
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <EuroIcon className="h-4 w-4 text-muted-foreground" />
                           <span>{formatCurrency(item.price)}</span>
                         </div>
                       </TableCell>

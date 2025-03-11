@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Pencil, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrency } from '@/contexts/CurrencyContext';
 
 interface Item {
   id: string;
@@ -38,6 +38,7 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
   const [fetchingVatRates, setFetchingVatRates] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
   
   useEffect(() => {
     if (open) {
@@ -46,7 +47,6 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
   }, [open]);
 
   useEffect(() => {
-    // Update local state when item prop changes
     setTitle(item.title);
     setPrice(item.price.toString());
     setVat(item.vat);
@@ -72,7 +72,6 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
       } else {
         setFetchError('No VAT rates found in the database');
         
-        // Fallback to default VAT rates if none are found in the database
         const defaultVats: VatRate[] = [
           { title: '0%', amount: 0 },
           { title: '6%', amount: 6 },
@@ -87,7 +86,6 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
       toast.error('Failed to fetch VAT rates');
       setFetchError(`Exception: ${errorMessage}`);
       
-      // Fallback to default VAT rates on error
       const defaultVats: VatRate[] = [
         { title: '0%', amount: 0 },
         { title: '6%', amount: 6 },
@@ -166,7 +164,7 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="price">Price</Label>
+            <Label htmlFor="price">Price ({currencySymbol})</Label>
             <Input
               id="price"
               type="number"
