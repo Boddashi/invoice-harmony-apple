@@ -67,7 +67,7 @@ const Settings = () => {
             ...data,
             postal_code: data.postal_code || '',
             invoice_prefix: data.invoice_prefix || '',
-            invoice_number_type: data.invoice_number_type || 'date'
+            invoice_number_type: (data.invoice_number_type as 'date' | 'incremental') || 'date'
           });
           
           if (data.default_currency) {
@@ -106,10 +106,18 @@ const Settings = () => {
   };
 
   const handleSelectChange = (value: string, name: string) => {
-    setCompanySettings(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'invoice_number_type') {
+      const validValue = value === 'date' || value === 'incremental' ? value : 'date';
+      setCompanySettings(prev => ({
+        ...prev,
+        [name]: validValue
+      }));
+    } else {
+      setCompanySettings(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSaveCompany = async (e: React.FormEvent) => {

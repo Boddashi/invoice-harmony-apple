@@ -42,4 +42,3 @@ export const defaultCompanySettings: CompanySettings = {
   invoice_prefix: '',
   invoice_number_type: 'date'
 };
-
