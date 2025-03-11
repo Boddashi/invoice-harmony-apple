@@ -505,8 +505,27 @@ const NewInvoice = () => {
     document.body.removeChild(link);
   };
 
+  const handleSaveAsDraft = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStatus('draft');
+    setTimeout(() => {
+      const form = document.getElementById('invoice-form') as HTMLFormElement;
+      if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }, 0);
+  };
+
+  const handleCreateAndSend = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStatus('pending');
+    setTimeout(() => {
+      const form = document.getElementById('invoice-form') as HTMLFormElement;
+      if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }, 0);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted with status:", status);
     
     if (!user) {
       toast({
@@ -657,18 +676,6 @@ const NewInvoice = () => {
     }
   };
 
-  const handleSaveAsDraft = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setStatus('draft');
-    handleSubmit(e as unknown as React.FormEvent);
-  };
-
-  const handleCreateAndSend = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setStatus('pending');
-    handleSubmit(e as unknown as React.FormEvent);
-  };
-
   const getVatGroups = () => {
     const vatGroups: Record<string, {
       subtotal: number;
@@ -725,11 +732,21 @@ const NewInvoice = () => {
               </button>
             )}
             
-            <button type="button" onClick={handleSaveAsDraft} className={`px-4 py-2 rounded-lg font-medium transition-colors ${status === 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-50'}`} disabled={isSubmitting || isGeneratingPDF}>
+            <button 
+              type="button" 
+              onClick={handleSaveAsDraft} 
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${status === 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-50'}`} 
+              disabled={isSubmitting || isGeneratingPDF}
+            >
               {isSubmitting && status === 'draft' ? 'Saving...' : 'Save as Draft'}
             </button>
             
-            <button type="button" onClick={handleCreateAndSend} className="apple-button flex items-center gap-2" disabled={isSubmitting || isGeneratingPDF}>
+            <button 
+              type="button" 
+              onClick={handleCreateAndSend} 
+              className="apple-button flex items-center gap-2" 
+              disabled={isSubmitting || isGeneratingPDF}
+            >
               {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
             </button>
           </div>
@@ -900,4 +917,3 @@ const NewInvoice = () => {
 };
 
 export default NewInvoice;
-
