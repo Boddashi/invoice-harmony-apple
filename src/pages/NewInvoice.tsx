@@ -587,7 +587,7 @@ const NewInvoice = () => {
                     </div>
                   </div>
 
-                  <div className="col-span-1">
+                  <div className="col-span-2">
                     <Select value={item.vat_rate} onValueChange={value => handleItemVatChange(item.id, value)}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="VAT" />
