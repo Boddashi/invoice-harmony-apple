@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 interface Client {
   id: string;
   name: string;
@@ -31,21 +32,15 @@ interface Vat {
   title: string;
   amount: number | null;
 }
+
 const NewInvoice = () => {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const isEditMode = Boolean(id);
-  const {
-    currencySymbol
-  } = useCurrency();
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { currencySymbol } = useCurrency();
+  const { user } = useAuth();
+  const { toast } = useToast();
+
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +65,7 @@ const NewInvoice = () => {
   const [total, setTotal] = useState(0);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [vats, setVats] = useState<Vat[]>([]);
+
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -96,6 +92,7 @@ const NewInvoice = () => {
     };
     fetchClients();
   }, [user, toast]);
+
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -116,6 +113,7 @@ const NewInvoice = () => {
     };
     fetchItems();
   }, [toast]);
+
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!isEditMode || !id || !user) return;
@@ -180,6 +178,7 @@ const NewInvoice = () => {
     };
     fetchInvoiceData();
   }, [id, isEditMode, user, navigate, toast]);
+
   useEffect(() => {
     const fetchVats = async () => {
       try {
@@ -200,6 +199,95 @@ const NewInvoice = () => {
     };
     fetchVats();
   }, [toast]);
+
+  useEffect(() => {
+    const generateInvoiceNumber = async () => {
+      if (isEditMode || invoiceNumber) return;
+      
+      try {
+        if (!user) return;
+        
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('company_settings')
+          .select('invoice_prefix, invoice_number_type')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (settingsError) {
+          console.error('Error fetching company settings:', settingsError);
+          const defaultPrefix = 'INV';
+          const timestamp = Date.now().toString().slice(-6);
+          setInvoiceNumber(`${defaultPrefix}-${timestamp}`);
+          return;
+        }
+        
+        const prefix = settingsData?.invoice_prefix || 'INV';
+        const numberType = settingsData?.invoice_number_type as 'date' | 'incremental' || 'date';
+        
+        if (numberType === 'date') {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}${month}${day}`;
+          setInvoiceNumber(`${prefix}-${dateStr}`);
+        } else {
+          const { data: latestInvoice, error: invoiceError } = await supabase
+            .from('invoices')
+            .select('invoice_number')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+            
+          if (invoiceError && invoiceError.code !== 'PGRST116') {
+            console.error('Error fetching latest invoice:', invoiceError);
+            const timestamp = Date.now().toString().slice(-6);
+            setInvoiceNumber(`INV-${timestamp}`);
+            return;
+          }
+          
+          let nextNumber = 1;
+          
+          if (latestInvoice) {
+            const latestNumberStr = latestInvoice.invoice_number.split('-').pop();
+            if (latestNumberStr && !isNaN(Number(latestNumberStr))) {
+              nextNumber = Number(latestNumberStr) + 1;
+            }
+          }
+          
+          setInvoiceNumber(`${prefix}-${String(nextNumber).padStart(6, '0')}`);
+        }
+      } catch (error) {
+        console.error('Error generating invoice number:', error);
+        const timestamp = Date.now().toString().slice(-6);
+        setInvoiceNumber(`INV-${timestamp}`);
+      }
+    };
+    
+    generateInvoiceNumber();
+  }, [isEditMode, invoiceNumber, user]);
+
+  useEffect(() => {
+    if (issueDate && !dueDate) {
+      const date = new Date(issueDate);
+      date.setDate(date.getDate() + 30);
+      setDueDate(date.toISOString().split('T')[0]);
+    }
+  }, [issueDate, dueDate]);
+
+  useEffect(() => {
+    const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
+    setSubTotal(calculatedSubTotal);
+    const calculatedTaxAmount = items.reduce((sum, item) => {
+      const vatRate = availableItems.find(i => i.id === item.description)?.vat || '0%';
+      const rate = parseFloat(vatRate) / 100;
+      return sum + item.amount * rate;
+    }, 0);
+    setTaxAmount(calculatedTaxAmount);
+    setTotal(calculatedSubTotal + calculatedTaxAmount);
+  }, [items, availableItems]);
+
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
     try {
@@ -237,34 +325,7 @@ const NewInvoice = () => {
       });
     }
   };
-  useEffect(() => {
-    const generateInvoiceNumber = () => {
-      const prefix = 'INV';
-      const timestamp = Date.now().toString().slice(-6);
-      return `${prefix}-${timestamp}`;
-    };
-    if (!isEditMode && !invoiceNumber) {
-      setInvoiceNumber(generateInvoiceNumber());
-    }
-  }, [isEditMode, invoiceNumber]);
-  useEffect(() => {
-    if (issueDate && !dueDate) {
-      const date = new Date(issueDate);
-      date.setDate(date.getDate() + 30);
-      setDueDate(date.toISOString().split('T')[0]);
-    }
-  }, [issueDate, dueDate]);
-  useEffect(() => {
-    const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
-    setSubTotal(calculatedSubTotal);
-    const calculatedTaxAmount = items.reduce((sum, item) => {
-      const vatRate = availableItems.find(i => i.id === item.description)?.vat || '0%';
-      const rate = parseFloat(vatRate) / 100;
-      return sum + item.amount * rate;
-    }, 0);
-    setTaxAmount(calculatedTaxAmount);
-    setTotal(calculatedSubTotal + calculatedTaxAmount);
-  }, [items, availableItems]);
+
   const handleItemDescriptionChange = (id: string, value: string) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -280,6 +341,7 @@ const NewInvoice = () => {
       return item;
     }));
   };
+
   const handleItemQuantityChange = (id: string, value: number) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -294,6 +356,7 @@ const NewInvoice = () => {
       return item;
     }));
   };
+
   const handleItemUnitPriceChange = (id: string, value: number) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -308,6 +371,7 @@ const NewInvoice = () => {
       return item;
     }));
   };
+
   const handleAddItem = () => {
     setItems([...items, {
       id: crypto.randomUUID(),
@@ -318,11 +382,13 @@ const NewInvoice = () => {
       vat_rate: ''
     }]);
   };
+
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
+
   const handleItemVatChange = (id: string, value: string) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -334,6 +400,7 @@ const NewInvoice = () => {
       return item;
     }));
   };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -451,16 +518,19 @@ const NewInvoice = () => {
       setIsSubmitting(false);
     }
   };
+
   const handleSaveAsDraft = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('draft');
     handleSubmit(e as unknown as React.FormEvent);
   };
+
   const handleCreateAndSend = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('pending');
     handleSubmit(e as unknown as React.FormEvent);
   };
+
   const getVatGroups = () => {
     const vatGroups: Record<string, {
       subtotal: number;
@@ -484,6 +554,7 @@ const NewInvoice = () => {
       vat: values.vat
     }));
   };
+
   if (isLoading && isEditMode) {
     return <MainLayout>
         <div className="max-w-5xl mx-auto p-8 text-center">
@@ -491,6 +562,7 @@ const NewInvoice = () => {
         </div>
       </MainLayout>;
   }
+
   return <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
@@ -677,4 +749,5 @@ const NewInvoice = () => {
       </div>
     </MainLayout>;
 };
+
 export default NewInvoice;
