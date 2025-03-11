@@ -42,6 +42,16 @@ interface Item {
   vat: string;
 }
 
+interface InvoiceItemResponse {
+  invoice_id: string;
+  item_id: string;
+  quantity: number;
+  total_amount: number;
+  created_at: string;
+  updated_at: string;
+  items: Item;
+}
+
 interface VatGroup {
   rate: string;
   subtotal: number;
@@ -114,10 +124,13 @@ const ViewInvoice = () => {
         setAvailableItems(allItems || []);
         
         if (invoiceItems && invoiceItems.length > 0) {
-          const formattedItems = invoiceItems.map(item => {
-            const itemData = item.items as unknown as Item;
+          const formattedItems = invoiceItems.map((item: InvoiceItemResponse) => {
+            const itemData = item.items;
+            // Create a unique ID from invoice_id and item_id
+            const uniqueId = `${item.invoice_id}_${item.item_id}`;
+            
             return {
-              id: item.id || crypto.randomUUID(),
+              id: uniqueId,
               description: itemData.id,
               quantity: item.quantity,
               unit_price: item.total_amount / item.quantity,
