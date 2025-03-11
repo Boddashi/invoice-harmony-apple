@@ -263,7 +263,36 @@ export const useInvoiceForm = () => {
           const month = String(today.getMonth() + 1).padStart(2, '0');
           const day = String(today.getDate()).padStart(2, '0');
           const dateStr = `${year}${month}${day}`;
-          setInvoiceNumber(`${prefix}-${dateStr}`);
+          
+          // Check for invoices with the same date-based number to add increment
+          const { data: existingInvoices, error: existingInvoicesError } = await supabase
+            .from('invoices')
+            .select('invoice_number')
+            .eq('user_id', user.id)
+            .like('invoice_number', `${prefix}-${dateStr}%`)
+            .order('invoice_number', { ascending: false });
+            
+          if (existingInvoicesError) {
+            console.error('Error checking existing invoices:', existingInvoicesError);
+            setInvoiceNumber(`${prefix}-${dateStr}/1`);
+            return;
+          }
+          
+          let increment = 1;
+          if (existingInvoices && existingInvoices.length > 0) {
+            // Extract the highest increment from existing invoices
+            for (const invoice of existingInvoices) {
+              const parts = invoice.invoice_number.split('/');
+              if (parts.length > 1) {
+                const existingIncrement = parseInt(parts[1], 10);
+                if (!isNaN(existingIncrement) && existingIncrement >= increment) {
+                  increment = existingIncrement + 1;
+                }
+              }
+            }
+          }
+          
+          setInvoiceNumber(`${prefix}-${dateStr}/${increment}`);
         } else {
           // For incremental type
           const { data: latestInvoice, error: invoiceError } = await supabase
