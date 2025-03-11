@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AddItemModalProps {
   onItemAdded: () => void;
@@ -28,6 +29,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   const [vatRates, setVatRates] = useState<VatRate[]>([]);
   const [fetchingVatRates, setFetchingVatRates] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const { user } = useAuth();
   
   useEffect(() => {
     if (open) {
@@ -102,6 +104,11 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
       return;
     }
     
+    if (!user) {
+      toast.error('You must be logged in to add items');
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -110,7 +117,8 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
         .insert({
           title,
           price: parseFloat(price),
-          vat
+          vat,
+          user_id: user.id
         });
         
       if (error) throw error;
@@ -131,12 +139,6 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
   
   // Helper function to display the VAT rate label
   const formatVatRateLabel = (rate: VatRate) => {
-    // For regular percentage rates
-    if (rate.title.endsWith('%')) {
-      return rate.title;
-    }
-    
-    // For special VAT rates with 0 amount
     return rate.title;
   };
   

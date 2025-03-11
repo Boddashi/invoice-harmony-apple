@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, DollarSign } from 'lucide-react';
@@ -51,12 +52,18 @@ const Items = () => {
   }, [user]);
 
   const fetchItems = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       
       const { data, error } = await supabase
         .from('items')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
         
       if (error) {
@@ -77,7 +84,8 @@ const Items = () => {
       const { error } = await supabase
         .from('items')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user?.id);
         
       if (error) throw error;
       
@@ -132,6 +140,19 @@ const Items = () => {
       default: return 'bg-gray-500';
     }
   };
+
+  if (!user) {
+    return (
+      <MainLayout>
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold tracking-tight">Items</h1>
+          <CustomCard>
+            <p className="text-center py-4">Please log in to view and manage your items.</p>
+          </CustomCard>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
