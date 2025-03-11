@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -55,6 +54,7 @@ const getStatusConfig = (status: InvoiceStatus) => {
 };
 
 const InvoiceList = () => {
+  
   const { currencySymbol } = useCurrency();
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);

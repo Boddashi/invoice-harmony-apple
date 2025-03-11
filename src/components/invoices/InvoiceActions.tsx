@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Eye, Download } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 interface InvoiceActionsProps {
   invoiceId: string;
@@ -34,6 +35,18 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
 
   const handleEdit = () => {
     navigate(`/invoices/edit/${invoiceId}`);
+  };
+
+  const handleView = () => {
+    navigate(`/invoices/${invoiceId}`);
+  };
+
+  const handleDownload = () => {
+    // PDF download functionality would go here
+    toast({
+      title: "Invoice Download",
+      description: "Download functionality will be implemented soon."
+    });
   };
 
   const handleDelete = async () => {
@@ -98,14 +111,39 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     setShowDeleteDialog(false);
   };
 
-  if (status !== 'draft') {
+  // For pending, paid, and overdue invoices - show View and Download buttons
+  if (status === 'pending' || status === 'paid' || status === 'overdue') {
     return (
-      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-        <MoreHorizontal size={16} />
-      </button>
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleView();
+          }}
+          title="View Invoice"
+        >
+          <Eye size={16} />
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-8 w-8" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload();
+          }}
+          title="Download Invoice"
+        >
+          <Download size={16} />
+        </Button>
+      </div>
     );
   }
 
+  // For draft invoices - show dropdown with Edit and Delete options
   return (
     <>
       <DropdownMenu>
