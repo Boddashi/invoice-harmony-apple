@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import DashboardSummary from '../components/dashboard/DashboardSummary';
@@ -9,6 +8,8 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 interface ClientRevenue {
   name: string;
@@ -22,6 +23,11 @@ interface Stats {
   topClients: ClientRevenue[];
 }
 
+interface RevenueData {
+  name: string;
+  amount: number;
+}
+
 const Index = () => {
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
@@ -33,11 +39,76 @@ const Index = () => {
     topClients: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
   
   // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
+
+  // Fetch revenue data based on selected period
+  const fetchRevenueData = async () => {
+    if (!user) return;
+
+    try {
+      const today = new Date();
+      let startDate;
+      
+      // Calculate start date based on selected period
+      switch (selectedPeriod) {
+        case 'monthly':
+          startDate = subMonths(today, 6);
+          break;
+        case 'quarterly':
+          startDate = subMonths(today, 12);
+          break;
+        case 'yearly':
+          startDate = subMonths(today, 24);
+          break;
+        default:
+          startDate = subMonths(today, 6);
+      }
+
+      const { data: invoices, error } = await supabase
+        .from('invoices')
+        .select('issue_date, total_amount')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .gte('issue_date', startOfMonth(startDate).toISOString())
+        .lte('issue_date', endOfMonth(today).toISOString())
+        .order('issue_date', { ascending: true });
+
+      if (error) throw error;
+
+      // Group invoices by month and sum amounts
+      const monthlyRevenue = new Map<string, number>();
+      
+      invoices?.forEach(invoice => {
+        const monthKey = format(new Date(invoice.issue_date), 'MMM yyyy');
+        const currentAmount = monthlyRevenue.get(monthKey) || 0;
+        monthlyRevenue.set(monthKey, currentAmount + Number(invoice.total_amount));
+      });
+
+      const formattedData = Array.from(monthlyRevenue.entries()).map(([name, amount]) => ({
+        name,
+        amount,
+      }));
+
+      setRevenueData(formattedData);
+    } catch (error: any) {
+      console.error('Error fetching revenue data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load revenue data."
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchRevenueData();
+  }, [user, selectedPeriod]);
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -133,17 +204,74 @@ const Index = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold">Revenue</h2>
               <div className="flex gap-2">
-                <button className="px-3 py-1 text-sm rounded-full bg-apple-blue/10 text-apple-blue">Monthly</button>
-                <button className="px-3 py-1 text-sm rounded-full hover:bg-secondary">Quarterly</button>
-                <button className="px-3 py-1 text-sm rounded-full hover:bg-secondary">Yearly</button>
+                <button 
+                  onClick={() => setSelectedPeriod('monthly')}
+                  className={`px-3 py-1 text-sm rounded-full ${
+                    selectedPeriod === 'monthly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button 
+                  onClick={() => setSelectedPeriod('quarterly')}
+                  className={`px-3 py-1 text-sm rounded-full ${
+                    selectedPeriod === 'quarterly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'
+                  }`}
+                >
+                  Quarterly
+                </button>
+                <button 
+                  onClick={() => setSelectedPeriod('yearly')}
+                  className={`px-3 py-1 text-sm rounded-full ${
+                    selectedPeriod === 'yearly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'
+                  }`}
+                >
+                  Yearly
+                </button>
               </div>
             </div>
             
-            <div className="h-[240px] flex items-center justify-center text-muted-foreground">
-              <div className="flex flex-col items-center">
-                <BarChart4 size={48} strokeWidth={1.25} />
-                <p className="mt-3">Revenue chart will appear here</p>
-              </div>
+            <div className="h-[240px]">
+              {revenueData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={revenueData}
+                    margin={{
+                      top: 10,
+                      right: 10,
+                      left: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="name"
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => `${currencySymbol}${value}`}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [`${currencySymbol}${value.toFixed(2)}`, 'Revenue']}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#3b82f6"
+                      fill="#3b82f6"
+                      fillOpacity={0.1}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  <div className="flex flex-col items-center">
+                    <BarChart4 size={48} strokeWidth={1.25} />
+                    <p className="mt-3">No revenue data available</p>
+                  </div>
+                </div>
+              )}
             </div>
           </CustomCard>
           
