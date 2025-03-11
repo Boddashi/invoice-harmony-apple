@@ -9,7 +9,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 interface Client {
   id: string;
   name: string;
@@ -32,7 +31,6 @@ interface Vat {
   title: string;
   amount: number | null;
 }
-
 const NewInvoice = () => {
   const navigate = useNavigate();
   const {
@@ -72,7 +70,6 @@ const NewInvoice = () => {
   const [total, setTotal] = useState(0);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [vats, setVats] = useState<Vat[]>([]);
-
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -99,7 +96,6 @@ const NewInvoice = () => {
     };
     fetchClients();
   }, [user, toast]);
-
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -120,7 +116,6 @@ const NewInvoice = () => {
     };
     fetchItems();
   }, [toast]);
-
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!isEditMode || !id || !user) return;
@@ -185,7 +180,6 @@ const NewInvoice = () => {
     };
     fetchInvoiceData();
   }, [id, isEditMode, user, navigate, toast]);
-
   useEffect(() => {
     const fetchVats = async () => {
       try {
@@ -206,7 +200,6 @@ const NewInvoice = () => {
     };
     fetchVats();
   }, [toast]);
-
   const handleAddClient = async (newClient: any) => {
     if (!user) return;
     try {
@@ -244,7 +237,6 @@ const NewInvoice = () => {
       });
     }
   };
-
   useEffect(() => {
     const generateInvoiceNumber = () => {
       const prefix = 'INV';
@@ -255,7 +247,6 @@ const NewInvoice = () => {
       setInvoiceNumber(generateInvoiceNumber());
     }
   }, [isEditMode, invoiceNumber]);
-
   useEffect(() => {
     if (issueDate && !dueDate) {
       const date = new Date(issueDate);
@@ -263,7 +254,6 @@ const NewInvoice = () => {
       setDueDate(date.toISOString().split('T')[0]);
     }
   }, [issueDate, dueDate]);
-
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
     setSubTotal(calculatedSubTotal);
@@ -275,7 +265,6 @@ const NewInvoice = () => {
     setTaxAmount(calculatedTaxAmount);
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, availableItems]);
-
   const handleItemDescriptionChange = (id: string, value: string) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -291,7 +280,6 @@ const NewInvoice = () => {
       return item;
     }));
   };
-
   const handleItemQuantityChange = (id: string, value: number) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -306,7 +294,6 @@ const NewInvoice = () => {
       return item;
     }));
   };
-
   const handleItemUnitPriceChange = (id: string, value: number) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -321,7 +308,6 @@ const NewInvoice = () => {
       return item;
     }));
   };
-
   const handleAddItem = () => {
     setItems([...items, {
       id: crypto.randomUUID(),
@@ -332,13 +318,11 @@ const NewInvoice = () => {
       vat_rate: ''
     }]);
   };
-
   const handleRemoveItem = (id: string) => {
     if (items.length > 1) {
       setItems(items.filter(item => item.id !== id));
     }
   };
-
   const handleItemVatChange = (id: string, value: string) => {
     setItems(prevItems => prevItems.map(item => {
       if (item.id === id) {
@@ -350,7 +334,6 @@ const NewInvoice = () => {
       return item;
     }));
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -468,41 +451,39 @@ const NewInvoice = () => {
       setIsSubmitting(false);
     }
   };
-
   const handleSaveAsDraft = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('draft');
     handleSubmit(e as unknown as React.FormEvent);
   };
-
   const handleCreateAndSend = async (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus('pending');
     handleSubmit(e as unknown as React.FormEvent);
   };
-
   const getVatGroups = () => {
-    const vatGroups: Record<string, { subtotal: number, vat: number }> = {};
-    
+    const vatGroups: Record<string, {
+      subtotal: number;
+      vat: number;
+    }> = {};
     items.forEach(item => {
       const vatRate = item.vat_rate || '0%';
       const vatPercentage = parseFloat(vatRate) || 0;
-      
       if (!vatGroups[vatRate]) {
-        vatGroups[vatRate] = { subtotal: 0, vat: 0 };
+        vatGroups[vatRate] = {
+          subtotal: 0,
+          vat: 0
+        };
       }
-      
       vatGroups[vatRate].subtotal += item.amount;
-      vatGroups[vatRate].vat += (item.amount * vatPercentage / 100);
+      vatGroups[vatRate].vat += item.amount * vatPercentage / 100;
     });
-    
     return Object.entries(vatGroups).map(([rate, values]) => ({
       rate,
       subtotal: values.subtotal,
       vat: values.vat
     }));
   };
-
   if (isLoading && isEditMode) {
     return <MainLayout>
         <div className="max-w-5xl mx-auto p-8 text-center">
@@ -510,7 +491,6 @@ const NewInvoice = () => {
         </div>
       </MainLayout>;
   }
-
   return <MainLayout>
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
@@ -672,19 +652,17 @@ const NewInvoice = () => {
               <h3 className="text-lg font-medium mb-4">Summary</h3>
               
               <div className="space-y-4">
-                {getVatGroups().map((group, index) => (
-                  <div key={index} className="space-y-1">
+                {getVatGroups().map((group, index) => <div key={index} className="space-y-1">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Subtotal ({group.rate})</span>
                       <span className="font-medium">{currencySymbol}{group.subtotal.toFixed(2)}</span>
                     </div>
                     
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground pl-4">VAT {group.rate}</span>
+                      <span className="text-muted-foreground">VAT {group.rate}</span>
                       <span className="font-medium">{currencySymbol}{group.vat.toFixed(2)}</span>
                     </div>
-                  </div>
-                ))}
+                  </div>)}
                 
                 <div className="border-t border-border pt-4 flex justify-between">
                   <span className="font-medium">Total</span>
@@ -699,5 +677,4 @@ const NewInvoice = () => {
       </div>
     </MainLayout>;
 };
-
 export default NewInvoice;
