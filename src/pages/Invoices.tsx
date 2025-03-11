@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -65,7 +66,8 @@ const Invoices = () => {
             *,
             client:clients(name)
           `)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false }); // Order by created_at in descending order
         
         if (error) {
           throw error;
