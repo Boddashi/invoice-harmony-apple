@@ -20,8 +20,6 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          "SF Pro Display", 
-          "SF Pro", 
           "system-ui", 
           "-apple-system", 
           "BlinkMacSystemFont", 
