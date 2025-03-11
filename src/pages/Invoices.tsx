@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Download, Eye, Plus, Search, Send } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -271,20 +270,7 @@ const Invoices = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4">
-                          <div className="flex justify-center gap-1" onClick={(e) => e.stopPropagation()}>
-                            <button 
-                              className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-                              title="View"
-                              onClick={() => navigate(`/invoices/${invoice.id}`)}
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Send">
-                              <Send size={16} />
-                            </button>
-                            <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
-                              <Download size={16} />
-                            </button>
+                          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
                             <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
                           </div>
                         </td>
@@ -327,20 +313,7 @@ const Invoices = () => {
                       <div className="text-right font-medium">{formatAmount(invoice.total_amount)}</div>
                     </div>
                     
-                    <div className="flex justify-end gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                      <button 
-                        className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-                        title="View"
-                        onClick={() => navigate(`/invoices/${invoice.id}`)}
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Send">
-                        <Send size={16} />
-                      </button>
-                      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors" title="Download">
-                        <Download size={16} />
-                      </button>
+                    <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
                       <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
                     </div>
                   </div>
