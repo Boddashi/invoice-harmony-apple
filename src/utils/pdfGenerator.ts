@@ -138,6 +138,10 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
     // Save PDF
     const pdfBase64 = pdf.output('datauristring');
+    
+    // Automatically save the PDF to Supabase storage
+    await saveInvoicePDF(invoiceData.id, pdfBase64);
+    
     return pdfBase64;
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -145,7 +149,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
   }
 };
 
-export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string) => {
+export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Promise<string> => {
   try {
     // Convert data URI to Blob
     const byteString = atob(pdfBase64.split(',')[1]);
@@ -172,7 +176,12 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string) => {
       throw error;
     }
 
-    return data.path;
+    // Get the public URL for the uploaded file
+    const { data: urlData } = supabase.storage
+      .from('invoices')
+      .getPublicUrl(`${invoiceId}/invoice.pdf`);
+
+    return urlData.publicUrl;
   } catch (error) {
     console.error('Error saving PDF:', error);
     throw error;
