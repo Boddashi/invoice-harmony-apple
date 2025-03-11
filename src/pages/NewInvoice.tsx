@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash } from 'lucide-react';
@@ -215,14 +216,31 @@ const NewInvoice = () => {
           
         if (settingsError) {
           console.error('Error fetching company settings:', settingsError);
+          // Use a default prefix and incremental number instead of timestamp
+          const { data: latestInvoice } = await supabase
+            .from('invoices')
+            .select('invoice_number')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+            
           const defaultPrefix = 'INV';
-          const timestamp = Date.now().toString().slice(-6);
-          setInvoiceNumber(`${defaultPrefix}-${timestamp}`);
+          let nextNumber = 1; // Start with 1 for the first invoice
+          
+          if (latestInvoice && latestInvoice.invoice_number) {
+            const latestNumberStr = latestInvoice.invoice_number.split('-').pop();
+            if (latestNumberStr && !isNaN(Number(latestNumberStr))) {
+              nextNumber = Number(latestNumberStr) + 1;
+            }
+          }
+          
+          setInvoiceNumber(`${defaultPrefix}-${String(nextNumber).padStart(6, '0')}`);
           return;
         }
         
         const prefix = settingsData?.invoice_prefix || 'INV';
-        const numberType = settingsData?.invoice_number_type as 'date' | 'incremental' || 'date';
+        const numberType = settingsData?.invoice_number_type as 'date' | 'incremental' || 'incremental'; // Default to incremental
         
         if (numberType === 'date') {
           const today = new Date();
@@ -232,6 +250,7 @@ const NewInvoice = () => {
           const dateStr = `${year}${month}${day}`;
           setInvoiceNumber(`${prefix}-${dateStr}`);
         } else {
+          // For incremental type
           const { data: latestInvoice, error: invoiceError } = await supabase
             .from('invoices')
             .select('invoice_number')
@@ -240,14 +259,9 @@ const NewInvoice = () => {
             .limit(1)
             .single();
             
-          if (invoiceError && invoiceError.code !== 'PGRST116') {
-            console.error('Error fetching latest invoice:', invoiceError);
-            const timestamp = Date.now().toString().slice(-6);
-            setInvoiceNumber(`INV-${timestamp}`);
-            return;
-          }
-          
-          let nextNumber = 1;
+          // For the first invoice or if there's an error fetching the latest invoice
+          // (except for the "no rows returned" error which is expected for the first invoice)
+          let nextNumber = 1; // Start with 1 for the first invoice
           
           if (latestInvoice) {
             const latestNumberStr = latestInvoice.invoice_number.split('-').pop();
@@ -260,8 +274,9 @@ const NewInvoice = () => {
         }
       } catch (error) {
         console.error('Error generating invoice number:', error);
-        const timestamp = Date.now().toString().slice(-6);
-        setInvoiceNumber(`INV-${timestamp}`);
+        // Fallback to incremental numbering instead of timestamp
+        const defaultPrefix = 'INV';
+        setInvoiceNumber(`${defaultPrefix}-000001`); // Start with 1 for the first invoice
       }
     };
     

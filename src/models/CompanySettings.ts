@@ -40,5 +40,5 @@ export const defaultCompanySettings: CompanySettings = {
   swift: '',
   iban: '',
   invoice_prefix: '',
-  invoice_number_type: 'date'
+  invoice_number_type: 'incremental'
 };
