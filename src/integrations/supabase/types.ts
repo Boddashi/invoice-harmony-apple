@@ -78,6 +78,8 @@ export type Database = {
           default_currency: string | null
           iban: string | null
           id: string
+          invoice_number_type: string | null
+          invoice_prefix: string | null
           number: string | null
           postal_code: string | null
           street: string | null
@@ -100,6 +102,8 @@ export type Database = {
           default_currency?: string | null
           iban?: string | null
           id?: string
+          invoice_number_type?: string | null
+          invoice_prefix?: string | null
           number?: string | null
           postal_code?: string | null
           street?: string | null
@@ -122,6 +126,8 @@ export type Database = {
           default_currency?: string | null
           iban?: string | null
           id?: string
+          invoice_number_type?: string | null
+          invoice_prefix?: string | null
           number?: string | null
           postal_code?: string | null
           street?: string | null
