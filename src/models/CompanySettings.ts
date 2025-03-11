@@ -18,8 +18,6 @@ export interface CompanySettings {
   account_number: string;
   swift: string;
   iban: string;
-  invoice_prefix: string;
-  invoice_number_type: 'date' | 'incremental';
 }
 
 export const defaultCompanySettings: CompanySettings = {
@@ -38,7 +36,5 @@ export const defaultCompanySettings: CompanySettings = {
   bank_name: '',
   account_number: '',
   swift: '',
-  iban: '',
-  invoice_prefix: 'INV',
-  invoice_number_type: 'incremental'
+  iban: ''
 };

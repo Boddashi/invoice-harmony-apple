@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
@@ -8,9 +9,6 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings, defaultCompanySettings } from '@/models/CompanySettings';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = React.useState('profile');
@@ -38,6 +36,7 @@ const Settings = () => {
     { code: 'INR', label: 'Indian Rupee (₹)', symbol: '₹' },
   ];
 
+  // Load company settings from database
   useEffect(() => {
     if (!user) return;
     
@@ -61,6 +60,7 @@ const Settings = () => {
             postal_code: data.postal_code || ''
           });
           
+          // Update currency context if default_currency is set
           if (data.default_currency) {
             setCurrency(data.default_currency);
           }
@@ -96,13 +96,6 @@ const Settings = () => {
     }));
   };
 
-  const handleInvoiceNumberTypeChange = (value: 'date' | 'incremental') => {
-    setCompanySettings(prev => ({
-      ...prev,
-      invoice_number_type: value
-    }));
-  };
-
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -118,12 +111,14 @@ const Settings = () => {
     try {
       setSaving(true);
       
+      // Prepare the data
       const settingsData = {
         ...companySettings,
         user_id: user.id,
         default_currency: currency
       };
       
+      // Check if settings already exist for this user
       const { data: existingSettings, error: checkError } = await supabase
         .from('company_settings')
         .select('id')
@@ -138,6 +133,7 @@ const Settings = () => {
       let saveError;
       
       if (existingSettings) {
+        // Update existing settings
         const { error } = await supabase
           .from('company_settings')
           .update(settingsData)
@@ -145,6 +141,7 @@ const Settings = () => {
         
         saveError = error;
       } else {
+        // Insert new settings
         const { error } = await supabase
           .from('company_settings')
           .insert(settingsData);
@@ -179,6 +176,7 @@ const Settings = () => {
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Sidebar */}
           <div className="md:col-span-1">
             <CustomCard className="overflow-hidden">
               <div className="divide-y divide-border">
@@ -204,6 +202,7 @@ const Settings = () => {
             </CustomCard>
           </div>
           
+          {/* Content */}
           <div className="md:col-span-3 animate-fade-in">
             {activeTab === 'profile' && (
               <CustomCard>
@@ -263,6 +262,7 @@ const Settings = () => {
                 ) : (
                   <form onSubmit={handleSaveCompany}>
                     <div className="space-y-6">
+                      {/* Company Basic Info */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="md:col-span-2">
                           <label className="block text-sm font-medium text-foreground mb-1">Company Name</label>
@@ -343,6 +343,7 @@ const Settings = () => {
                         </div>
                       </div>
                       
+                      {/* Address */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Company Address</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -414,6 +415,7 @@ const Settings = () => {
                         </div>
                       </div>
                       
+                      {/* Bank Information */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Payment Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -463,6 +465,7 @@ const Settings = () => {
                         </div>
                       </div>
                       
+                      {/* Company Logo */}
                       <div>
                         <h3 className="text-base font-medium mb-4">Company Logo</h3>
                         <div className="flex items-center gap-5">
@@ -500,68 +503,7 @@ const Settings = () => {
             {activeTab === 'billing' && (
               <CustomCard>
                 <h2 className="text-xl font-semibold mb-6">Billing & Subscription</h2>
-                
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-medium mb-4">Invoice Settings</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <div>
-                        <Label htmlFor="invoice_prefix" className="block text-sm font-medium text-foreground mb-1">
-                          Invoice Number Prefix
-                        </Label>
-                        <Input
-                          id="invoice_prefix"
-                          name="invoice_prefix"
-                          type="text"
-                          value={companySettings.invoice_prefix}
-                          onChange={handleInputChange}
-                          placeholder="INV"
-                          className="input-field w-full"
-                        />
-                        <p className="text-sm text-muted-foreground mt-1">
-                          This prefix will appear before your invoice numbers (e.g. INV-0001)
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="invoice_number_type" className="block text-sm font-medium text-foreground mb-1">
-                          Invoice Number Format
-                        </Label>
-                        <Select
-                          value={companySettings.invoice_number_type}
-                          onValueChange={(value: 'date' | 'incremental') => handleInvoiceNumberTypeChange(value)}
-                        >
-                          <SelectTrigger className="input-field w-full">
-                            <SelectValue placeholder="Select format" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="incremental">Incremental (e.g. INV-0001)</SelectItem>
-                            <SelectItem value="date">Date-based (e.g. INV-20240825)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Choose how your invoice numbers should be generated
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-8 pt-6 border-t border-border flex justify-end">
-                    <button 
-                      type="button" 
-                      className="apple-button"
-                      onClick={handleSaveCompany}
-                      disabled={saving}
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : 'Save Invoice Settings'}
-                    </button>
-                  </div>
-                </div>
+                <p className="text-muted-foreground">Manage your billing information and subscription plan.</p>
               </CustomCard>
             )}
             
