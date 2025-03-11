@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Eye, Send, Download } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,9 +99,32 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
 
   if (status !== 'draft') {
     return (
-      <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-        <MoreHorizontal size={16} />
-      </button>
+      <div className="flex gap-1">
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="View"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/invoices/${invoiceId}`);
+          }}
+        >
+          <Eye size={16} />
+        </button>
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="Send"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Send size={16} />
+        </button>
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="Download"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Download size={16} />
+        </button>
+      </div>
     );
   }
 
@@ -111,7 +133,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-            <MoreHorizontal size={16} />
+            <Eye size={16} />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
