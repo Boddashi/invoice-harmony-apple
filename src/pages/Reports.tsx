@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -101,7 +100,6 @@ const STATUS_ICONS = {
   'Overdue': <AlertCircle size={16} className="text-[#f43f5e]" />
 };
 
-// Fix the type definition for the EnhancedLegend component
 interface EnhancedLegendProps {
   payload?: any[];
 }
@@ -130,7 +128,6 @@ const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
   );
 };
 
-// Fix the CustomTooltip component type
 interface CustomTooltipProps {
   active?: boolean;
   payload?: any[];
@@ -373,24 +370,56 @@ const Reports = () => {
                       data={monthlyData}
                       margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        vertical={false} 
+                        stroke="var(--border)"
+                      />
                       <XAxis
                         dataKey="month"
                         angle={-45}
                         textAnchor="end"
                         height={70}
-                        tick={{ fontSize: 12 }}
+                        tick={{ 
+                          fill: 'var(--muted-foreground)',
+                          fontSize: 12 
+                        }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tickLine={{ stroke: 'var(--border)' }}
                       />
                       <YAxis
                         tickFormatter={(value) => `${currencySymbol}${value}`}
                         width={80}
+                        tick={{ 
+                          fill: 'var(--muted-foreground)',
+                          fontSize: 12 
+                        }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tickLine={{ stroke: 'var(--border)' }}
                       />
                       <Tooltip 
+                        cursor={{ fill: 'var(--accent)' }}
                         formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
-                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
+                        contentStyle={{ 
+                          background: 'var(--background)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                        }}
                         labelStyle={{ color: 'var(--foreground)' }}
                       />
-                      <Bar dataKey="amount" fill="var(--primary)" />
+                      <Bar 
+                        dataKey="amount" 
+                        fill="url(#colorRevenue)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={50}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -452,24 +481,56 @@ const Reports = () => {
                       data={clientData}
                       margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" />
+                      <defs>
+                        <linearGradient id="colorClients" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0.1}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid 
+                        strokeDasharray="3 3" 
+                        vertical={false}
+                        stroke="var(--border)"
+                      />
                       <XAxis
                         dataKey="name"
                         angle={-45}
                         textAnchor="end"
                         height={70}
-                        tick={{ fontSize: 12 }}
+                        tick={{ 
+                          fill: 'var(--muted-foreground)',
+                          fontSize: 12 
+                        }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tickLine={{ stroke: 'var(--border)' }}
                       />
                       <YAxis
                         tickFormatter={(value) => `${currencySymbol}${value}`}
                         width={80}
+                        tick={{ 
+                          fill: 'var(--muted-foreground)',
+                          fontSize: 12 
+                        }}
+                        axisLine={{ stroke: 'var(--border)' }}
+                        tickLine={{ stroke: 'var(--border)' }}
                       />
                       <Tooltip 
+                        cursor={{ fill: 'var(--accent)' }}
                         formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
-                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
+                        contentStyle={{ 
+                          background: 'var(--background)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                        }}
                         labelStyle={{ color: 'var(--foreground)' }}
                       />
-                      <Bar dataKey="amount" fill="var(--primary)" />
+                      <Bar 
+                        dataKey="amount" 
+                        fill="url(#colorClients)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={50}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
