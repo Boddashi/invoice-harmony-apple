@@ -1,12 +1,10 @@
 
 import React from 'react';
-import { Download } from 'lucide-react';
-import { 
-  Table, TableBody, TableCaption, TableCell, 
-  TableHead, TableHeader, TableRow 
-} from '@/components/ui/table';
+import { Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 interface Report {
   id: string;
@@ -86,40 +84,62 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
     }
   };
 
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'monthly': return 'bg-blue-100 text-blue-800';
+      case 'status': return 'bg-green-100 text-green-800';
+      case 'client': return 'bg-purple-100 text-purple-800';
+      case 'item': return 'bg-amber-100 text-amber-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Export Reports</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Export Reports</h2>
       
-      <Table>
-        <TableCaption>A list of reports available for export.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Report</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Date Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      {reports.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            No reports available for export.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {reports.map((report) => (
-            <TableRow key={report.id}>
-              <TableCell className="font-medium">{report.title}</TableCell>
-              <TableCell>{report.type.charAt(0).toUpperCase() + report.type.slice(1)}</TableCell>
-              <TableCell>{report.date}</TableCell>
-              <TableCell className="text-right">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleExport(report)}
-                  title="Export Report"
-                >
-                  <Download size={18} />
-                </Button>
-              </TableCell>
-            </TableRow>
+            <Card key={report.id} className="overflow-hidden transition-all hover:shadow-md">
+              <CardContent className="p-0">
+                <div className="flex flex-col h-full">
+                  <div className="p-4 border-b">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium truncate" title={report.title}>
+                        {report.title}
+                      </h3>
+                      <Badge variant="outline" className={getTypeColor(report.type)}>
+                        {report.type.charAt(0).toUpperCase() + report.type.slice(1)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{report.date}</p>
+                  </div>
+                  
+                  <div className="p-4 mt-auto flex justify-end">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleExport(report)}
+                      className="flex items-center gap-2"
+                    >
+                      <FileText size={16} />
+                      <span>Export CSV</span>
+                      <Download size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           ))}
-        </TableBody>
-      </Table>
+        </div>
+      )}
     </div>
   );
 };
