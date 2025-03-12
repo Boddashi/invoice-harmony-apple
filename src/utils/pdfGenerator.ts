@@ -250,3 +250,153 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Prom
     throw error;
   }
 };
+
+export const generateReportPDF = async (report: { title: string; type: string; data: any }): Promise<string> => {
+  const element = document.createElement('div');
+  element.className = 'report-pdf-content';
+  element.style.width = '210mm';
+  element.style.padding = '20mm';
+  element.style.backgroundColor = 'white';
+  element.style.position = 'fixed';
+  element.style.left = '-9999px';
+  document.body.appendChild(element);
+
+  let chartContent = '';
+  switch (report.type) {
+    case 'monthly':
+      chartContent = `
+        <div class="chart-section">
+          <h3>Revenue Data</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">Period</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${report.data.map((item: any) => `
+                <tr>
+                  <td style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">${item.period}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">$${item.amount.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+    case 'status':
+      chartContent = `
+        <div class="chart-section">
+          <h3>Invoice Status Distribution</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">Status</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Count</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${report.data.map((item: any) => `
+                <tr>
+                  <td style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">${item.value}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">${(item.percent * 100).toFixed(1)}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+    case 'client':
+      chartContent = `
+        <div class="chart-section">
+          <h3>Top Clients by Revenue</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">Client</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${report.data.map((item: any) => `
+                <tr>
+                  <td style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">$${item.amount.toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+    case 'item':
+      chartContent = `
+        <div class="chart-section">
+          <h3>Items Analysis</h3>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">Item</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Revenue</th>
+                <th style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${report.data.map((item: any) => `
+                <tr>
+                  <td style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb;">${item.name}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">$${item.amount.toFixed(2)}</td>
+                  <td style="padding: 12px; text-align: right; border-bottom: 1px solid #e5e7eb;">${item.count}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      break;
+  }
+
+  element.innerHTML = `
+    <div style="font-family: Arial, sans-serif; color: #333;">
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h1 style="font-size: 24px; color: #1a1f2c; margin: 0;">${report.title}</h1>
+        <p style="color: #6b7280; margin: 10px 0 0 0;">Generated on ${new Date().toLocaleDateString()}</p>
+      </div>
+      
+      ${chartContent}
+    </div>
+  `;
+
+  try {
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      logging: false
+    });
+
+    document.body.removeChild(element);
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const imgWidth = 210;
+    const pageHeight = 297;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+    return pdf.output('datauristring');
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw error;
+  }
+};

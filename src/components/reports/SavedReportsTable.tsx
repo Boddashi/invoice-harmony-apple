@@ -6,6 +6,8 @@ import {
   TableHead, TableHeader, TableRow 
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { generateReportPDF } from '@/utils/pdfGenerator';
 
 interface Report {
   id: string;
@@ -17,10 +19,43 @@ interface Report {
 
 interface SavedReportsTableProps {
   reports: Report[];
-  onExport: (report: Report) => void;
 }
 
-const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, onExport }) => {
+const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
+  const { toast } = useToast();
+
+  const handleExport = async (report: Report) => {
+    try {
+      toast({
+        title: "Generating Report",
+        description: "Please wait while we prepare your report...",
+      });
+
+      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}-${report.date}`;
+      const pdfDataUrl = await generateReportPDF(report);
+      
+      // Create a link element and trigger download
+      const link = document.createElement('a');
+      link.href = pdfDataUrl;
+      link.download = `${fileName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export Complete",
+        description: "Your report has been exported successfully!",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        variant: "destructive",
+        title: "Export Failed",
+        description: "There was an error exporting your report. Please try again.",
+      });
+    }
+  };
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Saved Reports</h2>
@@ -45,7 +80,7 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, onExport
                 <Button 
                   variant="ghost" 
                   size="icon"
-                  onClick={() => onExport(report)}
+                  onClick={() => handleExport(report)}
                   title="Export Report"
                 >
                   <Download size={18} />
