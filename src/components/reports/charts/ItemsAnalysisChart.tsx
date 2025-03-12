@@ -27,22 +27,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   currencySymbol,
   formatCurrency
 }) => {
-  // Ensure we have data to display
-  const chartData = data && data.length > 0 ? data.filter(item => item.amount > 0) : [];
-  
-  if (chartData.length === 0) {
-    return (
-      <CustomCard padding="md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Selected Items Revenue Analysis</h3>
-          <BarChart3 size={20} className="text-muted-foreground" />
-        </div>
-        <div className="h-80 flex items-center justify-center text-muted-foreground">
-          No item revenue data available
-        </div>
-      </CustomCard>
-    );
-  }
+  if (data.length === 0) return null;
   
   return (
     <CustomCard padding="md">
@@ -54,7 +39,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
-            data={chartData}
+            data={data}
             margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
           >
             <defs>
