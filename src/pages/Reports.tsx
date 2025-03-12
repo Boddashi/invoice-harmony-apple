@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -191,6 +190,28 @@ const Reports = () => {
 
   const formatCurrency = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
+  };
+
+  const handleGenerateReport = () => {
+    toast({
+      title: "Report Generation",
+      description: "This feature will be available soon!",
+    });
+  };
+
+  const handleExportReport = (report: Report) => {
+    toast({
+      title: "Export Started",
+      description: `Exporting ${report.title} report...`,
+    });
+    
+    // Simulating export operation
+    setTimeout(() => {
+      toast({
+        title: "Export Complete",
+        description: `${report.title} report has been exported successfully!`,
+      });
+    }, 1500);
   };
 
   return (
