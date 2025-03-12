@@ -1,7 +1,7 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -21,6 +22,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -37,7 +39,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: Package, label: 'Items', href: '/items' },
   ];
 
-  // Navigation items to display in the "More" dropdown on mobile
+  // Navigation items to display in the "More" fullscreen menu on mobile
   const moreNavItems = [
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
@@ -52,6 +54,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   if (!user) {
     return null;
   }
+
+  const toggleMoreMenu = () => {
+    setMoreMenuOpen(!moreMenuOpen);
+  };
+
+  const handleMoreItemClick = (href: string) => {
+    navigate(href);
+    setMoreMenuOpen(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background w-full">
@@ -120,7 +131,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar - with Dashboard and Settings on left, More dropdown on right */}
+      {/* Mobile bottom navbar */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
         {/* Left side - Dashboard */}
         <Link
@@ -149,29 +160,55 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         {/* Center space */}
         <div className="flex-1"></div>
 
-        {/* Right side - More dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none">
-            <MoreHorizontal size={22} />
-            <span className="text-xs font-medium">More</span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mb-20">
-            {moreNavItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <DropdownMenuItem key={item.href} asChild>
-                  <Link 
-                    to={item.href}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <Icon size={18} />
-                    <span>{item.label}</span>
-                  </Link>
-                </DropdownMenuItem>
-              );
-            })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Right side - More button (now opens Dialog instead of Dropdown) */}
+        <button
+          onClick={toggleMoreMenu}
+          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none"
+        >
+          <MoreHorizontal size={22} />
+          <span className="text-xs font-medium">More</span>
+        </button>
+
+        {/* Full-screen More dialog */}
+        <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
+          <DialogContent className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom">
+            <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+              <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+                <h2 className="text-lg font-semibold">More Options</h2>
+                <button 
+                  onClick={() => setMoreMenuOpen(false)}
+                  className="p-2 rounded-full hover:bg-sidebar-accent/20"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4">
+                {moreNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href || 
+                    (item.href !== '/' && location.pathname.startsWith(item.href));
+                  
+                  return (
+                    <button
+                      key={item.href}
+                      onClick={() => handleMoreItemClick(item.href)}
+                      className={cn(
+                        "flex items-center gap-3 w-full px-4 py-5 mb-2 rounded-lg transition-colors",
+                        isActive 
+                          ? "bg-sidebar-primary/10 text-sidebar-primary font-medium" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-foreground"
+                      )}
+                    >
+                      <Icon size={24} className={isActive ? "text-sidebar-primary" : ""} />
+                      <span className="text-base">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
         
         {/* Right side - Sign Out */}
         <button
