@@ -1,14 +1,24 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Plus, Search } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import InvoiceActions from '@/components/invoices/InvoiceActions';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
@@ -39,6 +49,11 @@ const Invoices = () => {
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 10;
   
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
@@ -93,6 +108,7 @@ const Invoices = () => {
     fetchInvoices();
   }, [user, toast]);
   
+  // Filter invoices based on search and filter settings
   const filteredInvoices = invoices
     .filter(invoice => filter === 'all' || invoice.status === filter)
     .filter(invoice => {
@@ -107,6 +123,22 @@ const Invoices = () => {
         invoice.total_amount.toString().includes(query)
       );
     });
+  
+  // Update total pages when filtered invoices change
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(filteredInvoices.length / itemsPerPage)));
+    
+    // Reset to page 1 if current page would be out of bounds
+    if (currentPage > Math.ceil(filteredInvoices.length / itemsPerPage)) {
+      setCurrentPage(1);
+    }
+  }, [filteredInvoices, currentPage]);
+  
+  // Get paginated invoices for current page
+  const paginatedInvoices = filteredInvoices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
   
   const getStatusColor = (status: Invoice['status']) => {
     switch (status) {
@@ -128,6 +160,31 @@ const Invoices = () => {
       case 'paid': return 'Paid';
       case 'overdue': return 'Overdue';
     }
+  };
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // Scroll to top of table for better UX
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  // Generate page numbers for pagination
+  const generatePaginationItems = () => {
+    // If 5 or fewer pages, show all
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    
+    // Always show first, last, current, and neighbors
+    const items = new Set([1, totalPages, currentPage]);
+    
+    // Add neighbors of current page
+    if (currentPage > 1) items.add(currentPage - 1);
+    if (currentPage < totalPages) items.add(currentPage + 1);
+    
+    return Array.from(items).sort((a, b) => a - b);
   };
 
   return (
@@ -241,7 +298,7 @@ const Invoices = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredInvoices.map((invoice) => (
+                    {paginatedInvoices.map((invoice) => (
                       <tr 
                         key={invoice.id} 
                         className="border-b border-border hover:bg-secondary/30 transition-colors cursor-pointer"
@@ -282,7 +339,7 @@ const Invoices = () => {
               </div>
 
               <div className="md:hidden divide-y divide-border">
-                {filteredInvoices.map((invoice) => (
+                {paginatedInvoices.map((invoice) => (
                   <div 
                     key={invoice.id} 
                     className="p-4 hover:bg-secondary/30 transition-colors active:bg-secondary/50"
@@ -320,6 +377,74 @@ const Invoices = () => {
                   </div>
                 ))}
               </div>
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="p-4 border-t border-border">
+                  <Pagination>
+                    <PaginationContent>
+                      {/* Previous page button */}
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                        >
+                          <ChevronLeft size={16} />
+                          <span className="hidden sm:inline">Previous</span>
+                        </button>
+                      </PaginationItem>
+                      
+                      {/* Page numbers */}
+                      {generatePaginationItems().map((page, index, array) => {
+                        // Add ellipsis when there are gaps between page numbers
+                        const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
+                        
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsisBefore && (
+                              <PaginationItem className="hidden sm:inline-block">
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <button
+                                onClick={() => handlePageChange(page)}
+                                className={cn(
+                                  "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                                  currentPage === page 
+                                    ? "bg-primary text-primary-foreground" 
+                                    : "hover:bg-secondary"
+                                )}
+                              >
+                                {page}
+                              </button>
+                            </PaginationItem>
+                          </React.Fragment>
+                        );
+                      })}
+                      
+                      {/* Next page button */}
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                        >
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight size={16} />
+                        </button>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
             </>
           )}
         </CustomCard>
