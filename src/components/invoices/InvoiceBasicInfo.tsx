@@ -1,11 +1,13 @@
 
 import React from 'react';
 import CustomCard from '../ui/CustomCard';
+import { cn } from '@/lib/utils';
 
 interface InvoiceBasicInfoProps {
   invoiceNumber: string;
   issueDate: string;
   dueDate: string;
+  status?: string;
   setInvoiceNumber?: (value: string) => void;
   setIssueDate?: (value: string) => void;
   setDueDate?: (value: string) => void;
@@ -16,6 +18,7 @@ const InvoiceBasicInfo: React.FC<InvoiceBasicInfoProps> = ({
   invoiceNumber,
   issueDate,
   dueDate,
+  status,
   setInvoiceNumber,
   setIssueDate,
   setDueDate,
@@ -28,6 +31,14 @@ const InvoiceBasicInfo: React.FC<InvoiceBasicInfoProps> = ({
       month: 'long', 
       day: 'numeric' 
     });
+  };
+
+  const isOverdue = () => {
+    if (!readOnly || status !== 'overdue') return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    return due < today;
   };
 
   return (
@@ -67,7 +78,7 @@ const InvoiceBasicInfo: React.FC<InvoiceBasicInfoProps> = ({
           <div className="space-y-1">
             <label className="block text-sm font-medium text-muted-foreground">Due Date</label>
             {readOnly ? (
-              <div className="py-2">{formatDate(dueDate)}</div>
+              <div className={cn("py-2", isOverdue() && "text-apple-red font-medium")}>{formatDate(dueDate)}</div>
             ) : (
               <input 
                 type="date" 

@@ -93,6 +93,46 @@ const Invoices = () => {
     });
   };
   
+  const checkOverdueInvoices = async (invoices: Invoice[]) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of day for accurate comparison
+    
+    const overdueInvoiceIds = invoices
+      .filter(invoice => 
+        invoice.status === 'pending' && 
+        new Date(invoice.due_date) < today
+      )
+      .map(invoice => invoice.id);
+    
+    if (overdueInvoiceIds.length === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'overdue' })
+        .in('id', overdueInvoiceIds);
+      
+      if (error) throw error;
+      
+      setInvoices(prevInvoices => 
+        prevInvoices.map(invoice => 
+          overdueInvoiceIds.includes(invoice.id) 
+            ? { ...invoice, status: 'overdue' as InvoiceDBStatus } 
+            : invoice
+        )
+      );
+      
+      console.log(`Updated ${overdueInvoiceIds.length} invoices to overdue status`);
+    } catch (error: any) {
+      console.error('Error updating overdue invoices:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update overdue invoices."
+      });
+    }
+  };
+  
   const handleInvoiceStatusChange = () => {
     const fetchInvoices = async () => {
       if (!user) return;
@@ -118,6 +158,8 @@ const Invoices = () => {
         })) || [];
         
         setInvoices(typedData);
+        
+        await checkOverdueInvoices(typedData);
       } catch (error: any) {
         console.error('Error fetching invoices:', error);
         toast({
