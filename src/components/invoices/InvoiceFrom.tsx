@@ -38,7 +38,7 @@ const InvoiceFrom: React.FC<InvoiceFromProps> = ({
     };
     fetchCompanySettings();
   }, [user]);
-  return <CustomCard padding="sm">
+  return <CustomCard padding="sm" className="p-4">
       <h3 className="text-lg font-medium mb-4">From</h3>
       
       {isLoading ? <div className="text-xs text-muted-foreground">Loading...</div> : companySettings ? <div className="text-xs">
