@@ -1,11 +1,17 @@
 
 import React, { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings, LogOut, Package } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -26,6 +32,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   const navItems = [
     { icon: LayoutGrid, label: 'Dashboard', href: '/' },
+    { icon: FileText, label: 'Invoices', href: '/invoices' },
+    { icon: Users, label: 'Clients', href: '/clients' },
+    { icon: Package, label: 'Items', href: '/items' },
+  ];
+
+  // Navigation items to display in the "More" dropdown on mobile
+  const moreNavItems = [
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
     { icon: Package, label: 'Items', href: '/items' },
@@ -107,46 +120,65 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar - improved spacing and layout */}
+      {/* Mobile bottom navbar - with Dashboard and Settings on left, More dropdown on right */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.href || 
-            (item.href !== '/' && location.pathname.startsWith(item.href));
-          const Icon = item.icon;
-          
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-1",
-                isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70"
-              )}
-            >
-              <Icon size={20} />
-              <span className="text-xs font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-        
-        {/* Settings icon for mobile */}
+        {/* Left side - Dashboard */}
+        <Link
+          to="/"
+          className={cn(
+            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
+            location.pathname === "/" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+          )}
+        >
+          <LayoutGrid size={22} />
+          <span className="text-xs font-medium">Dashboard</span>
+        </Link>
+
+        {/* Left side - Settings */}
         <Link
           to="/settings"
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-1",
+            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
             location.pathname === "/settings" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
           )}
         >
-          <Settings size={20} />
+          <Settings size={22} />
           <span className="text-xs font-medium">Settings</span>
         </Link>
         
-        {/* Sign out icon for mobile */}
+        {/* Center space */}
+        <div className="flex-1"></div>
+
+        {/* Right side - More dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none">
+            <MoreHorizontal size={22} />
+            <span className="text-xs font-medium">More</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 mb-20">
+            {moreNavItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <DropdownMenuItem key={item.href} asChild>
+                  <Link 
+                    to={item.href}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </Link>
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        {/* Right side - Sign Out */}
         <button
           onClick={handleLogout}
-          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
+          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3"
         >
-          <LogOut size={20} />
+          <LogOut size={22} />
           <span className="text-xs font-medium">Sign Out</span>
         </button>
       </div>
