@@ -44,6 +44,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
     { icon: Package, label: 'Items', href: '/items' },
+    { icon: LogOut, label: 'Sign Out', href: null, onClick: () => { signOut(); setMoreMenuOpen(false); } },
   ];
 
   const handleLogout = () => {
@@ -59,9 +60,13 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     setMoreMenuOpen(!moreMenuOpen);
   };
 
-  const handleMoreItemClick = (href: string) => {
-    navigate(href);
-    setMoreMenuOpen(false);
+  const handleMoreItemClick = (href: string | null, onClick?: () => void) => {
+    if (onClick) {
+      onClick();
+    } else if (href) {
+      navigate(href);
+      setMoreMenuOpen(false);
+    }
   };
 
   return (
@@ -133,18 +138,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       
       {/* Mobile bottom navbar */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
-        {/* Left side - Dashboard */}
-        <Link
-          to="/"
-          className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
-            location.pathname === "/" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
-          )}
-        >
-          <LayoutGrid size={22} />
-          <span className="text-xs font-medium">Dashboard</span>
-        </Link>
-
         {/* Left side - Settings */}
         <Link
           to="/settings"
@@ -157,10 +150,19 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">Settings</span>
         </Link>
         
-        {/* Center space */}
-        <div className="flex-1"></div>
+        {/* Center - Dashboard */}
+        <Link
+          to="/"
+          className={cn(
+            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
+            location.pathname === "/" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+          )}
+        >
+          <LayoutGrid size={22} />
+          <span className="text-xs font-medium">Dashboard</span>
+        </Link>
 
-        {/* Right side - More button (now opens Dialog instead of Dropdown) */}
+        {/* Right side - More button */}
         <button
           onClick={toggleMoreMenu}
           className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none"
@@ -187,15 +189,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               </div>
               
               <div className="flex-1 overflow-y-auto p-4">
-                {moreNavItems.map((item) => {
+                {moreNavItems.map((item, index) => {
                   const Icon = item.icon;
-                  const isActive = location.pathname === item.href || 
-                    (item.href !== '/' && location.pathname.startsWith(item.href));
+                  const isActive = item.href && (location.pathname === item.href || 
+                    (item.href !== '/' && location.pathname.startsWith(item.href)));
                   
                   return (
                     <button
-                      key={item.href}
-                      onClick={() => handleMoreItemClick(item.href)}
+                      key={item.label + index}
+                      onClick={() => handleMoreItemClick(item.href, item.onClick)}
                       className={cn(
                         "flex items-center gap-3 w-full px-4 py-5 mb-2 rounded-lg transition-colors",
                         isActive 
@@ -212,15 +214,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </div>
           </DialogContent>
         </Dialog>
-        
-        {/* Right side - Sign Out */}
-        <button
-          onClick={handleLogout}
-          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3"
-        >
-          <LogOut size={22} />
-          <span className="text-xs font-medium">Sign Out</span>
-        </button>
       </div>
     </div>
   );
