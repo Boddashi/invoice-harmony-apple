@@ -404,12 +404,7 @@ const Reports = () => {
                         tickLine={{ stroke: 'var(--border)' }}
                       />
                       <Tooltip 
-                        cursor={{ 
-                          fill: 'var(--background)',
-                          opacity: 0.1,
-                          rx: 4,
-                          ry: 4
-                        }}
+                        cursor={false}
                         formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
                         contentStyle={{ 
                           background: 'var(--background)',
@@ -520,12 +515,7 @@ const Reports = () => {
                         tickLine={{ stroke: 'var(--border)' }}
                       />
                       <Tooltip 
-                        cursor={{ 
-                          fill: 'var(--background)',
-                          opacity: 0.1,
-                          rx: 4,
-                          ry: 4
-                        }}
+                        cursor={false}
                         formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
                         contentStyle={{ 
                           background: 'var(--background)',
