@@ -8,7 +8,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import CustomCard from '@/components/ui/CustomCard';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Download, PieChart as PieChartIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { 
+  FileText, BarChart3, Download, PieChart as PieChartIcon, 
+  CheckCircle2, Clock, AlertCircle, FilterIcon 
+} from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -26,12 +29,28 @@ import {
   Legend,
   LegendProps
 } from 'recharts';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 type Report = {
   id: string;
   title: string;
   data: any;
-  type: 'monthly' | 'status' | 'client';
+  type: 'monthly' | 'status' | 'client' | 'item';
   date: string;
 };
 
@@ -41,6 +60,12 @@ type InvoiceStats = {
   pending: number;
   overdue: number;
   revenue: number;
+};
+
+type Item = {
+  id: string;
+  title: string;
+  price: number;
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -167,13 +192,58 @@ const Reports = () => {
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any[]>([]);
   const [clientData, setClientData] = useState<any[]>([]);
+  const [itemData, setItemData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<Report[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
+      fetchItems();
       fetchInvoiceData();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && selectedItems.length > 0) {
+      fetchInvoiceData();
+    }
+  }, [selectedItems]);
+
+  const fetchItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .select('id, title, price')
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      setItems(data || []);
+    } catch (error: any) {
+      console.error('Error fetching items:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load items."
+      });
+    }
+  };
+
+  const toggleItemSelection = (itemId: string) => {
+    setSelectedItems(prev => {
+      if (prev.includes(itemId)) {
+        return prev.filter(id => id !== itemId);
+      } else {
+        return [...prev, itemId];
+      }
+    });
+  };
+
+  const filteredItems = items.filter(item => 
+    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const fetchInvoiceData = async () => {
     if (!user) return;
@@ -181,10 +251,16 @@ const Reports = () => {
     try {
       setIsLoading(true);
       
-      const { data: invoices, error: invoicesError } = await supabase
+      let invoiceQuery = supabase
         .from('invoices')
-        .select('*, client:clients(name)')
+        .select('*, client:clients(name), invoice_items!inner(item_id, quantity, total_amount)')
         .eq('user_id', user.id);
+      
+      if (selectedItems.length > 0) {
+        invoiceQuery = invoiceQuery.filter('invoice_items.item_id', 'in', `(${selectedItems.join(',')})`);
+      }
+      
+      const { data: invoices, error: invoicesError } = await invoiceQuery;
       
       if (invoicesError) throw invoicesError;
       
@@ -249,7 +325,37 @@ const Reports = () => {
       
       setClientData(clientDataArray);
       
-      setSavedReports([
+      const itemRevenue: Record<string, number> = {};
+      const itemCounts: Record<string, number> = {};
+      
+      invoices.forEach(invoice => {
+        const invoiceItems = invoice.invoice_items || [];
+        
+        invoiceItems.forEach(item => {
+          if (selectedItems.includes(item.item_id)) {
+            const itemDetails = items.find(i => i.id === item.item_id);
+            const itemName = itemDetails ? itemDetails.title : 'Unknown Item';
+            
+            if (invoice.status === 'paid') {
+              itemRevenue[itemName] = (itemRevenue[itemName] || 0) + Number(item.total_amount);
+            }
+            
+            itemCounts[itemName] = (itemCounts[itemName] || 0) + Number(item.quantity);
+          }
+        });
+      });
+      
+      const itemDataArray = Object.entries(itemRevenue)
+        .map(([name, amount]) => ({ 
+          name, 
+          amount,
+          count: itemCounts[name] || 0
+        }))
+        .sort((a, b) => b.amount - a.amount);
+      
+      setItemData(itemDataArray);
+      
+      const reports = [
         {
           id: '1',
           title: 'Monthly Revenue',
@@ -271,7 +377,19 @@ const Reports = () => {
           type: 'client',
           date: format(new Date(), 'yyyy-MM-dd')
         }
-      ]);
+      ];
+      
+      if (itemDataArray.length > 0) {
+        reports.push({
+          id: '4',
+          title: 'Selected Items Analysis',
+          data: itemDataArray,
+          type: 'item',
+          date: format(new Date(), 'yyyy-MM-dd')
+        });
+      }
+      
+      setSavedReports(reports);
       
     } catch (error: any) {
       console.error('Error fetching report data:', error);
@@ -310,6 +428,11 @@ const Reports = () => {
     }, 1500);
   };
 
+  const clearFilters = () => {
+    setSelectedItems([]);
+    setSearchQuery('');
+  };
+
   return (
     <MainLayout>
       <div className="space-y-8">
@@ -319,10 +442,69 @@ const Reports = () => {
             <p className="text-muted-foreground">View and analyze your business data</p>
           </div>
           
-          <Button onClick={handleGenerateReport} className="flex items-center gap-2">
-            <FileText size={18} />
-            Generate New Report
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <FilterIcon size={16} />
+                  Filter by Items
+                  {selectedItems.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-medium">
+                      {selectedItems.length}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72">
+                <DropdownMenuLabel>Select Items</DropdownMenuLabel>
+                <div className="px-2 py-2">
+                  <Input
+                    placeholder="Search items..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="mb-2"
+                  />
+                </div>
+                <DropdownMenuSeparator />
+                <div className="max-h-[300px] overflow-y-auto py-1">
+                  {filteredItems.length === 0 ? (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div>
+                  ) : (
+                    filteredItems.map((item) => (
+                      <DropdownMenuCheckboxItem
+                        key={item.id}
+                        checked={selectedItems.includes(item.id)}
+                        onCheckedChange={() => toggleItemSelection(item.id)}
+                      >
+                        <div className="flex flex-col">
+                          <span>{item.title}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatCurrency(item.price)}
+                          </span>
+                        </div>
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={clearFilters}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <Button onClick={handleGenerateReport} className="flex items-center gap-2">
+              <FileText size={18} />
+              Generate New Report
+            </Button>
+          </div>
         </div>
         
         {isLoading ? (
@@ -535,6 +717,80 @@ const Reports = () => {
                   </ResponsiveContainer>
                 </div>
               </CustomCard>
+              
+              {selectedItems.length > 0 && itemData.length > 0 && (
+                <CustomCard padding="md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium">Selected Items Revenue Analysis</h3>
+                    <BarChart3 size={20} className="text-muted-foreground" />
+                  </div>
+                  
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={itemData}
+                        margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
+                      >
+                        <defs>
+                          <linearGradient id="colorItems" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
+                            <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid 
+                          strokeDasharray="3 3" 
+                          vertical={false}
+                          stroke="var(--border)"
+                        />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={70}
+                          tick={{ 
+                            fill: 'var(--muted-foreground)',
+                            fontSize: 12 
+                          }}
+                          axisLine={{ stroke: 'var(--border)' }}
+                          tickLine={{ stroke: 'var(--border)' }}
+                        />
+                        <YAxis
+                          tickFormatter={(value) => `${currencySymbol}${value}`}
+                          width={80}
+                          tick={{ 
+                            fill: 'var(--muted-foreground)',
+                            fontSize: 12 
+                          }}
+                          axisLine={{ stroke: 'var(--border)' }}
+                          tickLine={{ stroke: 'var(--border)' }}
+                        />
+                        <Tooltip 
+                          cursor={false}
+                          formatter={(value, name) => {
+                            if (name === 'amount') return [`${formatCurrency(Number(value))}`, 'Revenue'];
+                            if (name === 'count') return [value, 'Units Sold'];
+                            return [value, name];
+                          }}
+                          contentStyle={{ 
+                            background: 'var(--background)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                          }}
+                          labelStyle={{ color: 'var(--foreground)' }}
+                        />
+                        <Bar 
+                          dataKey="amount" 
+                          fill="url(#colorItems)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={50}
+                          name="Revenue"
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CustomCard>
+              )}
             </div>
             
             <div>
