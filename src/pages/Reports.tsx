@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -117,7 +118,8 @@ const renderLegend = (props) => {
   );
 };
 
-const CustomTooltip = ({ active, payload }) => {
+// Fix the TypeScript error by adding proper typing
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
@@ -339,7 +341,8 @@ const Reports = () => {
               </CustomCard>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
+              {/* Changed the grid layout to make all charts full width */}
               <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Monthly Revenue</h3>
@@ -375,6 +378,7 @@ const Reports = () => {
                 </div>
               </CustomCard>
               
+              {/* Made the invoice status chart wider by making it full width */}
               <CustomCard padding="md" variant="elevated">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -383,7 +387,7 @@ const Reports = () => {
                   </div>
                 </div>
                 
-                <div className="h-[400px] mt-4">
+                <div className="h-[450px] mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -391,8 +395,8 @@ const Reports = () => {
                         cx="50%"
                         cy="40%"
                         labelLine={false}
-                        outerRadius={100}
-                        innerRadius={50}
+                        outerRadius={130} {/* Increased the chart size */}
+                        innerRadius={60} {/* Increased the inner radius for better proportion */}
                         paddingAngle={6}
                         dataKey="value"
                         label={renderCustomizedLabel}
@@ -420,7 +424,7 @@ const Reports = () => {
                 </div>
               </CustomCard>
               
-              <CustomCard padding="md" className="lg:col-span-2">
+              <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Top Clients by Revenue</h3>
                   <BarChart3 size={20} className="text-muted-foreground" />
