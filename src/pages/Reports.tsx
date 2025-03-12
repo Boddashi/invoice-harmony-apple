@@ -26,7 +26,6 @@ import {
   Legend
 } from 'recharts';
 
-// Types and constants
 type Report = {
   id: string;
   title: string;
@@ -47,7 +46,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
   const RADIAN = Math.PI / 180;
-  const radius = outerRadius * 1.6;
+  const radius = outerRadius * 1.8;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   
@@ -57,30 +56,32 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     <g>
       <path 
         d={`M${cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN)},${cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN)}L${x},${y}`} 
-        stroke="#888" 
-        strokeWidth={1} 
+        stroke="#666" 
+        strokeWidth={1.5} 
         fill="none" 
         strokeDasharray="3,3"
       />
-      <circle cx={x} cy={y} r={2} fill="#888" />
+      <circle cx={x} cy={y} r={3} fill="#666" />
       <text 
-        x={x + (x > cx ? 5 : -5)} 
+        x={x + (x > cx ? 10 : -10)} 
         y={y} 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        fill="#666"
-        fontWeight="500"
-        fontSize="13"
+        fill="#333"
+        fontWeight="600"
+        fontSize="14"
+        letterSpacing="0.2px"
       >
         {displayText}
       </text>
       <text 
-        x={x + (x > cx ? 5 : -5)} 
-        y={y + 16} 
+        x={x + (x > cx ? 10 : -10)} 
+        y={y + 18} 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        fill="#888"
-        fontSize="11"
+        fill="#555"
+        fontWeight="500"
+        fontSize="12"
       >
         {`(${(percent * 100).toFixed(0)}%)`}
       </text>
@@ -88,7 +89,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const PIE_COLORS = ['#9b87f5', '#7fcbae', '#ff9087', '#ffcc85'];
+const PIE_COLORS = ['#6366F1', '#22C55E', '#F97316', '#9333EA'];
 
 const Reports = () => {
   const { user } = useAuth();
@@ -370,7 +371,10 @@ const Reports = () => {
                           background: 'var(--card)', 
                           border: '1px solid var(--border)',
                           borderRadius: '0.5rem',
-                          boxShadow: 'var(--apple-sm)'
+                          boxShadow: 'var(--apple-sm)',
+                          padding: '10px',
+                          fontSize: '13px',
+                          fontWeight: '500'
                         }}
                       />
                     </PieChart>
