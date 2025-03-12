@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
@@ -516,6 +517,7 @@ const ClientList = () => {
                           <SelectItem value="10">10</SelectItem>
                           <SelectItem value="25">25</SelectItem>
                           <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
