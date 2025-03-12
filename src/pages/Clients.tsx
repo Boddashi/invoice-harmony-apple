@@ -6,7 +6,7 @@ import ClientList from '../components/clients/ClientList';
 const Clients = () => {
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto px-2 md:px-0 pb-6">
         <ClientList />
       </div>
     </MainLayout>

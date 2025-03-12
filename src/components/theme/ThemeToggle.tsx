@@ -19,7 +19,11 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onClick={() => {
+          const newTheme = theme === "dark" ? "light" : "dark";
+          console.log(`Toggling theme from ${theme} to ${newTheme}`);
+          setTheme(newTheme);
+        }}
         className="rounded-full p-2 transition-colors hover:bg-secondary/80 dark:hover:bg-secondary/30 focus:outline-none"
         aria-label="Toggle theme"
       >

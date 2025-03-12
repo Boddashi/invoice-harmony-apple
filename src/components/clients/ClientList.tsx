@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone } from 'lucide-react';
+import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
 import ClientActions from './ClientActions';
@@ -10,6 +9,32 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 
 interface Client {
   id: string;
@@ -38,7 +63,11 @@ const ClientList = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Format amount with currency symbol
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  
   const formatAmount = (amount: number | string) => {
     if (typeof amount === 'string') {
       return amount;
@@ -46,14 +75,12 @@ const ClientList = () => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
   
-  // Fetch clients and their invoice data from Supabase
   const fetchClients = async () => {
     if (!user) return;
     
     try {
       setIsLoading(true);
       
-      // First, fetch all clients
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('*')
@@ -63,7 +90,6 @@ const ClientList = () => {
         throw clientsError;
       }
       
-      // Then fetch invoice data for all clients
       const { data: invoicesData, error: invoicesError } = await supabase
         .from('invoices')
         .select('client_id, total_amount')
@@ -73,7 +99,6 @@ const ClientList = () => {
         throw invoicesError;
       }
       
-      // Calculate the invoice counts and total spent for each client
       const clientInvoiceMap = new Map();
       
       invoicesData.forEach(invoice => {
@@ -87,12 +112,10 @@ const ClientList = () => {
         
         const clientData = clientInvoiceMap.get(clientId);
         clientData.count += 1;
-        // Fix: Parse the total_amount as a number before adding it
         clientData.total += Number(invoice.total_amount);
         clientInvoiceMap.set(clientId, clientData);
       });
       
-      // Transform the clients data to include invoice information
       const transformedData = clientsData.map(client => {
         const invoiceData = clientInvoiceMap.get(client.id) || { count: 0, total: 0 };
         
@@ -120,6 +143,33 @@ const ClientList = () => {
   useEffect(() => {
     fetchClients();
   }, [user, toast]);
+
+  const filteredClients = clients.filter(client => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      client.name.toLowerCase().includes(query) ||
+      client.email.toLowerCase().includes(query) ||
+      (client.phone && client.phone.toLowerCase().includes(query)) ||
+      (client.city && client.city.toLowerCase().includes(query)) ||
+      (client.country && client.country.toLowerCase().includes(query)) ||
+      (client.vat_number && client.vat_number.toLowerCase().includes(query))
+    );
+  });
+  
+  useEffect(() => {
+    setTotalPages(Math.max(1, Math.ceil(filteredClients.length / itemsPerPage)));
+    
+    if (currentPage > Math.ceil(filteredClients.length / itemsPerPage)) {
+      setCurrentPage(1);
+    }
+  }, [filteredClients, itemsPerPage, currentPage]);
+  
+  const paginatedClients = filteredClients.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleAddClient = async (newClient: any) => {
     try {
@@ -220,7 +270,6 @@ const ClientList = () => {
       }
       
       if (data) {
-        // Find the updated client's invoice data
         const existingClient = clients.find(c => c.id === updatedClient.id);
         const clientWithInvoiceData = {
           ...data,
@@ -229,7 +278,6 @@ const ClientList = () => {
           totalSpent: existingClient?.totalSpent || 0
         };
         
-        // Update the clients list
         setClients(clients.map(client => 
           client.id === updatedClient.id ? clientWithInvoiceData : client
         ));
@@ -266,13 +314,39 @@ const ClientList = () => {
     setClientToEdit(null);
     setIsModalOpen(false);
   };
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
+  const handleItemsPerPageChange = (value: string) => {
+    const newItemsPerPage = parseInt(value, 10);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+  
+  const generatePaginationItems = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+    
+    const items = new Set([1, totalPages, currentPage]);
+    
+    if (currentPage > 1) items.add(currentPage - 1);
+    if (currentPage < totalPages) items.add(currentPage + 1);
+    
+    return Array.from(items).sort((a, b) => a - b);
+  };
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-xl font-semibold">Your Clients</h2>
         <Button 
-          className="gap-2"
+          className="gap-2 w-full sm:w-auto"
           onClick={handleOpenModal}
         >
           <Plus size={18} />
@@ -280,82 +354,263 @@ const ClientList = () => {
         </Button>
       </div>
       
+      <div className="relative w-full">
+        <input
+          type="text"
+          placeholder="Search clients..."
+          className="w-full px-4 py-2 border border-border rounded-md"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+      
       <CustomCard padding="none">
         {isLoading ? (
           <div className="p-8 text-center">
             <p className="text-muted-foreground">Loading clients...</p>
           </div>
-        ) : clients.length === 0 ? (
+        ) : filteredClients.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-muted-foreground">No clients found. Add your first client to get started.</p>
+            <p className="text-muted-foreground">
+              {searchQuery.trim() 
+                ? "No clients match your search. Try a different search term." 
+                : "No clients found. Add your first client to get started."}
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead>
-                <tr className="bg-secondary/50 text-foreground text-left">
-                  <th className="p-4 font-medium">Name</th>
-                  <th className="p-4 font-medium">Contact</th>
-                  <th className="p-4 font-medium">Address</th>
-                  <th className="p-4 font-medium text-right">Invoices</th>
-                  <th className="p-4 font-medium text-right">Total Spent</th>
-                  <th className="p-4 w-16"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {clients.map((client) => (
-                  <tr key={client.id} className="border-t border-border hover:bg-secondary/30 transition-colors">
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{client.name}</span>
-                        {client.type === 'business' && client.vat_number && (
-                          <span className="text-xs text-muted-foreground mt-1">VAT: {client.vat_number}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <Mail size={14} className="text-muted-foreground" />
-                          <span className="text-sm">{client.email}</span>
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Address</TableHead>
+                    <TableHead className="text-right">Invoices</TableHead>
+                    <TableHead className="text-right">Total Spent</TableHead>
+                    <TableHead className="w-16"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedClients.map((client) => (
+                    <TableRow key={client.id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{client.name}</span>
+                          {client.type === 'business' && client.vat_number && (
+                            <span className="text-xs text-muted-foreground mt-1">VAT: {client.vat_number}</span>
+                          )}
                         </div>
-                        {client.phone && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Phone size={14} className="text-muted-foreground" />
-                            <span className="text-sm">{client.phone}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <Mail size={14} className="text-muted-foreground" />
+                            <span className="text-sm">{client.email}</span>
                           </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col text-sm">
-                        {client.street && (
-                          <span>{client.street} {client.number} {client.bus}</span>
-                        )}
-                        {client.postcode && client.city && (
-                          <span>{client.postcode} {client.city}</span>
-                        )}
-                        {client.country && (
-                          <span className="text-muted-foreground">{client.country}</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right">{client.invoices}</td>
-                    <td className="p-4 text-right font-medium">
-                      {client.totalSpent !== undefined ? formatAmount(client.totalSpent) : '$0.00'}
-                    </td>
-                    <td className="p-4">
-                      <ClientActions 
-                        clientId={client.id} 
-                        onEditClient={handleEditClient}
-                        onClientDeleted={fetchClients}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          {client.phone && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Phone size={14} className="text-muted-foreground" />
+                              <span className="text-sm">{client.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col text-sm">
+                          {client.street && (
+                            <span>{client.street} {client.number} {client.bus}</span>
+                          )}
+                          {client.postcode && client.city && (
+                            <span>{client.postcode} {client.city}</span>
+                          )}
+                          {client.country && (
+                            <span className="text-muted-foreground">{client.country}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">{client.invoices}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {client.totalSpent !== undefined ? formatAmount(client.totalSpent) : '$0.00'}
+                      </TableCell>
+                      <TableCell>
+                        <ClientActions 
+                          clientId={client.id} 
+                          onEditClient={handleEditClient}
+                          onClientDeleted={fetchClients}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="md:hidden divide-y divide-border">
+              {paginatedClients.map((client) => (
+                <div key={client.id} className="p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-medium">{client.name}</h3>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <Mail size={12} />
+                        {client.email}
+                      </p>
+                      {client.phone && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                          <Phone size={12} />
+                          {client.phone}
+                        </p>
+                      )}
+                    </div>
+                    <ClientActions 
+                      clientId={client.id} 
+                      onEditClient={handleEditClient}
+                      onClientDeleted={fetchClients}
+                    />
+                  </div>
+                  
+                  {client.street && (
+                    <div className="text-sm mt-2">
+                      <div>{client.street} {client.number} {client.bus}</div>
+                      {client.postcode && client.city && (
+                        <div>{client.postcode} {client.city}</div>
+                      )}
+                      {client.country && (
+                        <div className="text-muted-foreground">{client.country}</div>
+                      )}
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Invoices</p>
+                      <p className="font-medium">{client.invoices || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total Spent</p>
+                      <p className="font-medium">
+                        {client.totalSpent !== undefined ? formatAmount(client.totalSpent) : '$0.00'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                  <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
+                    <span className="text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={handleItemsPerPageChange}
+                    >
+                      <SelectTrigger className="w-20 h-8">
+                        <SelectValue placeholder="10" />
+                      </SelectTrigger>
+                      <SelectContent align="end">
+                        <SelectGroup>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="25">25</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(1)}
+                          disabled={currentPage === 1}
+                          className={cn(
+                            "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                          aria-label="Go to first page"
+                        >
+                          <ChevronsLeft size={16} />
+                        </button>
+                      </PaginationItem>
+                      
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                        >
+                          <ChevronLeft size={16} />
+                          <span className="hidden sm:inline">Previous</span>
+                        </button>
+                      </PaginationItem>
+                      
+                      {generatePaginationItems().map((page, index, array) => {
+                        const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
+                        
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsisBefore && (
+                              <PaginationItem className="hidden sm:inline-block">
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <button
+                                onClick={() => handlePageChange(page)}
+                                className={cn(
+                                  "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                                  currentPage === page 
+                                    ? "bg-primary text-primary-foreground" 
+                                    : "hover:bg-secondary"
+                                )}
+                              >
+                                {page}
+                              </button>
+                            </PaginationItem>
+                          </React.Fragment>
+                        );
+                      })}
+                      
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                        >
+                          <span className="hidden sm:inline">Next</span>
+                          <ChevronRight size={16} />
+                        </button>
+                      </PaginationItem>
+                      
+                      <PaginationItem>
+                        <button
+                          onClick={() => handlePageChange(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className={cn(
+                            "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                          )}
+                          aria-label="Go to last page"
+                        >
+                          <ChevronsRight size={16} />
+                        </button>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CustomCard>
 
