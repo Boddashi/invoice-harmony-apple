@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -37,7 +36,6 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   onPeriodChange,
   selectedPeriod
 }) => {
-  // Don't render chart content if there's no valid data
   const hasValidData = data && data.length > 0;
 
   return (
@@ -81,7 +79,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               </defs>
               <CartesianGrid 
                 strokeDasharray="3 3" 
-                vertical={false} 
+                vertical={false}
                 stroke="var(--border)"
               />
               <XAxis
@@ -90,7 +88,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 textAnchor="end"
                 height={70}
                 tick={{ 
-                  fill: 'var(--foreground)',
+                  fill: 'hsl(var(--foreground))',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
@@ -100,7 +98,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 tickFormatter={(value) => `${currencySymbol}${value}`}
                 width={80}
                 tick={{ 
-                  fill: 'var(--foreground)',
+                  fill: 'hsl(var(--foreground))',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}

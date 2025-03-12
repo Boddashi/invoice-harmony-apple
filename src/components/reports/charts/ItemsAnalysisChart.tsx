@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -27,21 +26,6 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   currencySymbol,
   formatCurrency
 }) => {
-  // Return null if there's no data to display
-  if (!data || data.length === 0) {
-    return (
-      <CustomCard padding="md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Selected Items Revenue Analysis</h3>
-          <BarChart3 size={20} className="text-muted-foreground" />
-        </div>
-        <div className="h-80 flex items-center justify-center">
-          <p className="text-muted-foreground">No item data available</p>
-        </div>
-      </CustomCard>
-    );
-  }
-  
   return (
     <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
@@ -72,7 +56,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               textAnchor="end"
               height={70}
               tick={{ 
-                fill: 'var(--foreground)',
+                fill: 'hsl(var(--foreground))',
                 fontSize: 12 
               }}
               axisLine={{ stroke: 'var(--border)' }}
@@ -82,7 +66,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               tickFormatter={(value) => `${currencySymbol}${value}`}
               width={80}
               tick={{ 
-                fill: 'var(--foreground)',
+                fill: 'hsl(var(--foreground))',
                 fontSize: 12 
               }}
               axisLine={{ stroke: 'var(--border)' }}

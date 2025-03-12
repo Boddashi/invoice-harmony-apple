@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -23,7 +22,6 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
   currencySymbol,
   formatCurrency
 }) => {
-  // Don't render chart content if there's no valid data
   const hasValidData = data && data.length > 0;
 
   return (
@@ -61,7 +59,7 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
                 textAnchor="end"
                 height={70}
                 tick={{ 
-                  fill: 'var(--foreground)',
+                  fill: 'hsl(var(--foreground))',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
@@ -71,7 +69,7 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
                 tickFormatter={(value) => `${currencySymbol}${value}`}
                 width={80}
                 tick={{ 
-                  fill: 'var(--foreground)',
+                  fill: 'hsl(var(--foreground))',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
