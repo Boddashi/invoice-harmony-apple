@@ -137,41 +137,22 @@ const Settings = () => {
     
     const file = files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    const filePath = `company-logos/${fileName}`;
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     
     try {
       setUploadingLogo(true);
       
-      const { data: buckets, error: bucketError } = await supabase
-        .storage
-        .listBuckets();
-      
-      if (bucketError) {
-        throw bucketError;
-      }
-      
-      const bucketExists = buckets.some(bucket => bucket.name === 'company-logos');
-      
-      if (!bucketExists) {
-        const { error: createBucketError } = await supabase
-          .storage
-          .createBucket('company-logos', {
-            public: true
-          });
-        
-        if (createBucketError) {
-          throw createBucketError;
-        }
-      }
-      
-      const { error: uploadError } = await supabase
+      const { error: uploadError, data } = await supabase
         .storage
         .from('company-logos')
         .upload(fileName, file);
       
       if (uploadError) {
         throw uploadError;
+      }
+      
+      if (!data) {
+        throw new Error('Failed to upload logo');
       }
       
       const { data: publicURL } = supabase
@@ -209,7 +190,7 @@ const Settings = () => {
   };
   
   const handleRemoveLogo = async () => {
-    if (!user || !companySettings.logo_url) return;
+    if (!companySettings.logo_url) return;
     
     try {
       setUploadingLogo(true);
@@ -821,5 +802,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
-
