@@ -29,7 +29,7 @@ import {
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
-type SortField = 'invoice_number' | 'client.name' | 'issue_date' | 'due_date' | 'total_amount' | 'status';
+type SortField = 'invoice_number' | 'client.name' | 'issue_date' | 'due_date' | 'total_amount';
 type SortOrder = 'asc' | 'desc';
 
 interface Invoice {
@@ -208,8 +208,6 @@ const Invoices = () => {
           return multiplier * (new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
         case 'total_amount':
           return multiplier * (a.total_amount - b.total_amount);
-        case 'status':
-          return multiplier * a.status.localeCompare(b.status);
         default:
           return 0;
       }
