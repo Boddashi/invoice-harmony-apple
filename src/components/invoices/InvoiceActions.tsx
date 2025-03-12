@@ -280,13 +280,12 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     return (
       <div className="flex items-center gap-1">
         <button 
-          className="flex items-center gap-1 p-1.5 text-sm text-gray-500 hover:text-apple-green hover:bg-gray-100 rounded-md transition-colors" 
+          className="p-1.5 text-gray-500 hover:text-apple-green hover:bg-gray-100 rounded-md transition-colors" 
           onClick={handleMarkAsPaid}
           disabled={isMarkingAsPaid}
           title="Mark as Paid"
         >
           <Check size={14} />
-          {isMarkingAsPaid ? 'Updating...' : 'Paid'}
         </button>
         <button 
           className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
