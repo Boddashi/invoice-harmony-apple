@@ -395,8 +395,8 @@ const Reports = () => {
                         cx="50%"
                         cy="40%"
                         labelLine={false}
-                        outerRadius={130} {/* Increased the chart size */}
-                        innerRadius={60} {/* Increased the inner radius for better proportion */}
+                        outerRadius={130} /* Increased the chart size */
+                        innerRadius={60} /* Increased the inner radius for better proportion */
                         paddingAngle={6}
                         dataKey="value"
                         label={renderCustomizedLabel}
