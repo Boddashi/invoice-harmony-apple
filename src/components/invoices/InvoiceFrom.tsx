@@ -3,8 +3,6 @@ import React, { useEffect, useState } from 'react';
 import CustomCard from '../ui/CustomCard';
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings } from '@/models/CompanySettings';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface InvoiceFromProps {
@@ -47,26 +45,28 @@ const InvoiceFrom: React.FC<InvoiceFromProps> = ({ userEmail, readOnly = false }
 
   return (
     <CustomCard>
-      <h3 className="text-lg font-medium mb-4">From</h3>
+      <h3 className="text-lg font-medium mb-3">From</h3>
       
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading company information...</p>
+        <div className="py-2 text-sm text-muted-foreground">Loading...</div>
       ) : companySettings ? (
-        <div className="space-y-2 text-sm">
-          <p className="font-medium">{companySettings.company_name}</p>
-          <p>{companySettings.street} {companySettings.number}{companySettings.bus ? `, ${companySettings.bus}` : ''}</p>
-          <p>{companySettings.postal_code} {companySettings.city}</p>
-          <p>{companySettings.country}</p>
-          {companySettings.vat_number && <p>VAT: {companySettings.vat_number}</p>}
-          {companySettings.company_email && <p>Email: {companySettings.company_email}</p>}
-          {companySettings.company_phone && <p>Phone: {companySettings.company_phone}</p>}
-          {companySettings.company_website && <p>Web: {companySettings.company_website}</p>}
+        <div className="space-y-1 text-sm">
+          <p className="font-semibold text-base">{companySettings.company_name}</p>
+          <p className="text-muted-foreground">{companySettings.street} {companySettings.number}{companySettings.bus ? `, ${companySettings.bus}` : ''}</p>
+          <p className="text-muted-foreground">{companySettings.postal_code} {companySettings.city}, {companySettings.country}</p>
+          
+          <div className="pt-1 flex flex-col space-y-0.5">
+            {companySettings.vat_number && <p className="text-xs text-muted-foreground">VAT: {companySettings.vat_number}</p>}
+            {companySettings.company_email && <p className="text-xs text-muted-foreground">Email: {companySettings.company_email}</p>}
+            {companySettings.company_phone && <p className="text-xs text-muted-foreground">Phone: {companySettings.company_phone}</p>}
+            {companySettings.company_website && <p className="text-xs text-muted-foreground">Web: {companySettings.company_website}</p>}
+          </div>
         </div>
       ) : (
         <div className="space-y-1">
           <p className="font-medium">{userEmail}</p>
           {!readOnly && (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-xs text-muted-foreground">
               No company details found. Please add them in Settings.
             </p>
           )}
