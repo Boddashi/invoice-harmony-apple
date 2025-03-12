@@ -223,7 +223,13 @@ const DashboardSummary = () => {
                     {item.change}
                   </span>
                 )}
-                {item.isPositive ? (
+                {item.title === 'Pending Invoices' ? (
+                  <ArrowDownRight size={16} className="text-apple-orange" />
+                ) : item.title === 'Paid Invoices' ? (
+                  <ArrowUpRight size={16} className="text-apple-blue" />
+                ) : item.title === 'Overdue Invoices' ? (
+                  <ArrowDownRight size={16} className="text-apple-red" />
+                ) : item.isPositive ? (
                   <ArrowUpRight size={16} className="text-apple-green" />
                 ) : (
                   <ArrowDownRight size={16} className="text-apple-red" />
