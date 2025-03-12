@@ -7,7 +7,6 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { generateReportPDF } from '@/utils/pdfGenerator';
 
 interface Report {
   id: string;
@@ -27,20 +26,51 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
   const handleExport = async (report: Report) => {
     try {
       toast({
-        title: "Generating Report",
+        title: "Generating CSV",
         description: "Please wait while we prepare your report...",
       });
 
-      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}-${report.date}`;
-      const pdfDataUrl = await generateReportPDF(report);
+      // Convert report data to CSV format
+      let csvContent = "";
+      
+      // Define headers and content based on report type
+      if (report.type === 'monthly') {
+        csvContent = "Period,Amount\n";
+        report.data.forEach((item: any) => {
+          csvContent += `"${item.period}",${item.amount}\n`;
+        });
+      } else if (report.type === 'status') {
+        csvContent = "Status,Count,Percentage\n";
+        report.data.forEach((item: any) => {
+          csvContent += `"${item.name}",${item.value},${(item.percent * 100).toFixed(2)}%\n`;
+        });
+      } else if (report.type === 'client') {
+        csvContent = "Client,Revenue\n";
+        report.data.forEach((item: any) => {
+          csvContent += `"${item.name}",${item.amount}\n`;
+        });
+      } else if (report.type === 'item') {
+        csvContent = "Item,Revenue,Count\n";
+        report.data.forEach((item: any) => {
+          csvContent += `"${item.name}",${item.amount},${item.count}\n`;
+        });
+      }
+      
+      // Create a Blob with the CSV content
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
       
       // Create a link element and trigger download
+      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}-${report.date}`;
       const link = document.createElement('a');
-      link.href = pdfDataUrl;
-      link.download = `${fileName}.pdf`;
+      link.href = url;
+      link.download = `${fileName}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      
+      // Clean up
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Export Complete",
@@ -58,10 +88,10 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Saved Reports</h2>
+      <h2 className="text-xl font-semibold mb-4">Export Reports</h2>
       
       <Table>
-        <TableCaption>A list of your saved reports.</TableCaption>
+        <TableCaption>A list of reports available for export.</TableCaption>
         <TableHeader>
           <TableRow>
             <TableHead>Report</TableHead>

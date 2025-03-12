@@ -451,7 +451,6 @@ const Reports = () => {
             
             <SavedReportsTable 
               reports={savedReports}
-              onExport={handleExportReport}
             />
           </>
         )}
