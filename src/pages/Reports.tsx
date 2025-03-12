@@ -10,7 +10,7 @@ import CustomCard from '@/components/ui/CustomCard';
 import { Button } from '@/components/ui/button';
 import { 
   FileText, BarChart3, Download, PieChart as PieChartIcon, 
-  CheckCircle2, Clock, AlertCircle, FilterIcon 
+  CheckCircle2, Clock, AlertCircle, FilterIcon, Users 
 } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { format } from 'date-fns';
@@ -66,6 +66,11 @@ type Item = {
   id: string;
   title: string;
   price: number;
+};
+
+type Client = {
+  id: string;
+  name: string;
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -196,20 +201,24 @@ const Reports = () => {
   const [savedReports, setSavedReports] = useState<Report[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchItemQuery, setSearchItemQuery] = useState('');
+  const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClients, setSelectedClients] = useState<string[]>([]);
+  const [searchClientQuery, setSearchClientQuery] = useState('');
 
   useEffect(() => {
     if (user) {
       fetchItems();
+      fetchClients();
       fetchInvoiceData();
     }
   }, [user]);
 
   useEffect(() => {
-    if (user && selectedItems.length > 0) {
+    if (user && (selectedItems.length > 0 || selectedClients.length > 0)) {
       fetchInvoiceData();
     }
-  }, [selectedItems]);
+  }, [selectedItems, selectedClients]);
 
   const fetchItems = async () => {
     try {
@@ -231,6 +240,26 @@ const Reports = () => {
     }
   };
 
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name')
+        .eq('user_id', user?.id);
+      
+      if (error) throw error;
+      
+      setClients(data || []);
+    } catch (error: any) {
+      console.error('Error fetching clients:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to load clients."
+      });
+    }
+  };
+
   const toggleItemSelection = (itemId: string) => {
     setSelectedItems(prev => {
       if (prev.includes(itemId)) {
@@ -241,8 +270,22 @@ const Reports = () => {
     });
   };
 
+  const toggleClientSelection = (clientId: string) => {
+    setSelectedClients(prev => {
+      if (prev.includes(clientId)) {
+        return prev.filter(id => id !== clientId);
+      } else {
+        return [...prev, clientId];
+      }
+    });
+  };
+
   const filteredItems = items.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    item.title.toLowerCase().includes(searchItemQuery.toLowerCase())
+  );
+
+  const filteredClients = clients.filter(client => 
+    client.name.toLowerCase().includes(searchClientQuery.toLowerCase())
   );
 
   const fetchInvoiceData = async () => {
@@ -258,6 +301,10 @@ const Reports = () => {
       
       if (selectedItems.length > 0) {
         invoiceQuery = invoiceQuery.filter('invoice_items.item_id', 'in', `(${selectedItems.join(',')})`);
+      }
+      
+      if (selectedClients.length > 0) {
+        invoiceQuery = invoiceQuery.filter('client_id', 'in', `(${selectedClients.join(',')})`);
       }
       
       const { data: invoices, error: invoicesError } = await invoiceQuery;
@@ -332,7 +379,7 @@ const Reports = () => {
         const invoiceItems = invoice.invoice_items || [];
         
         invoiceItems.forEach(item => {
-          if (selectedItems.includes(item.item_id)) {
+          if (selectedItems.length === 0 || selectedItems.includes(item.item_id)) {
             const itemDetails = items.find(i => i.id === item.item_id);
             const itemName = itemDetails ? itemDetails.title : 'Unknown Item';
             
@@ -430,7 +477,9 @@ const Reports = () => {
 
   const clearFilters = () => {
     setSelectedItems([]);
-    setSearchQuery('');
+    setSelectedClients([]);
+    setSearchItemQuery('');
+    setSearchClientQuery('');
   };
 
   return (
@@ -460,8 +509,8 @@ const Reports = () => {
                 <div className="px-2 py-2">
                   <Input
                     placeholder="Search items..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={searchItemQuery}
+                    onChange={(e) => setSearchItemQuery(e.target.value)}
                     className="mb-2"
                   />
                 </div>
@@ -492,9 +541,61 @@ const Reports = () => {
                     variant="outline" 
                     size="sm" 
                     className="w-full"
-                    onClick={clearFilters}
+                    onClick={() => setSelectedItems([])}
                   >
-                    Clear Filters
+                    Clear Item Filters
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Users size={16} />
+                  Filter by Clients
+                  {selectedClients.length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 bg-primary/20 text-primary rounded-full text-xs font-medium">
+                      {selectedClients.length}
+                    </span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-72">
+                <DropdownMenuLabel>Select Clients</DropdownMenuLabel>
+                <div className="px-2 py-2">
+                  <Input
+                    placeholder="Search clients..."
+                    value={searchClientQuery}
+                    onChange={(e) => setSearchClientQuery(e.target.value)}
+                    className="mb-2"
+                  />
+                </div>
+                <DropdownMenuSeparator />
+                <div className="max-h-[300px] overflow-y-auto py-1">
+                  {filteredClients.length === 0 ? (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div>
+                  ) : (
+                    filteredClients.map((client) => (
+                      <DropdownMenuCheckboxItem
+                        key={client.id}
+                        checked={selectedClients.includes(client.id)}
+                        onCheckedChange={() => toggleClientSelection(client.id)}
+                      >
+                        <span>{client.name}</span>
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  )}
+                </div>
+                <DropdownMenuSeparator />
+                <div className="p-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setSelectedClients([])}
+                  >
+                    Clear Client Filters
                   </Button>
                 </div>
               </DropdownMenuContent>
@@ -506,6 +607,19 @@ const Reports = () => {
             </Button>
           </div>
         </div>
+        
+        {(selectedItems.length > 0 || selectedClients.length > 0) && (
+          <div className="flex justify-end">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={clearFilters}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              Clear All Filters
+            </Button>
+          </div>
+        )}
         
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
