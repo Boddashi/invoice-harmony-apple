@@ -346,21 +346,21 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                 <DropdownMenuItem 
                   onClick={handleSend}
                   disabled={isSending}
-                  className="flex items-center text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-blue-700 hover:bg-blue-50 rounded-md my-1 cursor-pointer"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   {isSending ? 'Sending...' : 'Send'}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleEdit}
-                  className="flex items-center text-amber-700 bg-amber-50 hover:bg-amber-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-amber-700 hover:bg-amber-50 rounded-md my-1 cursor-pointer"
                 >
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleOpenDeleteDialog} 
-                  className="flex items-center text-red-700 bg-red-50 hover:bg-red-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-red-700 hover:bg-red-50 rounded-md my-1 cursor-pointer"
                   disabled={isDeleting}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -374,14 +374,14 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                 <DropdownMenuItem 
                   onClick={handleMarkAsPaid}
                   disabled={isMarkingAsPaid}
-                  className="flex items-center text-green-700 bg-green-50 hover:bg-green-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-green-700 hover:bg-green-50 rounded-md my-1 cursor-pointer"
                 >
                   <Check className="mr-2 h-4 w-4" />
                   {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleDownload}
-                  className="flex items-center text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-gray-600 hover:bg-gray-50 rounded-md my-1 cursor-pointer"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Download
@@ -392,7 +392,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
             {status === 'paid' && (
               <DropdownMenuItem 
                 onClick={handleDownload}
-                className="flex items-center text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md my-1 cursor-pointer"
+                className="flex items-center text-gray-600 hover:bg-gray-50 rounded-md my-1 cursor-pointer"
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download
@@ -403,14 +403,14 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
               <>
                 <DropdownMenuItem 
                   onClick={handleSendReminder}
-                  className="flex items-center text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-orange-700 hover:bg-orange-50 rounded-md my-1 cursor-pointer"
                 >
                   <Bell className="mr-2 h-4 w-4" />
                   Send Reminder
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleDownload}
-                  className="flex items-center text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-md my-1 cursor-pointer"
+                  className="flex items-center text-gray-600 hover:bg-gray-50 rounded-md my-1 cursor-pointer"
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Download
