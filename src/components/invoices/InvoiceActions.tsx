@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, Download, Eye, Send } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Send } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,7 +43,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
 
   const handleDownload = async () => {
     try {
-      // Only pending/paid invoices should have PDFs
       if (status === 'draft') {
         toast({
           title: "Info",
@@ -53,13 +51,11 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         return;
       }
       
-      // Get the public URL for the PDF
       const { data } = supabase.storage
         .from('invoices')
         .getPublicUrl(`${invoiceId}/invoice.pdf`);
       
       if (data && data.publicUrl) {
-        // Create a link and trigger download
         const link = document.createElement('a');
         link.href = data.publicUrl;
         link.download = `invoice-${invoiceId}.pdf`;
@@ -88,7 +84,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     
     setIsSending(true);
     try {
-      // First, update the invoice status to 'pending'
       const { error: updateError } = await supabase
         .from('invoices')
         .update({ status: 'pending' })
@@ -96,7 +91,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       
       if (updateError) throw updateError;
       
-      // Get the invoice data to generate the PDF
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .select(`
@@ -108,7 +102,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       
       if (invoiceError) throw invoiceError;
       
-      // Get the invoice items
       const { data: invoiceItems, error: itemsError } = await supabase
         .from('invoice_items')
         .select(`
@@ -119,14 +112,12 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       
       if (itemsError) throw itemsError;
       
-      // Get user info
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!invoice || !invoiceItems || !user) {
         throw new Error("Could not retrieve all required data");
       }
       
-      // Format items for PDF generator
       const itemsForPDF = invoiceItems.map(item => {
         const itemData = item.items;
         return {
@@ -138,11 +129,9 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         };
       });
       
-      // Calculate needed values
       const subTotal = invoiceItems.reduce((sum, item) => sum + Number(item.total_amount), 0);
       const taxAmount = invoice.tax_amount || 0;
       
-      // Get currency symbol
       const { data: settings } = await supabase
         .from('company_settings')
         .select('default_currency')
@@ -153,7 +142,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
                             settings?.default_currency === 'EUR' ? '€' : 
                             settings?.default_currency === 'GBP' ? '£' : '$';
       
-      // Generate the PDF
       const pdfBase64 = await generateInvoicePDF({
         id: invoiceId,
         invoice_number: invoice.invoice_number,
@@ -169,14 +157,11 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         currencySymbol
       });
       
-      // Save PDF to storage (automatically done in generateInvoicePDF)
-      
       toast({
         title: "Success",
         description: "Invoice sent successfully and PDF generated"
       });
       
-      // Refresh the page to show updated status
       window.location.reload();
       
     } catch (error: any) {
@@ -253,13 +238,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
       <div className="flex items-center gap-1">
         <button 
           className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-          title="View"
-          onClick={handleView}
-        >
-          <Eye size={16} />
-        </button>
-        <button 
-          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
           title="Download"
           onClick={handleDownload}
         >
@@ -272,13 +250,6 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
   return (
     <>
       <div className="flex items-center gap-1">
-        <button 
-          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-          title="View"
-          onClick={handleView}
-        >
-          <Eye size={16} />
-        </button>
         {status === 'draft' ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
