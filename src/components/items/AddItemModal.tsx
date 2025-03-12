@@ -192,19 +192,16 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
             ) : fetchError ? (
               <div className="text-sm text-destructive py-2">
                 Error: {fetchError}
-                <pre className="mt-1 p-2 bg-muted rounded-md text-xs overflow-auto">
-                  {JSON.stringify(vatRates, null, 2)}
-                </pre>
               </div>
             ) : vatRates.length > 0 ? (
               <Select value={vat} onValueChange={setVat}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select VAT rate" />
                 </SelectTrigger>
                 <SelectContent>
                   {vatRates.map((rate) => (
                     <SelectItem key={rate.title} value={rate.title}>
-                      {formatVatRateLabel(rate)}
+                      {rate.title}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -193,7 +192,7 @@ const EditItemModal = ({ item, onItemUpdated, trigger }: EditItemModalProps) => 
               </div>
             ) : vatRates.length > 0 ? (
               <Select value={vat} onValueChange={setVat}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select VAT rate" />
                 </SelectTrigger>
                 <SelectContent>
