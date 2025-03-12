@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,12 +30,9 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
         description: "Please wait while we prepare your report...",
       });
 
-      // Convert report data to CSV format
       let csvContent = "";
       
-      // Define headers and content based on report type
       if (report.type === 'monthly') {
-        // Use the title with selected period for revenue exports
         const periodLabel = getPeriodLabel(selectedPeriod);
         csvContent = `Period,${periodLabel} Revenue\n`;
         report.data.forEach((item: any) => {
@@ -59,11 +55,9 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
         });
       }
       
-      // Create a Blob with the CSV content
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       
-      // Create a link element and trigger download
       const periodSuffix = report.type === 'monthly' ? `-${selectedPeriod}` : '';
       const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}${periodSuffix}-${report.date}`;
       const link = document.createElement('a');
@@ -73,7 +67,6 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
       link.click();
       document.body.removeChild(link);
       
-      // Clean up
       URL.revokeObjectURL(url);
 
       toast({
@@ -100,9 +93,18 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
     }
   };
 
-  const getTypeColor = (type: string) => {
+  const getTypeColor = (type: string, reportType: string) => {
+    if (type === 'monthly' && reportType === 'Revenue') {
+      switch (selectedPeriod) {
+        case 'daily': return 'bg-cyan-100 text-cyan-800';
+        case 'weekly': return 'bg-indigo-100 text-indigo-800';
+        case 'monthly': return 'bg-blue-100 text-blue-800';
+        case 'yearly': return 'bg-violet-100 text-violet-800';
+        default: return 'bg-blue-100 text-blue-800';
+      }
+    }
+    
     switch (type) {
-      case 'monthly': return 'bg-blue-100 text-blue-800';
       case 'status': return 'bg-green-100 text-green-800';
       case 'client': return 'bg-purple-100 text-purple-800';
       case 'item': return 'bg-amber-100 text-amber-800';
@@ -133,8 +135,13 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
                           ? `${getPeriodLabel(selectedPeriod)} Revenue` 
                           : report.title}
                       </h3>
-                      <Badge variant="outline" className={getTypeColor(report.type)}>
-                        {report.type.charAt(0).toUpperCase() + report.type.slice(1)}
+                      <Badge 
+                        variant="outline" 
+                        className={getTypeColor(report.type, report.title)}
+                      >
+                        {report.type === 'monthly' 
+                          ? getPeriodLabel(selectedPeriod)
+                          : report.type.charAt(0).toUpperCase() + report.type.slice(1)}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{report.date}</p>
