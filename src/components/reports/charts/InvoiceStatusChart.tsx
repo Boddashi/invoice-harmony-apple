@@ -63,7 +63,7 @@ const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
             </div>
           </div>
           <span className="text-muted-foreground ml-auto">
-            {entry.payload.count} ({(entry.payload.percent * 100).toFixed(0)}%)
+            {entry.payload.value} ({(entry.payload.percent * 100).toFixed(0)}%)
           </span>
         </div>
       ))}
@@ -81,6 +81,23 @@ interface InvoiceStatusChartProps {
 }
 
 const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
+  // Don't render the chart if there's no valid data
+  if (!data || data.length === 0 || data.every(item => item.value === 0)) {
+    return (
+      <CustomCard padding="md" variant="elevated">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <PieChartIcon size={18} className="text-primary" />
+            <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
+          </div>
+        </div>
+        <div className="h-[400px] flex items-center justify-center">
+          <p className="text-muted-foreground">No status data available</p>
+        </div>
+      </CustomCard>
+    );
+  }
+
   return (
     <CustomCard padding="md" variant="elevated">
       <div className="flex items-center justify-between mb-6">

@@ -27,7 +27,8 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   currencySymbol,
   formatCurrency
 }) => {
-  if (data.length === 0) return null;
+  // Return null if there's no data to display
+  if (!data || data.length === 0) return null;
   
   return (
     <CustomCard padding="md">
