@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import CustomCard from '@/components/ui/CustomCard';
 import { Button } from '@/components/ui/button';
 import { 
-  FileText, BarChart3, Download, PieChart as PieChartIcon, 
+  BarChart3, Download, PieChart as PieChartIcon, 
   CheckCircle2, Clock, AlertCircle, FilterIcon, Users 
 } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -454,13 +454,6 @@ const Reports = () => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
 
-  const handleGenerateReport = () => {
-    toast({
-      title: "Report Generation",
-      description: "This feature will be available soon!",
-    });
-  };
-
   const handleExportReport = (report: Report) => {
     toast({
       title: "Export Started",
@@ -600,11 +593,6 @@ const Reports = () => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-            
-            <Button onClick={handleGenerateReport} className="flex items-center gap-2">
-              <FileText size={18} />
-              Generate New Report
-            </Button>
           </div>
         </div>
         
@@ -924,28 +912,3 @@ const Reports = () => {
                   {savedReports.map((report) => (
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">{report.title}</TableCell>
-                      <TableCell>{report.type.charAt(0).toUpperCase() + report.type.slice(1)}</TableCell>
-                      <TableCell>{report.date}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => handleExportReport(report)}
-                          title="Export Report"
-                        >
-                          <Download size={18} />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </>
-        )}
-      </div>
-    </MainLayout>
-  );
-};
-
-export default Reports;
