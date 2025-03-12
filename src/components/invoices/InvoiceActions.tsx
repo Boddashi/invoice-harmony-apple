@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, Download, Send, Check } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -275,6 +275,81 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const handleCloseDeleteDialog = () => {
     setShowDeleteDialog(false);
   };
+
+  const handleSendReminder = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      // First get the invoice details
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          client:clients(*)
+        `)
+        .eq('id', invoiceId)
+        .single();
+      
+      if (invoiceError) throw invoiceError;
+      
+      const response = await fetch('/functions/v1/send-overdue-reminder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          clientName: invoice.client.name,
+          clientEmail: invoice.client.email,
+          invoiceNumber: invoice.invoice_number,
+          dueDate: invoice.due_date,
+          amount: invoice.total_amount,
+          currencySymbol: '$' // You might want to get this from your currency context
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send reminder');
+      }
+
+      toast({
+        title: "Success",
+        description: "Reminder email sent successfully"
+      });
+      
+    } catch (error: any) {
+      console.error('Error sending reminder:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send reminder"
+      });
+    }
+  };
+
+  if (status === 'overdue') {
+    return (
+      <div className="flex items-center gap-1">
+        <button 
+          className="p-1.5 text-apple-red hover:bg-apple-red/10 rounded-md transition-colors" 
+          onClick={handleSendReminder}
+          title="Send Reminder"
+        >
+          <Bell size={16} />
+        </button>
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="Download"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload();
+          }}
+        >
+          <Download size={16} />
+        </button>
+      </div>
+    );
+  }
 
   if (status === 'pending') {
     return (
