@@ -33,8 +33,6 @@ const Settings = () => {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'company', label: 'Company', icon: Building },
     { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'security', label: 'Security', icon: Shield },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
   ];
 
   const currencies = [
@@ -780,20 +778,6 @@ const Settings = () => {
                 )}
               </CustomCard>
             )}
-            
-            {activeTab === 'security' && (
-              <CustomCard>
-                <h2 className="text-xl font-semibold mb-6">Security Settings</h2>
-                <p className="text-muted-foreground">Update your password and configure security settings.</p>
-              </CustomCard>
-            )}
-            
-            {activeTab === 'notifications' && (
-              <CustomCard>
-                <h2 className="text-xl font-semibold mb-6">Notification Preferences</h2>
-                <p className="text-muted-foreground">Customize when and how you receive notifications.</p>
-              </CustomCard>
-            )}
           </div>
         </div>
       </div>
@@ -802,3 +786,4 @@ const Settings = () => {
 };
 
 export default Settings;
+
