@@ -7,16 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogAction,
-} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -251,12 +241,13 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         throw error;
       }
 
+      setShowDeleteDialog(false);
+
       toast({
         title: "Success",
         description: "Invoice deleted successfully"
       });
       
-      setShowDeleteDialog(false);
       navigate('/invoices', { replace: true });
       
     } catch (error: any) {
@@ -274,6 +265,12 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const handleOpenDeleteDialog = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    if (!isDeleting) {
+      setShowDeleteDialog(false);
+    }
   };
 
   const handleSendReminder = async (e: React.MouseEvent) => {
@@ -437,9 +434,10 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 
       <Dialog 
         open={showDeleteDialog} 
-        onOpenChange={setShowDeleteDialog}
+        onOpenChange={handleCloseDeleteDialog}
+        modal={true}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px] z-50">
           <DialogHeader>
             <DialogTitle>Delete Invoice</DialogTitle>
             <DialogDescription>
@@ -449,7 +447,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setShowDeleteDialog(false)} 
+              onClick={handleCloseDeleteDialog}
               disabled={isDeleting}
             >
               Cancel
@@ -469,3 +467,4 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 };
 
 export default InvoiceActions;
+
