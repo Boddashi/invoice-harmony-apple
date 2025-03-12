@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { Check, ChevronDown, Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronDown, Plus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
@@ -53,7 +61,7 @@ const Invoices = () => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
@@ -132,7 +140,7 @@ const Invoices = () => {
     if (currentPage > Math.ceil(filteredInvoices.length / itemsPerPage)) {
       setCurrentPage(1);
     }
-  }, [filteredInvoices, currentPage]);
+  }, [filteredInvoices, itemsPerPage, currentPage]);
   
   // Get paginated invoices for current page
   const paginatedInvoices = filteredInvoices.slice(
@@ -168,6 +176,12 @@ const Invoices = () => {
       // Scroll to top of table for better UX
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+  
+  const handleItemsPerPageChange = (value: string) => {
+    const newItemsPerPage = parseInt(value, 10);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
   
   // Generate page numbers for pagination
@@ -381,68 +395,121 @@ const Invoices = () => {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="p-4 border-t border-border">
-                  <Pagination>
-                    <PaginationContent>
-                      {/* Previous page button */}
-                      <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
-                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                        >
-                          <ChevronLeft size={16} />
-                          <span className="hidden sm:inline">Previous</span>
-                        </button>
-                      </PaginationItem>
-                      
-                      {/* Page numbers */}
-                      {generatePaginationItems().map((page, index, array) => {
-                        // Add ellipsis when there are gaps between page numbers
-                        const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
-                        
-                        return (
-                          <React.Fragment key={page}>
-                            {showEllipsisBefore && (
-                              <PaginationItem className="hidden sm:inline-block">
-                                <PaginationEllipsis />
-                              </PaginationItem>
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    {/* Rows per page selector */}
+                    <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
+                      <span className="text-muted-foreground whitespace-nowrap">Rows per page:</span>
+                      <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={handleItemsPerPageChange}
+                      >
+                        <SelectTrigger className="w-20 h-8">
+                          <SelectValue placeholder="10" />
+                        </SelectTrigger>
+                        <SelectContent align="end">
+                          <SelectGroup>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <Pagination>
+                      <PaginationContent>
+                        {/* First page button */}
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(1)}
+                            disabled={currentPage === 1}
+                            className={cn(
+                              "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                              currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
                             )}
-                            <PaginationItem>
-                              <button
-                                onClick={() => handlePageChange(page)}
-                                className={cn(
-                                  "flex items-center justify-center h-9 w-9 rounded-md text-sm",
-                                  currentPage === page 
-                                    ? "bg-primary text-primary-foreground" 
-                                    : "hover:bg-secondary"
-                                )}
-                              >
-                                {page}
-                              </button>
-                            </PaginationItem>
-                          </React.Fragment>
-                        );
-                      })}
-                      
-                      {/* Next page button */}
-                      <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
-                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                        >
-                          <span className="hidden sm:inline">Next</span>
-                          <ChevronRight size={16} />
-                        </button>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
+                            aria-label="Go to first page"
+                          >
+                            <ChevronsLeft size={16} />
+                          </button>
+                        </PaginationItem>
+                        
+                        {/* Previous page button */}
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={cn(
+                              "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                              currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                            )}
+                          >
+                            <ChevronLeft size={16} />
+                            <span className="hidden sm:inline">Previous</span>
+                          </button>
+                        </PaginationItem>
+                        
+                        {/* Page numbers */}
+                        {generatePaginationItems().map((page, index, array) => {
+                          // Add ellipsis when there are gaps between page numbers
+                          const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
+                          
+                          return (
+                            <React.Fragment key={page}>
+                              {showEllipsisBefore && (
+                                <PaginationItem className="hidden sm:inline-block">
+                                  <PaginationEllipsis />
+                                </PaginationItem>
+                              )}
+                              <PaginationItem>
+                                <button
+                                  onClick={() => handlePageChange(page)}
+                                  className={cn(
+                                    "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                                    currentPage === page 
+                                      ? "bg-primary text-primary-foreground" 
+                                      : "hover:bg-secondary"
+                                  )}
+                                >
+                                  {page}
+                                </button>
+                              </PaginationItem>
+                            </React.Fragment>
+                          );
+                        })}
+                        
+                        {/* Next page button */}
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={cn(
+                              "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                              currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                            )}
+                          >
+                            <span className="hidden sm:inline">Next</span>
+                            <ChevronRight size={16} />
+                          </button>
+                        </PaginationItem>
+                        
+                        {/* Last page button */}
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(totalPages)}
+                            disabled={currentPage === totalPages}
+                            className={cn(
+                              "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                              currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
+                            )}
+                            aria-label="Go to last page"
+                          >
+                            <ChevronsRight size={16} />
+                          </button>
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
                 </div>
               )}
             </>
