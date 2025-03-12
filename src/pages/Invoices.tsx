@@ -216,11 +216,11 @@ const Invoices = () => {
 
   const getSortIcon = (field: SortField) => {
     if (sortBy !== field) {
-      return <ChevronDown size={16} className="text-muted-foreground/50" />;
+      return <ChevronDown size={18} className="text-muted-foreground/50" />;
     }
     return sortOrder === 'asc' ? 
-      <ChevronDown size={16} /> : 
-      <ChevronDown size={16} className="rotate-180 transform" />;
+      <ChevronDown size={18} /> : 
+      <ChevronDown size={18} className="rotate-180 transform" />;
   };
 
   const sortedAndFilteredInvoices = getSortedInvoices(
