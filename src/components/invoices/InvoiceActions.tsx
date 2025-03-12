@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, Download, Send, CheckCircle } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Send, Check } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -280,16 +279,15 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   if (status === 'pending') {
     return (
       <div className="flex items-center gap-1">
-        <Button
-          size="sm"
-          variant="outline"
-          className="flex items-center gap-1 text-apple-green border-apple-green/30 hover:bg-apple-green/10"
+        <button 
+          className="flex items-center gap-1 p-1.5 text-sm text-gray-500 hover:text-apple-green hover:bg-gray-100 rounded-md transition-colors" 
           onClick={handleMarkAsPaid}
           disabled={isMarkingAsPaid}
+          title="Mark as Paid"
         >
-          <CheckCircle size={14} />
-          {isMarkingAsPaid ? 'Updating...' : 'Mark Paid'}
-        </Button>
+          <Check size={14} />
+          {isMarkingAsPaid ? 'Updating...' : 'Paid'}
+        </button>
         <button 
           className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
           title="Download"
