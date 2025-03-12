@@ -355,7 +355,7 @@ const Reports = () => {
       
       setItemData(itemDataArray);
       
-      const reports = [
+      const reports: Report[] = [
         {
           id: '1',
           title: 'Monthly Revenue',
