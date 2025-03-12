@@ -34,15 +34,18 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const [isSending, setIsSending] = React.useState(false);
   const [isMarkingAsPaid, setIsMarkingAsPaid] = React.useState(false);
 
-  const handleEdit = () => {
+  const handleEdit = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     navigate(`/invoices/edit/${invoiceId}`);
   };
 
-  const handleView = () => {
+  const handleView = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     navigate(`/invoices/${invoiceId}`);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     try {
       if (status === 'draft') {
         toast({
@@ -80,7 +83,8 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
-  const handleSend = async () => {
+  const handleSend = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (isSending) return;
     
     setIsSending(true);
@@ -181,8 +185,8 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
-  const handleMarkAsPaid = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleMarkAsPaid = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (isMarkingAsPaid) return;
     
     setIsMarkingAsPaid(true);
@@ -273,8 +277,8 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
-  const handleSendReminder = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSendReminder = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     
     try {
       const { data: invoice, error: invoiceError } = await supabase
@@ -323,113 +327,80 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
-  if (status === 'overdue') {
-    return (
-      <div className="flex items-center gap-1">
-        <button 
-          className="p-1.5 text-apple-red hover:bg-apple-red/10 rounded-md transition-colors" 
-          onClick={handleSendReminder}
-          title="Send Reminder"
-        >
-          <Bell size={16} />
-        </button>
-        <button 
-          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-          title="Download"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-        >
-          <Download size={16} />
-        </button>
-      </div>
-    );
-  }
-
-  if (status === 'pending') {
-    return (
-      <div className="flex items-center gap-1">
-        <button 
-          className="p-1.5 text-gray-500 hover:text-apple-green hover:bg-gray-100 rounded-md transition-colors" 
-          onClick={handleMarkAsPaid}
-          disabled={isMarkingAsPaid}
-          title="Mark as Paid"
-        >
-          <Check size={14} />
-        </button>
-        <button 
-          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-          title="Download"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-        >
-          <Download size={16} />
-        </button>
-      </div>
-    );
-  }
-
-  if (status !== 'draft') {
-    return (
-      <div className="flex items-center gap-1">
-        <button 
-          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-          title="Download"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-        >
-          <Download size={16} />
-        </button>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex items-center gap-1">
-        {status === 'draft' ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
-                <MoreHorizontal size={16} />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem 
-                onClick={handleSend}
-                disabled={isSending}
-              >
-                <Send className="mr-2 h-4 w-4" />
-                {isSending ? 'Sending...' : 'Send'}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button 
+              className="p-1.5 rounded-full hover:bg-secondary transition-colors"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal size={16} />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {status === 'draft' && (
+              <>
+                <DropdownMenuItem 
+                  onClick={handleSend}
+                  disabled={isSending}
+                >
+                  <Send className="mr-2 h-4 w-4" />
+                  {isSending ? 'Sending...' : 'Send'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleEdit}>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={handleOpenDeleteDialog} 
+                  className="text-destructive"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </>
+            )}
+            
+            {status === 'pending' && (
+              <>
+                <DropdownMenuItem 
+                  onClick={handleMarkAsPaid}
+                  disabled={isMarkingAsPaid}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </DropdownMenuItem>
+              </>
+            )}
+            
+            {status === 'paid' && (
+              <DropdownMenuItem onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={handleOpenDeleteDialog} 
-                className="text-destructive"
-                disabled={isDeleting}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <button 
-            className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
-            title="Download"
-            onClick={handleDownload}
-          >
-            <Download size={16} />
-          </button>
-        )}
+            )}
+            
+            {status === 'overdue' && (
+              <>
+                <DropdownMenuItem onClick={handleSendReminder}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Send Reminder
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownload}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Dialog 
@@ -467,4 +438,3 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 };
 
 export default InvoiceActions;
-
