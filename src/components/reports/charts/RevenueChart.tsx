@@ -3,6 +3,14 @@ import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BarChart,
   Bar,
   XAxis,
@@ -12,16 +20,22 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-interface MonthlyRevenueChartProps {
-  data: Array<{ month: string; amount: number }>;
+export type TimePeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+interface RevenueChartProps {
+  data: Array<{ period: string; amount: number }>;
   currencySymbol: string;
   formatCurrency: (amount: number) => string;
+  onPeriodChange: (period: TimePeriod) => void;
+  selectedPeriod: TimePeriod;
 }
 
-const MonthlyRevenueChart: React.FC<MonthlyRevenueChartProps> = ({ 
+const RevenueChart: React.FC<RevenueChartProps> = ({ 
   data, 
   currencySymbol,
-  formatCurrency
+  formatCurrency,
+  onPeriodChange,
+  selectedPeriod
 }) => {
   // Don't render chart content if there's no valid data
   const hasValidData = data && data.length > 0;
@@ -29,13 +43,28 @@ const MonthlyRevenueChart: React.FC<MonthlyRevenueChartProps> = ({
   return (
     <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">Monthly Revenue</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="text-lg font-medium">Revenue</h3>
+          <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => onPeriodChange(value)}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Select period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <BarChart3 size={20} className="text-muted-foreground" />
       </div>
       
       {!hasValidData ? (
         <div className="h-80 flex items-center justify-center">
-          <p className="text-muted-foreground">No monthly revenue data available</p>
+          <p className="text-muted-foreground">No revenue data available</p>
         </div>
       ) : (
         <div className="h-80">
@@ -56,7 +85,7 @@ const MonthlyRevenueChart: React.FC<MonthlyRevenueChartProps> = ({
                 stroke="var(--border)"
               />
               <XAxis
-                dataKey="month"
+                dataKey="period"
                 angle={-45}
                 textAnchor="end"
                 height={70}
@@ -102,4 +131,4 @@ const MonthlyRevenueChart: React.FC<MonthlyRevenueChartProps> = ({
   );
 };
 
-export default MonthlyRevenueChart;
+export default RevenueChart;

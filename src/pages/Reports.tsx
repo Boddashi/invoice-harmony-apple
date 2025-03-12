@@ -1,21 +1,21 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import CustomCard from '@/components/ui/CustomCard';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { format } from 'date-fns';
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subDays, subWeeks, subMonths, subYears } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 // Import Refactored Components
 import ReportFilters from '@/components/reports/ReportFilters';
 import StatCards from '@/components/reports/StatCards';
-import MonthlyRevenueChart from '@/components/reports/charts/MonthlyRevenueChart';
+import RevenueChart from '@/components/reports/charts/RevenueChart';
 import InvoiceStatusChart from '@/components/reports/charts/InvoiceStatusChart';
 import TopClientsChart from '@/components/reports/charts/TopClientsChart';
 import ItemsAnalysisChart from '@/components/reports/charts/ItemsAnalysisChart';
 import SavedReportsTable from '@/components/reports/SavedReportsTable';
+import type { TimePeriod } from '@/components/reports/charts/RevenueChart';
 
 // Types
 type Report = {
@@ -52,6 +52,7 @@ const Reports = () => {
   const { toast } = useToast();
   const { currencySymbol } = useCurrency();
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('monthly');
   const [invoiceStats, setInvoiceStats] = useState<InvoiceStats>({
     total: 0,
     paid: 0,
@@ -77,13 +78,7 @@ const Reports = () => {
       fetchClients();
       fetchInvoiceData();
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchInvoiceData();
-    }
-  }, [selectedItems, selectedClients]);
+  }, [user, selectedPeriod]);
 
   const fetchItems = async () => {
     try {
@@ -155,31 +150,14 @@ const Reports = () => {
         .from('invoices')
         .select('*, client:clients(name), invoice_items(item_id, quantity, total_amount)')
         .eq('user_id', user.id);
-      
-      // Get all invoices first before filtering in code, which is more reliable
+
+      // Get all invoices first before filtering in code
       const { data: allInvoices, error: invoicesError } = await query;
       
       if (invoicesError) throw invoicesError;
-      
-      if (!allInvoices || allInvoices.length === 0) {
-        setInvoiceStats({
-          total: 0,
-          paid: 0,
-          pending: 0,
-          overdue: 0, 
-          revenue: 0
-        });
-        setMonthlyData([]);
-        setStatusData([]);
-        setClientData([]);
-        setItemData([]);
-        setSavedReports([]);
-        setIsLoading(false);
-        return;
-      }
-      
+
       // Filter invoices based on selected items and clients
-      let filteredInvoices = [...allInvoices];
+      let filteredInvoices = allInvoices || [];
       
       if (selectedItems.length > 0) {
         filteredInvoices = filteredInvoices.filter(invoice => {
@@ -193,40 +171,72 @@ const Reports = () => {
           selectedClients.includes(invoice.client_id)
         );
       }
-      
-      // Process filtered invoice data
+
+      // Process invoice data based on selected period
       const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
+      const today = new Date();
+      let periodStart: Date;
+      let formatString: string;
+
+      switch (selectedPeriod) {
+        case 'daily':
+          periodStart = subDays(today, 30); // Show last 30 days
+          formatString = 'MMM dd';
+          break;
+        case 'weekly':
+          periodStart = subWeeks(today, 12); // Show last 12 weeks
+          formatString = "'Week' w, MMM";
+          break;
+        case 'monthly':
+          periodStart = subMonths(today, 12); // Show last 12 months
+          formatString = 'MMM yyyy';
+          break;
+        case 'yearly':
+          periodStart = subYears(today, 5); // Show last 5 years
+          formatString = 'yyyy';
+          break;
+      }
+
+      // Group revenues by period
+      const revenueByPeriod = new Map<string, number>();
+
+      paidInvoices.forEach(invoice => {
+        const date = new Date(invoice.issue_date);
+        if (date >= periodStart) {
+          const period = format(date, formatString);
+          const currentAmount = revenueByPeriod.get(period) || 0;
+          revenueByPeriod.set(period, currentAmount + Number(invoice.total_amount));
+        }
+      });
+
+      const periodData = Array.from(revenueByPeriod.entries())
+        .map(([period, amount]) => ({
+          period,
+          amount
+        }))
+        .sort((a, b) => {
+          // Sort based on the actual date, not the formatted string
+          const dateA = new Date(a.period);
+          const dateB = new Date(b.period);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+      setMonthlyData(periodData);
+      
+      // Process invoice data
+      const paidInvoicesList = filteredInvoices.filter(inv => inv.status === 'paid');
       const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
       const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue');
       
-      const totalRevenue = paidInvoices.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
+      const totalRevenue = paidInvoicesList.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
       
       setInvoiceStats({
         total: filteredInvoices.length,
-        paid: paidInvoices.length,
+        paid: paidInvoicesList.length,
         pending: pendingInvoices.length,
         overdue: overdueInvoices.length,
         revenue: totalRevenue
       });
-      
-      // Process monthly revenue data
-      const monthlyRevenue: Record<string, number> = {};
-      
-      paidInvoices.forEach(invoice => {
-        const month = format(new Date(invoice.issue_date), 'MMM yyyy');
-        monthlyRevenue[month] = (monthlyRevenue[month] || 0) + Number(invoice.total_amount);
-      });
-      
-      const monthlyDataArray = Object.entries(monthlyRevenue).map(([month, amount]) => ({
-        month,
-        amount
-      })).sort((a, b) => {
-        const dateA = new Date(a.month);
-        const dateB = new Date(b.month);
-        return dateA.getTime() - dateB.getTime();
-      });
-      
-      setMonthlyData(monthlyDataArray);
       
       // Process invoice status data
       const totalCount = filteredInvoices.length || 1; // Avoid division by zero
@@ -234,9 +244,9 @@ const Reports = () => {
       const statusDataArray = [
         { 
           name: 'Paid', 
-          value: paidInvoices.length, 
+          value: paidInvoicesList.length, 
           fill: PIE_COLORS[0], 
-          percent: paidInvoices.length / totalCount 
+          percent: paidInvoicesList.length / totalCount 
         },
         { 
           name: 'Pending', 
@@ -257,7 +267,7 @@ const Reports = () => {
       // Process client revenue data
       const clientRevenue: Record<string, number> = {};
       
-      paidInvoices.forEach(invoice => {
+      paidInvoicesList.forEach(invoice => {
         if (invoice.client && invoice.client.name) {
           const clientName = invoice.client.name;
           clientRevenue[clientName] = (clientRevenue[clientName] || 0) + Number(invoice.total_amount);
@@ -308,7 +318,7 @@ const Reports = () => {
         {
           id: '1',
           title: 'Monthly Revenue',
-          data: monthlyDataArray,
+          data: periodData,
           type: 'monthly',
           date: format(new Date(), 'yyyy-MM-dd')
         },
@@ -414,10 +424,12 @@ const Reports = () => {
             />
             
             <div className="grid grid-cols-1 gap-6">
-              <MonthlyRevenueChart 
+              <RevenueChart 
                 data={monthlyData} 
                 currencySymbol={currencySymbol}
                 formatCurrency={formatCurrency}
+                onPeriodChange={setSelectedPeriod}
+                selectedPeriod={selectedPeriod}
               />
               
               <InvoiceStatusChart data={statusData} />
