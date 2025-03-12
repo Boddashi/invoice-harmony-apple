@@ -442,13 +442,9 @@ const Invoices = () => {
                           {getSortIcon('total_amount')}
                         </div>
                       </th>
-                      <th 
-                        className="py-3 px-4 text-center font-medium cursor-pointer hover:bg-secondary/80"
-                        onClick={() => handleSort('status')}
-                      >
-                        <div className="flex items-center justify-center gap-1">
+                      <th className="py-3 px-4 text-center font-medium">
+                        <div className="flex items-center justify-center">
                           Status
-                          {getSortIcon('status')}
                         </div>
                       </th>
                       <th className="py-3 px-4 text-center font-medium">Actions</th>
