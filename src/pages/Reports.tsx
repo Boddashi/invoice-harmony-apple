@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import CustomCard from '@/components/ui/CustomCard';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Download } from 'lucide-react';
+import { FileText, BarChart3, Download, PieChart as PieChartIcon } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -45,27 +45,50 @@ type InvoiceStats = {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-// Custom label renderer that positions labels better
-const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
   const RADIAN = Math.PI / 180;
-  // Position the label further away from the pie to avoid overlap
-  const radius = outerRadius * 1.4;
+  const radius = outerRadius * 1.6;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  
+  const displayText = `${name}: ${value}`;
 
   return (
-    <text 
-      x={x} 
-      y={y} 
-      fill="#666"
-      textAnchor={x > cx ? 'start' : 'end'} 
-      dominantBaseline="central"
-      fontSize="12"
-    >
-      {`${name}: ${(percent * 100).toFixed(0)}%`}
-    </text>
+    <g>
+      <path 
+        d={`M${cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN)},${cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN)}L${x},${y}`} 
+        stroke="#888" 
+        strokeWidth={1} 
+        fill="none" 
+        strokeDasharray="3,3"
+      />
+      <circle cx={x} cy={y} r={2} fill="#888" />
+      <text 
+        x={x + (x > cx ? 5 : -5)} 
+        y={y} 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fill="#666"
+        fontWeight="500"
+        fontSize="13"
+      >
+        {displayText}
+      </text>
+      <text 
+        x={x + (x > cx ? 5 : -5)} 
+        y={y + 16} 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fill="#888"
+        fontSize="11"
+      >
+        {`(${(percent * 100).toFixed(0)}%)`}
+      </text>
+    </g>
   );
 };
+
+const PIE_COLORS = ['#9b87f5', '#7fcbae', '#ff9087', '#ffcc85'];
 
 const Reports = () => {
   const { user } = useAuth();
@@ -84,9 +107,6 @@ const Reports = () => {
   const [clientData, setClientData] = useState<any[]>([]);
   const [savedReports, setSavedReports] = useState<Report[]>([]);
 
-  // Colors for pie chart
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-  
   useEffect(() => {
     if (user) {
       fetchInvoiceData();
@@ -99,7 +119,6 @@ const Reports = () => {
     try {
       setIsLoading(true);
       
-      // Fetch all invoices for the user
       const { data: invoices, error: invoicesError } = await supabase
         .from('invoices')
         .select('*, client:clients(name)')
@@ -112,7 +131,6 @@ const Reports = () => {
         return;
       }
       
-      // Calculate basic statistics
       const paidInvoices = invoices.filter(inv => inv.status === 'paid');
       const pendingInvoices = invoices.filter(inv => inv.status === 'pending');
       const overdueInvoices = invoices.filter(inv => inv.status === 'overdue');
@@ -127,7 +145,6 @@ const Reports = () => {
         revenue: totalRevenue
       });
       
-      // Generate monthly data
       const monthlyRevenue: Record<string, number> = {};
       
       paidInvoices.forEach(invoice => {
@@ -146,7 +163,6 @@ const Reports = () => {
       
       setMonthlyData(monthlyDataArray);
       
-      // Generate status data for pie chart
       const statusDataArray = [
         { name: 'Paid', value: paidInvoices.length },
         { name: 'Pending', value: pendingInvoices.length },
@@ -155,7 +171,6 @@ const Reports = () => {
       
       setStatusData(statusDataArray);
       
-      // Generate client data
       const clientRevenue: Record<string, number> = {};
       
       invoices.forEach(invoice => {
@@ -168,12 +183,10 @@ const Reports = () => {
       const clientDataArray = Object.entries(clientRevenue)
         .map(([name, amount]) => ({ name, amount }))
         .sort((a, b) => b.amount - a.amount)
-        .slice(0, 5); // Top 5 clients
+        .slice(0, 5);
       
       setClientData(clientDataArray);
       
-      // Fetch saved reports (if we had them in the database)
-      // This would typically come from a reports table
       setSavedReports([
         {
           id: '1',
@@ -227,7 +240,6 @@ const Reports = () => {
       description: `Exporting ${report.title} report...`,
     });
     
-    // Simulating export operation
     setTimeout(() => {
       toast({
         title: "Export Complete",
@@ -261,7 +273,6 @@ const Reports = () => {
           </div>
         ) : (
           <>
-            {/* Summary Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <CustomCard>
                 <h3 className="text-sm font-medium text-muted-foreground">Total Invoices</h3>
@@ -284,9 +295,7 @@ const Reports = () => {
               </CustomCard>
             </div>
             
-            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Monthly Revenue Chart */}
               <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Monthly Revenue</h3>
@@ -322,46 +331,53 @@ const Reports = () => {
                 </div>
               </CustomCard>
               
-              {/* Invoice Status Chart - Fixed overlapping labels */}
-              <CustomCard padding="md">
+              <CustomCard padding="md" variant="elevated">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">Invoice Status</h3>
-                  <BarChart3 size={20} className="text-muted-foreground" />
+                  <div className="flex items-center gap-2">
+                    <PieChartIcon size={18} className="text-primary" />
+                    <h3 className="text-lg font-medium">Invoice Status</h3>
+                  </div>
                 </div>
                 
-                <div className="h-80">
+                <div className="h-[350px] mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
                         cy="50%"
-                        labelLine={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '3' }}
-                        outerRadius={80}
+                        labelLine={false}
+                        outerRadius={90}
+                        innerRadius={40}
+                        paddingAngle={4}
                         fill="#8884d8"
                         dataKey="value"
                         label={renderCustomizedLabel}
+                        strokeWidth={2}
+                        stroke="var(--background)"
                       >
                         {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                            className="drop-shadow-md hover:opacity-90 transition-opacity"
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
-                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
-                        labelStyle={{ color: 'var(--foreground)' }}
-                      />
-                      <Legend 
-                        layout="horizontal"
-                        verticalAlign="bottom"
-                        align="center"
-                        wrapperStyle={{ paddingTop: '20px' }}
+                        formatter={(value, name) => [`${value} invoices`, name]}
+                        contentStyle={{ 
+                          background: 'var(--card)', 
+                          border: '1px solid var(--border)',
+                          borderRadius: '0.5rem',
+                          boxShadow: 'var(--apple-sm)'
+                        }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </CustomCard>
               
-              {/* Top Clients */}
               <CustomCard padding="md" className="lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Top Clients by Revenue</h3>
@@ -398,7 +414,6 @@ const Reports = () => {
               </CustomCard>
             </div>
             
-            {/* Saved Reports */}
             <div>
               <h2 className="text-xl font-semibold mb-4">Saved Reports</h2>
               
