@@ -25,7 +25,7 @@ import { generateInvoicePDF } from '@/utils/pdfGenerator';
 interface InvoiceActionsProps {
   invoiceId: string;
   status: string;
-  onStatusChange?: () => void; // Add callback prop
+  onStatusChange?: () => void;
 }
 
 const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsProps) => {
@@ -165,12 +165,10 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: "Invoice sent successfully and PDF generated"
       });
 
-      // Call the callback to update parent component state
       if (onStatusChange) {
         onStatusChange();
       }
       
-      // Navigate to invoices page
       navigate('/invoices', { replace: true });
       
     } catch (error: any) {
@@ -203,7 +201,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: "Invoice marked as paid"
       });
       
-      // Call the callback to update parent component state
       if (onStatusChange) {
         onStatusChange();
       }
@@ -251,7 +248,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: "Invoice deleted successfully"
       });
       
-      // Use navigate instead of setTimeout and reload
       navigate('/invoices', { replace: true });
       
     } catch (error: any) {
@@ -262,8 +258,8 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: error.message || "Failed to delete invoice"
       });
     } finally {
-      setIsDeleting(false);
       setShowDeleteDialog(false);
+      setIsDeleting(false);
     }
   };
 
@@ -280,7 +276,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     e.stopPropagation();
     
     try {
-      // First get the invoice details
       const { data: invoice, error: invoiceError } = await supabase
         .from('invoices')
         .select(`
@@ -304,7 +299,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
           invoiceNumber: invoice.invoice_number,
           dueDate: invoice.due_date,
           amount: invoice.total_amount,
-          currencySymbol: '$' // You might want to get this from your currency context
+          currencySymbol: '$'
         }),
       });
 
@@ -436,26 +431,35 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         )}
       </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this invoice? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {showDeleteDialog && (
+        <AlertDialog 
+          open={showDeleteDialog} 
+          onOpenChange={(open) => {
+            if (!open && !isDeleting) {
+              setShowDeleteDialog(false);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this invoice? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </>
   );
 };
