@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
@@ -28,7 +27,6 @@ const DashboardSummary = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [summaryData, setSummaryData] = useState<SummaryData[]>([]);
   
-  // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
@@ -40,7 +38,6 @@ const DashboardSummary = () => {
       try {
         setIsLoading(true);
         
-        // Get invoices data from Supabase
         const { data: invoices, error: invoicesError } = await supabase
           .from('invoices')
           .select('*')
@@ -50,7 +47,6 @@ const DashboardSummary = () => {
           throw invoicesError;
         }
         
-        // Calculate summary statistics
         const totalRevenue = invoices?.reduce((sum, invoice) => 
           invoice.status === 'paid' ? sum + Number(invoice.total_amount) : sum, 0) || 0;
           
@@ -63,13 +59,11 @@ const DashboardSummary = () => {
         const overdueInvoices = invoices?.filter(invoice => invoice.status === 'overdue') || [];
         const overdueAmount = overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0);
         
-        // Generate change information (this could be improved with historical data)
-        const previousTotalRevenue = totalRevenue * 0.8; // Dummy calculation
+        const previousTotalRevenue = totalRevenue * 0.8;
         const percentChange = totalRevenue > 0 
           ? ((totalRevenue - previousTotalRevenue) / previousTotalRevenue * 100).toFixed(1) + '%'
           : '0%';
         
-        // Build summary data
         const newSummaryData: SummaryData[] = [
           { 
             title: 'Total Revenue', 
@@ -77,8 +71,8 @@ const DashboardSummary = () => {
             change: percentChange.startsWith('-') ? percentChange : `+${percentChange}`, 
             isPositive: !percentChange.startsWith('-'),
             icon: DollarSign,
-            color: 'bg-apple-green/10 text-apple-green',
-            textColor: 'text-apple-green',
+            color: 'bg-apple-blue/10 text-apple-blue',
+            textColor: 'text-apple-blue',
             link: '/invoices'
           },
           { 
@@ -97,8 +91,8 @@ const DashboardSummary = () => {
             change: `${paidInvoices.length} invoices`, 
             isPositive: true,
             icon: CheckCircle,
-            color: 'bg-apple-blue/10 text-apple-blue',
-            textColor: 'text-apple-blue',
+            color: 'bg-apple-green/10 text-apple-green',
+            textColor: 'text-apple-green',
             link: '/invoices?filter=paid'
           },
           { 
@@ -122,7 +116,6 @@ const DashboardSummary = () => {
           description: error.message || "Failed to load dashboard data."
         });
         
-        // Set default data on error
         setSummaryData([
           { 
             title: 'Total Revenue', 
@@ -130,8 +123,8 @@ const DashboardSummary = () => {
             change: '+0%', 
             isPositive: true,
             icon: DollarSign,
-            color: 'bg-apple-green/10 text-apple-green',
-            textColor: 'text-apple-green',
+            color: 'bg-apple-blue/10 text-apple-blue',
+            textColor: 'text-apple-blue',
             link: '/invoices'
           },
           { 
@@ -150,8 +143,8 @@ const DashboardSummary = () => {
             change: '0 invoices', 
             isPositive: true,
             icon: CheckCircle,
-            color: 'bg-apple-blue/10 text-apple-blue',
-            textColor: 'text-apple-blue',
+            color: 'bg-apple-green/10 text-apple-green',
+            textColor: 'text-apple-green',
             link: '/invoices?filter=paid'
           },
           { 
