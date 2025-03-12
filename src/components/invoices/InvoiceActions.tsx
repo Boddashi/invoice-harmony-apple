@@ -258,8 +258,8 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: error.message || "Failed to delete invoice"
       });
     } finally {
-      setShowDeleteDialog(false);
       setIsDeleting(false);
+      setShowDeleteDialog(false);
     }
   };
 
@@ -269,7 +269,9 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   };
 
   const handleCloseDeleteDialog = () => {
-    setShowDeleteDialog(false);
+    if (!isDeleting) {
+      setShowDeleteDialog(false);
+    }
   };
 
   const handleSendReminder = async (e: React.MouseEvent) => {
@@ -431,35 +433,29 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         )}
       </div>
 
-      {showDeleteDialog && (
-        <AlertDialog 
-          open={showDeleteDialog} 
-          onOpenChange={(open) => {
-            if (!open && !isDeleting) {
-              setShowDeleteDialog(false);
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to delete this invoice? This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isDeleting}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+      <AlertDialog 
+        open={showDeleteDialog} 
+        onOpenChange={handleCloseDeleteDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this invoice? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
