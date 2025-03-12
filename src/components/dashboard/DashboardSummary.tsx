@@ -91,8 +91,8 @@ const DashboardSummary = () => {
             change: `${paidInvoices.length} invoices`, 
             isPositive: true,
             icon: CheckCircle,
-            color: 'bg-apple-blue/10 text-apple-blue',
-            textColor: 'text-apple-blue',
+            color: 'bg-apple-green/10 text-apple-green',
+            textColor: 'text-apple-green',
             link: '/invoices?filter=paid'
           },
           { 
@@ -229,7 +229,7 @@ const DashboardSummary = () => {
                 ) : item.title === 'Pending Invoices' ? (
                   <ArrowDownRight size={16} className="text-apple-orange" />
                 ) : item.title === 'Paid Invoices' ? (
-                  <ArrowUpRight size={16} className="text-apple-blue" />
+                  <ArrowUpRight size={16} className="text-apple-green" />
                 ) : item.title === 'Overdue Invoices' ? (
                   <ArrowDownRight size={16} className="text-apple-red" />
                 ) : null}
@@ -248,3 +248,4 @@ const DashboardSummary = () => {
 };
 
 export default DashboardSummary;
+
