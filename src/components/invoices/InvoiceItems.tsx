@@ -2,7 +2,15 @@
 import React from 'react';
 import { Trash, Plus } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectGroup,
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from '@/components/ui/label';
 
 interface Item {
   id: string;
@@ -67,19 +75,23 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         {items.map((item) => (
           <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-4">
-              <select 
-                className="input-field w-full" 
-                value={item.description} 
-                onChange={e => handleItemDescriptionChange(item.id, e.target.value)}
-                required
+              <Select
+                value={item.description}
+                onValueChange={(value) => handleItemDescriptionChange(item.id, value)}
               >
-                <option value="">Select an item</option>
-                {availableItems.map(availableItem => (
-                  <option key={availableItem.id} value={availableItem.id}>
-                    {availableItem.title} - {currencySymbol}{availableItem.price}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder="Select an item" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {availableItems.map(availableItem => (
+                      <SelectItem key={availableItem.id} value={availableItem.id}>
+                        {availableItem.title} - {currencySymbol}{availableItem.price}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="col-span-2">
