@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -75,7 +74,6 @@ export const useInvoiceForm = () => {
   const [vats, setVats] = useState<Vat[]>([]);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  // Fetch clients
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -104,7 +102,6 @@ export const useInvoiceForm = () => {
     fetchClients();
   }, [user, toast]);
 
-  // Fetch items
   useEffect(() => {
     const fetchItems = async () => {
       try {
@@ -123,7 +120,6 @@ export const useInvoiceForm = () => {
     fetchItems();
   }, [toast]);
 
-  // Fetch invoice data if in edit mode
   useEffect(() => {
     const fetchInvoiceData = async () => {
       if (!isEditMode || !id || !user) return;
@@ -196,7 +192,6 @@ export const useInvoiceForm = () => {
     fetchInvoiceData();
   }, [id, isEditMode, user, navigate, toast]);
 
-  // Fetch VAT rates
   useEffect(() => {
     const fetchVats = async () => {
       try {
@@ -215,7 +210,6 @@ export const useInvoiceForm = () => {
     fetchVats();
   }, [toast]);
 
-  // Generate invoice number
   useEffect(() => {
     const generateInvoiceNumber = async () => {
       if (isEditMode || invoiceNumber) return;
@@ -231,7 +225,6 @@ export const useInvoiceForm = () => {
           
         if (settingsError) {
           console.error('Error fetching company settings:', settingsError);
-          // Use a default prefix and incremental number instead of timestamp
           const { data: latestInvoice } = await supabase
             .from('invoices')
             .select('invoice_number')
@@ -241,7 +234,7 @@ export const useInvoiceForm = () => {
             .single();
             
           const defaultPrefix = 'INV';
-          let nextNumber = 1; // Start with 1 for the first invoice
+          let nextNumber = 1;
           
           if (latestInvoice && latestInvoice.invoice_number) {
             const latestNumberStr = latestInvoice.invoice_number.split('-').pop();
@@ -255,7 +248,7 @@ export const useInvoiceForm = () => {
         }
         
         const prefix = settingsData?.invoice_prefix || 'INV';
-        const numberType = settingsData?.invoice_number_type as 'date' | 'incremental' || 'incremental'; // Default to incremental
+        const numberType = settingsData?.invoice_number_type as 'date' | 'incremental' || 'incremental';
         
         if (numberType === 'date') {
           const today = new Date();
@@ -264,7 +257,6 @@ export const useInvoiceForm = () => {
           const day = String(today.getDate()).padStart(2, '0');
           const dateStr = `${year}${month}${day}`;
           
-          // Check for invoices with the same date-based number to add increment
           const { data: existingInvoices, error: existingInvoicesError } = await supabase
             .from('invoices')
             .select('invoice_number')
@@ -280,7 +272,6 @@ export const useInvoiceForm = () => {
           
           let increment = 1;
           if (existingInvoices && existingInvoices.length > 0) {
-            // Extract the highest increment from existing invoices
             for (const invoice of existingInvoices) {
               const parts = invoice.invoice_number.split('/');
               if (parts.length > 1) {
@@ -294,7 +285,6 @@ export const useInvoiceForm = () => {
           
           setInvoiceNumber(`${prefix}-${dateStr}/${increment}`);
         } else {
-          // For incremental type
           const { data: latestInvoice, error: invoiceError } = await supabase
             .from('invoices')
             .select('invoice_number')
@@ -303,9 +293,7 @@ export const useInvoiceForm = () => {
             .limit(1)
             .single();
             
-          // For the first invoice or if there's an error fetching the latest invoice
-          // (except for the "no rows returned" error which is expected for the first invoice)
-          let nextNumber = 1; // Start with 1 for the first invoice
+          let nextNumber = 1;
           
           if (latestInvoice) {
             const latestNumberStr = latestInvoice.invoice_number.split('-').pop();
@@ -318,16 +306,14 @@ export const useInvoiceForm = () => {
         }
       } catch (error) {
         console.error('Error generating invoice number:', error);
-        // Fallback to incremental numbering instead of timestamp
         const defaultPrefix = 'INV';
-        setInvoiceNumber(`${defaultPrefix}-000001`); // Start with 1 for the first invoice
+        setInvoiceNumber(`${defaultPrefix}-000001`);
       }
     };
     
     generateInvoiceNumber();
   }, [isEditMode, invoiceNumber, user]);
 
-  // Update selected client when client ID changes
   useEffect(() => {
     if (selectedClientId) {
       const client = clients.find(c => c.id === selectedClientId);
@@ -337,7 +323,6 @@ export const useInvoiceForm = () => {
     }
   }, [selectedClientId, clients]);
 
-  // Calculate subtotal, tax, and total when items change
   useEffect(() => {
     const calculatedSubTotal = items.reduce((sum, item) => sum + item.amount, 0);
     setSubTotal(calculatedSubTotal);
@@ -352,7 +337,6 @@ export const useInvoiceForm = () => {
     setTotal(calculatedSubTotal + calculatedTaxAmount);
   }, [items, availableItems]);
 
-  // Set due date based on issue date
   useEffect(() => {
     if (issueDate && !dueDate) {
       const issueDateTime = new Date(issueDate);
@@ -520,7 +504,6 @@ export const useInvoiceForm = () => {
   const handleDownloadPDF = async () => {
     if (!pdfUrl) return;
     
-    // Create a link and trigger download
     const link = document.createElement('a');
     link.href = pdfUrl;
     link.download = `invoice-${invoiceNumber}.pdf`;
@@ -626,18 +609,15 @@ export const useInvoiceForm = () => {
           throw invoiceItemsError;
         }
 
-        // Generate PDF for edited invoice when status is changed to pending
         if (status === 'pending') {
           const pdfBase64 = await generatePDF(id);
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
-            setTimeout(() => {
-              const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
-              if (shouldDownload) {
-                handleDownloadPDF();
-              }
-              navigate('/invoices');
-            }, 100);
+            const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
+            if (shouldDownload) {
+              handleDownloadPDF();
+            }
+            navigate('/invoices');
             return;
           }
         }
@@ -646,6 +626,8 @@ export const useInvoiceForm = () => {
           title: "Success",
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'updated'} successfully.`
         });
+        
+        navigate('/invoices');
       } else {
         const { data: invoice, error: invoiceError } = await supabase.from('invoices').insert({
           user_id: user.id,
@@ -678,18 +660,15 @@ export const useInvoiceForm = () => {
           throw invoiceItemsError;
         }
 
-        // Generate PDF for new invoice with pending status
         if (status === 'pending') {
           const pdfBase64 = await generatePDF(invoiceId);
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
-            setTimeout(() => {
-              const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
-              if (shouldDownload) {
-                handleDownloadPDF();
-              }
-              navigate('/invoices');
-            }, 100);
+            const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
+            if (shouldDownload) {
+              handleDownloadPDF();
+            }
+            navigate('/invoices');
             return;
           }
         }
@@ -698,9 +677,9 @@ export const useInvoiceForm = () => {
           title: "Success",
           description: `Invoice ${status === 'draft' ? 'saved as draft' : 'created'} successfully.`
         });
+        
+        navigate('/invoices');
       }
-      
-      navigate('/invoices');
     } catch (error: any) {
       console.error('Error saving invoice:', error);
       toast({
@@ -740,7 +719,6 @@ export const useInvoiceForm = () => {
   };
 
   return {
-    // State
     isEditMode,
     isLoading,
     isSubmitting,
@@ -765,7 +743,6 @@ export const useInvoiceForm = () => {
     currencySymbol,
     user,
     
-    // Methods
     setIsAddClientModalOpen,
     setInvoiceNumber,
     setSelectedClientId,
