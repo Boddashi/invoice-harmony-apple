@@ -44,30 +44,30 @@ const InvoiceFrom: React.FC<InvoiceFromProps> = ({ userEmail, readOnly = false }
   }, [user]);
 
   return (
-    <CustomCard>
-      <h3 className="text-lg font-medium mb-3">From</h3>
+    <CustomCard padding="sm">
+      <h3 className="text-sm font-medium mb-1">From</h3>
       
       {isLoading ? (
-        <div className="py-2 text-sm text-muted-foreground">Loading...</div>
+        <div className="text-xs text-muted-foreground">Loading...</div>
       ) : companySettings ? (
-        <div className="space-y-1 text-sm">
-          <p className="font-semibold text-base">{companySettings.company_name}</p>
-          <p className="text-muted-foreground">{companySettings.street} {companySettings.number}{companySettings.bus ? `, ${companySettings.bus}` : ''}</p>
-          <p className="text-muted-foreground">{companySettings.postal_code} {companySettings.city}, {companySettings.country}</p>
+        <div className="text-xs">
+          <p className="font-medium">{companySettings.company_name}</p>
+          <p className="text-muted-foreground">
+            {companySettings.street} {companySettings.number}{companySettings.bus ? `, ${companySettings.bus}` : ''}, 
+            {companySettings.postal_code} {companySettings.city}
+          </p>
           
-          <div className="pt-1 flex flex-col space-y-0.5">
-            {companySettings.vat_number && <p className="text-xs text-muted-foreground">VAT: {companySettings.vat_number}</p>}
-            {companySettings.company_email && <p className="text-xs text-muted-foreground">Email: {companySettings.company_email}</p>}
-            {companySettings.company_phone && <p className="text-xs text-muted-foreground">Phone: {companySettings.company_phone}</p>}
-            {companySettings.company_website && <p className="text-xs text-muted-foreground">Web: {companySettings.company_website}</p>}
+          <div className="flex flex-wrap gap-x-4 text-muted-foreground mt-1">
+            {companySettings.vat_number && <span>VAT: {companySettings.vat_number}</span>}
+            {companySettings.company_phone && <span>☎ {companySettings.company_phone}</span>}
           </div>
         </div>
       ) : (
-        <div className="space-y-1">
-          <p className="font-medium">{userEmail}</p>
+        <div>
+          <p className="text-xs font-medium">{userEmail}</p>
           {!readOnly && (
             <p className="text-xs text-muted-foreground">
-              No company details found. Please add them in Settings.
+              No company details found
             </p>
           )}
         </div>
