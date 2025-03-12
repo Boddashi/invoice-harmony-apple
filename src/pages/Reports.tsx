@@ -155,6 +155,7 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
       
       <SavedReportsTable 
         reports={savedReports}
+        selectedPeriod={selectedPeriod}
       />
     </>
   );

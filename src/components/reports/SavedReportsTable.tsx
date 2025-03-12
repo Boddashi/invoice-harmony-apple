@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import type { TimePeriod } from '@/components/reports/charts/RevenueChart';
 
 interface Report {
   id: string;
@@ -12,13 +13,15 @@ interface Report {
   data: any;
   type: 'monthly' | 'status' | 'client' | 'item';
   date: string;
+  period?: TimePeriod;
 }
 
 interface SavedReportsTableProps {
   reports: Report[];
+  selectedPeriod: TimePeriod;
 }
 
-const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
+const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selectedPeriod }) => {
   const { toast } = useToast();
 
   const handleExport = async (report: Report) => {
@@ -33,7 +36,9 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
       
       // Define headers and content based on report type
       if (report.type === 'monthly') {
-        csvContent = "Period,Amount\n";
+        // Use the title with selected period for revenue exports
+        const periodLabel = getPeriodLabel(selectedPeriod);
+        csvContent = `Period,${periodLabel} Revenue\n`;
         report.data.forEach((item: any) => {
           csvContent += `"${item.period}",${item.amount}\n`;
         });
@@ -59,7 +64,8 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
       const url = URL.createObjectURL(blob);
       
       // Create a link element and trigger download
-      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}-${report.date}`;
+      const periodSuffix = report.type === 'monthly' ? `-${selectedPeriod}` : '';
+      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}${periodSuffix}-${report.date}`;
       const link = document.createElement('a');
       link.href = url;
       link.download = `${fileName}.csv`;
@@ -81,6 +87,16 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
         title: "Export Failed",
         description: "There was an error exporting your report. Please try again.",
       });
+    }
+  };
+
+  const getPeriodLabel = (period: TimePeriod): string => {
+    switch (period) {
+      case 'daily': return 'Daily';
+      case 'weekly': return 'Weekly';
+      case 'monthly': return 'Monthly';
+      case 'yearly': return 'Yearly';
+      default: return 'Monthly';
     }
   };
 
@@ -113,7 +129,9 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports }) => {
                   <div className="p-4 border-b">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium truncate" title={report.title}>
-                        {report.title}
+                        {report.type === 'monthly' 
+                          ? `${getPeriodLabel(selectedPeriod)} Revenue` 
+                          : report.title}
                       </h3>
                       <Badge variant="outline" className={getTypeColor(report.type)}>
                         {report.type.charAt(0).toUpperCase() + report.type.slice(1)}

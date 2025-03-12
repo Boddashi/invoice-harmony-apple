@@ -12,6 +12,7 @@ export type Report = {
   data: any;
   type: 'monthly' | 'status' | 'client' | 'item';
   date: string;
+  period?: TimePeriod;
 };
 
 export type InvoiceStats = {
@@ -130,12 +131,10 @@ export const useReportData = () => {
         .select('*, client:clients(name), invoice_items(item_id, quantity, total_amount)')
         .eq('user_id', user.id);
 
-      // Get all invoices first before filtering in code
       const { data: allInvoices, error: invoicesError } = await query;
       
       if (invoicesError) throw invoicesError;
 
-      // Filter invoices based on selected items and clients
       let filteredInvoices = allInvoices || [];
       
       if (selectedItems.length > 0) {
@@ -151,7 +150,6 @@ export const useReportData = () => {
         );
       }
 
-      // Process invoice data based on selected period
       const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
       const today = new Date();
       let periodStart: Date;
@@ -159,24 +157,23 @@ export const useReportData = () => {
 
       switch (selectedPeriod) {
         case 'daily':
-          periodStart = subDays(today, 30); // Show last 30 days
+          periodStart = subDays(today, 30);
           formatString = 'MMM dd';
           break;
         case 'weekly':
-          periodStart = subWeeks(today, 12); // Show last 12 weeks
+          periodStart = subWeeks(today, 12);
           formatString = "'Week' w, MMM";
           break;
         case 'monthly':
-          periodStart = subMonths(today, 12); // Show last 12 months
+          periodStart = subMonths(today, 12);
           formatString = 'MMM yyyy';
           break;
         case 'yearly':
-          periodStart = subYears(today, 5); // Show last 5 years
+          periodStart = subYears(today, 5);
           formatString = 'yyyy';
           break;
       }
 
-      // Group revenues by period
       const revenueByPeriod = new Map<string, number>();
 
       paidInvoices.forEach(invoice => {
@@ -194,7 +191,6 @@ export const useReportData = () => {
           amount
         }))
         .sort((a, b) => {
-          // Sort based on the actual date, not the formatted string
           const dateA = new Date(a.period);
           const dateB = new Date(b.period);
           return dateA.getTime() - dateB.getTime();
@@ -202,7 +198,6 @@ export const useReportData = () => {
 
       setMonthlyData(periodData);
       
-      // Process invoice data
       const paidInvoicesList = filteredInvoices.filter(inv => inv.status === 'paid');
       const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
       const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue');
@@ -217,8 +212,7 @@ export const useReportData = () => {
         revenue: totalRevenue
       });
       
-      // Process invoice status data
-      const totalCount = filteredInvoices.length || 1; // Avoid division by zero
+      const totalCount = filteredInvoices.length || 1;
       
       const statusDataArray = [
         { 
@@ -243,7 +237,6 @@ export const useReportData = () => {
       
       setStatusData(statusDataArray);
       
-      // Process client revenue data
       const clientRevenue: Record<string, number> = {};
       
       paidInvoicesList.forEach(invoice => {
@@ -260,7 +253,6 @@ export const useReportData = () => {
       
       setClientData(clientDataArray);
       
-      // Process item revenue data
       const itemRevenue: Record<string, { amount: number, count: number }> = {};
       
       filteredInvoices.forEach(invoice => {
@@ -292,14 +284,14 @@ export const useReportData = () => {
       
       setItemData(itemDataArray);
       
-      // Create saved reports
       const reports: Report[] = [
         {
           id: '1',
-          title: 'Monthly Revenue',
+          title: 'Revenue',
           data: periodData,
           type: 'monthly',
-          date: format(new Date(), 'yyyy-MM-dd')
+          date: format(new Date(), 'yyyy-MM-dd'),
+          period: selectedPeriod
         },
         {
           id: '2',
@@ -351,7 +343,6 @@ export const useReportData = () => {
     setSearchClientQuery('');
   };
 
-  // Fetch data when component mounts or dependencies change
   useEffect(() => {
     if (user) {
       fetchItems();
@@ -360,7 +351,6 @@ export const useReportData = () => {
     }
   }, [user, selectedPeriod]);
 
-  // Re-fetch when filters change
   useEffect(() => {
     if (user) {
       fetchInvoiceData();
