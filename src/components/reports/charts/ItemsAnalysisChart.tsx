@@ -28,7 +28,19 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   formatCurrency
 }) => {
   // Return null if there's no data to display
-  if (!data || data.length === 0) return null;
+  if (!data || data.length === 0) {
+    return (
+      <CustomCard padding="md">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Selected Items Revenue Analysis</h3>
+          <BarChart3 size={20} className="text-muted-foreground" />
+        </div>
+        <div className="h-80 flex items-center justify-center">
+          <p className="text-muted-foreground">No item data available</p>
+        </div>
+      </CustomCard>
+    );
+  }
   
   return (
     <CustomCard padding="md">

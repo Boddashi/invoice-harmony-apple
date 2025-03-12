@@ -80,7 +80,7 @@ const Reports = () => {
   }, [user]);
 
   useEffect(() => {
-    if (user && (selectedItems.length > 0 || selectedClients.length > 0)) {
+    if (user) {
       fetchInvoiceData();
     }
   }, [selectedItems, selectedClients]);
@@ -151,36 +151,58 @@ const Reports = () => {
     try {
       setIsLoading(true);
       
-      let invoiceQuery = supabase
+      let query = supabase
         .from('invoices')
-        .select('*, client:clients(name), invoice_items!inner(item_id, quantity, total_amount)')
+        .select('*, client:clients(name), invoice_items(item_id, quantity, total_amount)')
         .eq('user_id', user.id);
       
-      if (selectedItems.length > 0) {
-        invoiceQuery = invoiceQuery.filter('invoice_items.item_id', 'in', `(${selectedItems.join(',')})`);
-      }
-      
-      if (selectedClients.length > 0) {
-        invoiceQuery = invoiceQuery.filter('client_id', 'in', `(${selectedClients.join(',')})`);
-      }
-      
-      const { data: invoices, error: invoicesError } = await invoiceQuery;
+      // Get all invoices first before filtering in code, which is more reliable
+      const { data: allInvoices, error: invoicesError } = await query;
       
       if (invoicesError) throw invoicesError;
       
-      if (!invoices || invoices.length === 0) {
+      if (!allInvoices || allInvoices.length === 0) {
+        setInvoiceStats({
+          total: 0,
+          paid: 0,
+          pending: 0,
+          overdue: 0, 
+          revenue: 0
+        });
+        setMonthlyData([]);
+        setStatusData([]);
+        setClientData([]);
+        setItemData([]);
+        setSavedReports([]);
         setIsLoading(false);
         return;
       }
       
-      const paidInvoices = invoices.filter(inv => inv.status === 'paid');
-      const pendingInvoices = invoices.filter(inv => inv.status === 'pending');
-      const overdueInvoices = invoices.filter(inv => inv.status === 'overdue');
+      // Filter invoices based on selected items and clients
+      let filteredInvoices = [...allInvoices];
+      
+      if (selectedItems.length > 0) {
+        filteredInvoices = filteredInvoices.filter(invoice => {
+          const invoiceItems = invoice.invoice_items || [];
+          return invoiceItems.some(item => selectedItems.includes(item.item_id));
+        });
+      }
+      
+      if (selectedClients.length > 0) {
+        filteredInvoices = filteredInvoices.filter(invoice => 
+          selectedClients.includes(invoice.client_id)
+        );
+      }
+      
+      // Process filtered invoice data
+      const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
+      const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
+      const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue');
       
       const totalRevenue = paidInvoices.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
       
       setInvoiceStats({
-        total: invoices.length,
+        total: filteredInvoices.length,
         paid: paidInvoices.length,
         pending: pendingInvoices.length,
         overdue: overdueInvoices.length,
@@ -207,10 +229,27 @@ const Reports = () => {
       setMonthlyData(monthlyDataArray);
       
       // Process invoice status data
+      const totalCount = filteredInvoices.length || 1; // Avoid division by zero
+      
       const statusDataArray = [
-        { name: 'Paid', value: paidInvoices.length, fill: PIE_COLORS[0], percent: paidInvoices.length / invoices.length },
-        { name: 'Pending', value: pendingInvoices.length, fill: PIE_COLORS[1], percent: pendingInvoices.length / invoices.length },
-        { name: 'Overdue', value: overdueInvoices.length, fill: PIE_COLORS[2], percent: overdueInvoices.length / invoices.length }
+        { 
+          name: 'Paid', 
+          value: paidInvoices.length, 
+          fill: PIE_COLORS[0], 
+          percent: paidInvoices.length / totalCount 
+        },
+        { 
+          name: 'Pending', 
+          value: pendingInvoices.length, 
+          fill: PIE_COLORS[1], 
+          percent: pendingInvoices.length / totalCount 
+        },
+        { 
+          name: 'Overdue', 
+          value: overdueInvoices.length, 
+          fill: PIE_COLORS[2], 
+          percent: overdueInvoices.length / totalCount 
+        }
       ];
       
       setStatusData(statusDataArray);
@@ -218,9 +257,9 @@ const Reports = () => {
       // Process client revenue data
       const clientRevenue: Record<string, number> = {};
       
-      invoices.forEach(invoice => {
-        const clientName = invoice.client?.name || 'Unknown';
-        if (invoice.status === 'paid') {
+      paidInvoices.forEach(invoice => {
+        if (invoice.client && invoice.client.name) {
+          const clientName = invoice.client.name;
           clientRevenue[clientName] = (clientRevenue[clientName] || 0) + Number(invoice.total_amount);
         }
       });
@@ -233,31 +272,32 @@ const Reports = () => {
       setClientData(clientDataArray);
       
       // Process item revenue data
-      const itemRevenue: Record<string, number> = {};
-      const itemCounts: Record<string, number> = {};
+      const itemRevenue: Record<string, { amount: number, count: number }> = {};
       
-      invoices.forEach(invoice => {
-        const invoiceItems = invoice.invoice_items || [];
-        
-        invoiceItems.forEach(item => {
-          if (selectedItems.length === 0 || selectedItems.includes(item.item_id)) {
+      filteredInvoices.forEach(invoice => {
+        if (invoice.status === 'paid' && invoice.invoice_items) {
+          invoice.invoice_items.forEach(item => {
             const itemDetails = items.find(i => i.id === item.item_id);
-            const itemName = itemDetails ? itemDetails.title : 'Unknown Item';
             
-            if (invoice.status === 'paid') {
-              itemRevenue[itemName] = (itemRevenue[itemName] || 0) + Number(item.total_amount);
+            if (itemDetails) {
+              const itemName = itemDetails.title;
+              
+              if (!itemRevenue[itemName]) {
+                itemRevenue[itemName] = { amount: 0, count: 0 };
+              }
+              
+              itemRevenue[itemName].amount += Number(item.total_amount);
+              itemRevenue[itemName].count += Number(item.quantity);
             }
-            
-            itemCounts[itemName] = (itemCounts[itemName] || 0) + Number(item.quantity);
-          }
-        });
+          });
+        }
       });
       
       const itemDataArray = Object.entries(itemRevenue)
-        .map(([name, amount]) => ({ 
+        .map(([name, data]) => ({ 
           name, 
-          amount,
-          count: itemCounts[name] || 0
+          amount: data.amount,
+          count: data.count 
         }))
         .sort((a, b) => b.amount - a.amount);
       
@@ -278,17 +318,20 @@ const Reports = () => {
           data: statusDataArray,
           type: 'status',
           date: format(new Date(), 'yyyy-MM-dd')
-        },
-        {
+        }
+      ];
+      
+      if (clientDataArray.length > 0) {
+        reports.push({
           id: '3',
           title: 'Top Clients',
           data: clientDataArray,
           type: 'client',
           date: format(new Date(), 'yyyy-MM-dd')
-        }
-      ];
+        });
+      }
       
-      if (itemDataArray.length > 0) {
+      if (itemDataArray.length > 0 && selectedItems.length > 0) {
         reports.push({
           id: '4',
           title: 'Selected Items Analysis',
