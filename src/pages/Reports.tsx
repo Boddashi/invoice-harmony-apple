@@ -27,6 +27,7 @@ import {
   Legend
 } from 'recharts';
 
+// Types and constants
 type Report = {
   id: string;
   title: string;
@@ -42,6 +43,8 @@ type InvoiceStats = {
   overdue: number;
   revenue: number;
 };
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const Reports = () => {
   const { user } = useAuth();
@@ -189,25 +192,6 @@ const Reports = () => {
   const formatCurrency = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
-  
-  const handleGenerateReport = async () => {
-    toast({
-      title: "Report Generated",
-      description: "Your report has been created and added to the list."
-    });
-    
-    // Here we would typically save the report to the database
-    // and then refresh the list of reports
-    await fetchInvoiceData();
-  };
-  
-  const handleExportReport = (report: Report) => {
-    // In a real implementation, this would generate a CSV or PDF
-    toast({
-      title: "Report Exported",
-      description: `${report.title} has been exported to CSV.`
-    });
-  };
 
   return (
     <MainLayout>
@@ -227,7 +211,9 @@ const Reports = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
             {[...Array(4)].map((_, index) => (
-              <CustomCard key={index} className="h-60" />
+              <CustomCard key={index} padding="md">
+                <div className="h-60" />
+              </CustomCard>
             ))}
           </div>
         ) : (
@@ -258,7 +244,7 @@ const Reports = () => {
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Monthly Revenue Chart */}
-              <CustomCard>
+              <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Monthly Revenue</h3>
                   <BarChart3 size={20} className="text-muted-foreground" />
@@ -268,20 +254,33 @@ const Reports = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={monthlyData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" angle={-45} textAnchor="end" height={70} />
-                      <YAxis tickFormatter={(value) => `${currencySymbol}${value}`} />
-                      <Tooltip formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']} />
-                      <Bar dataKey="amount" fill="#8884d8" />
+                      <XAxis
+                        dataKey="month"
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `${currencySymbol}${value}`}
+                        width={80}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
+                        labelStyle={{ color: 'var(--foreground)' }}
+                      />
+                      <Bar dataKey="amount" fill="var(--primary)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </CustomCard>
               
               {/* Invoice Status Chart */}
-              <CustomCard>
+              <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Invoice Status</h3>
                   <BarChart3 size={20} className="text-muted-foreground" />
@@ -304,7 +303,10 @@ const Reports = () => {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
+                        labelStyle={{ color: 'var(--foreground)' }}
+                      />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -312,7 +314,7 @@ const Reports = () => {
               </CustomCard>
               
               {/* Top Clients */}
-              <CustomCard className="lg:col-span-2">
+              <CustomCard padding="md" className="lg:col-span-2">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Top Clients by Revenue</h3>
                   <BarChart3 size={20} className="text-muted-foreground" />
@@ -322,13 +324,26 @@ const Reports = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={clientData}
-                      margin={{ top: 20, right: 30, left: 20, bottom: 70 }}
+                      margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} />
-                      <YAxis tickFormatter={(value) => `${currencySymbol}${value}`} />
-                      <Tooltip formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']} />
-                      <Bar dataKey="amount" fill="#82ca9d" />
+                      <XAxis
+                        dataKey="name"
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickFormatter={(value) => `${currencySymbol}${value}`}
+                        width={80}
+                      />
+                      <Tooltip 
+                        formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                        contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
+                        labelStyle={{ color: 'var(--foreground)' }}
+                      />
+                      <Bar dataKey="amount" fill="var(--primary)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -378,3 +393,4 @@ const Reports = () => {
 };
 
 export default Reports;
+
