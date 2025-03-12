@@ -7,6 +7,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface SummaryData {
   title: string;
@@ -15,12 +16,14 @@ interface SummaryData {
   isPositive: boolean;
   icon: React.ElementType;
   color: string;
+  link?: string;
 }
 
 const DashboardSummary = () => {
   const { currencySymbol } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [summaryData, setSummaryData] = useState<SummaryData[]>([]);
   
@@ -73,7 +76,8 @@ const DashboardSummary = () => {
             change: percentChange.startsWith('-') ? percentChange : `+${percentChange}`, 
             isPositive: !percentChange.startsWith('-'),
             icon: DollarSign,
-            color: 'bg-apple-green/10 text-apple-green'
+            color: 'bg-apple-green/10 text-apple-green',
+            link: '/invoices'
           },
           { 
             title: 'Pending Invoices', 
@@ -118,7 +122,8 @@ const DashboardSummary = () => {
             change: '+0%', 
             isPositive: true,
             icon: DollarSign,
-            color: 'bg-apple-green/10 text-apple-green'
+            color: 'bg-apple-green/10 text-apple-green',
+            link: '/invoices'
           },
           { 
             title: 'Pending Invoices', 
@@ -167,6 +172,12 @@ const DashboardSummary = () => {
     );
   }
 
+  const handleCardClick = (link?: string) => {
+    if (link) {
+      navigate(link);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 animate-slide-up">
       {summaryData.map((item, index) => {
@@ -175,7 +186,11 @@ const DashboardSummary = () => {
         return (
           <CustomCard 
             key={index} 
-            className="transition-transform duration-300 hover:translate-y-[-2px]"
+            className={cn(
+              "transition-transform duration-300 hover:translate-y-[-2px]",
+              item.link && "cursor-pointer hover:ring-1 hover:ring-primary/20"
+            )}
+            onClick={() => handleCardClick(item.link)}
           >
             <div className="flex items-start justify-between">
               <div className={cn("p-2 rounded-lg", item.color)}>
