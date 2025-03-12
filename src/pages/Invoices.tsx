@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
@@ -58,7 +57,6 @@ const Invoices = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -76,7 +74,7 @@ const Invoices = () => {
     });
   };
   
-  useEffect(() => {
+  const handleInvoiceStatusChange = () => {
     const fetchInvoices = async () => {
       if (!user) return;
       
@@ -89,7 +87,7 @@ const Invoices = () => {
             client:clients(name)
           `)
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false }); // Order by created_at in descending order
+          .order('created_at', { ascending: false });
         
         if (error) {
           throw error;
@@ -114,9 +112,12 @@ const Invoices = () => {
     };
     
     fetchInvoices();
+  };
+
+  useEffect(() => {
+    handleInvoiceStatusChange();
   }, [user, toast]);
-  
-  // Filter invoices based on search and filter settings
+
   const filteredInvoices = invoices
     .filter(invoice => filter === 'all' || invoice.status === filter)
     .filter(invoice => {
@@ -132,17 +133,14 @@ const Invoices = () => {
       );
     });
   
-  // Update total pages when filtered invoices change
   useEffect(() => {
     setTotalPages(Math.max(1, Math.ceil(filteredInvoices.length / itemsPerPage)));
     
-    // Reset to page 1 if current page would be out of bounds
     if (currentPage > Math.ceil(filteredInvoices.length / itemsPerPage)) {
       setCurrentPage(1);
     }
   }, [filteredInvoices, itemsPerPage, currentPage]);
   
-  // Get paginated invoices for current page
   const paginatedInvoices = filteredInvoices.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -173,7 +171,6 @@ const Invoices = () => {
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      // Scroll to top of table for better UX
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -181,20 +178,16 @@ const Invoices = () => {
   const handleItemsPerPageChange = (value: string) => {
     const newItemsPerPage = parseInt(value, 10);
     setItemsPerPage(newItemsPerPage);
-    setCurrentPage(1); // Reset to first page when changing items per page
+    setCurrentPage(1);
   };
   
-  // Generate page numbers for pagination
   const generatePaginationItems = () => {
-    // If 5 or fewer pages, show all
     if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
     
-    // Always show first, last, current, and neighbors
     const items = new Set([1, totalPages, currentPage]);
     
-    // Add neighbors of current page
     if (currentPage > 1) items.add(currentPage - 1);
     if (currentPage < totalPages) items.add(currentPage + 1);
     
@@ -343,7 +336,11 @@ const Invoices = () => {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                            <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+                            <InvoiceActions 
+                              invoiceId={invoice.id} 
+                              status={invoice.status} 
+                              onStatusChange={handleInvoiceStatusChange}
+                            />
                           </div>
                         </td>
                       </tr>
@@ -386,17 +383,19 @@ const Invoices = () => {
                     </div>
                     
                     <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
-                      <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+                      <InvoiceActions 
+                        invoiceId={invoice.id} 
+                        status={invoice.status} 
+                        onStatusChange={handleInvoiceStatusChange}
+                      />
                     </div>
                   </div>
                 ))}
               </div>
               
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="p-4 border-t border-border">
                   <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                    {/* Rows per page selector */}
                     <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
                       <span className="text-muted-foreground whitespace-nowrap">Rows per page:</span>
                       <Select
@@ -419,7 +418,6 @@ const Invoices = () => {
                     
                     <Pagination>
                       <PaginationContent>
-                        {/* First page button */}
                         <PaginationItem>
                           <button
                             onClick={() => handlePageChange(1)}
@@ -434,7 +432,6 @@ const Invoices = () => {
                           </button>
                         </PaginationItem>
                         
-                        {/* Previous page button */}
                         <PaginationItem>
                           <button
                             onClick={() => handlePageChange(currentPage - 1)}
@@ -449,9 +446,7 @@ const Invoices = () => {
                           </button>
                         </PaginationItem>
                         
-                        {/* Page numbers */}
                         {generatePaginationItems().map((page, index, array) => {
-                          // Add ellipsis when there are gaps between page numbers
                           const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
                           
                           return (
@@ -478,7 +473,6 @@ const Invoices = () => {
                           );
                         })}
                         
-                        {/* Next page button */}
                         <PaginationItem>
                           <button
                             onClick={() => handlePageChange(currentPage + 1)}
@@ -493,7 +487,6 @@ const Invoices = () => {
                           </button>
                         </PaginationItem>
                         
-                        {/* Last page button */}
                         <PaginationItem>
                           <button
                             onClick={() => handlePageChange(totalPages)}

@@ -20,14 +20,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { generateInvoicePDF, saveInvoicePDF } from '@/utils/pdfGenerator';
+import { generateInvoicePDF } from '@/utils/pdfGenerator';
 
 interface InvoiceActionsProps {
   invoiceId: string;
   status: string;
+  onStatusChange?: () => void; // Add callback prop
 }
 
-const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
+const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
@@ -162,8 +163,13 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         title: "Success",
         description: "Invoice sent successfully and PDF generated"
       });
+
+      // Call the callback to update parent component state
+      if (onStatusChange) {
+        onStatusChange();
+      }
       
-      // Replace window.location.reload() with navigate to prevent full page reload
+      // Navigate to invoices page
       navigate('/invoices', { replace: true });
       
     } catch (error: any) {
