@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -92,7 +91,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const PIE_COLORS = ['#4ade80', '#f97316', '#8b5cf6', '#f43f5e'];
+const PIE_COLORS = ['#4ade80', '#f97316', '#f43f5e'];
 
 const STATUS_ICONS = {
   'Paid': <CheckCircle2 size={16} className="text-[#4ade80]" />,
@@ -100,36 +99,43 @@ const STATUS_ICONS = {
   'Overdue': <AlertCircle size={16} className="text-[#f43f5e]" />
 };
 
-const renderLegend = (props) => {
-  const { payload } = props;
-  
+const EnhancedLegend = ({ payload }: { payload: any[] }) => {
   return (
-    <div className="flex flex-col gap-2 mt-4">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
       {payload.map((entry, index) => (
-        <div key={`legend-${index}`} className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: entry.color }}></div>
-          <div className="flex items-center gap-1.5">
-            {STATUS_ICONS[entry.value]}
-            <span className="text-sm font-medium">{entry.value}</span>
+        <div 
+          key={`legend-${index}`} 
+          className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+            <div className="flex items-center gap-1.5">
+              {STATUS_ICONS[entry.value]}
+              <span className="font-medium">{entry.value}</span>
+            </div>
           </div>
+          <span className="text-muted-foreground ml-auto">
+            {entry.payload.count} ({(entry.payload.percent * 100).toFixed(0)}%)
+          </span>
         </div>
       ))}
     </div>
   );
 };
 
-// Fix the TypeScript error by adding proper typing
 const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
   if (active && payload && payload.length) {
-    const data = payload[0];
+    const data = payload[0].payload;
     return (
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.payload.fill }}></div>
+      <div className="bg-background border border-border shadow-lg rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.fill }}></div>
           <p className="font-semibold">{data.name}</p>
         </div>
-        <p className="text-sm">{`Count: ${data.value}`}</p>
-        <p className="text-sm">{`Percentage: ${(data.payload.percent * 100).toFixed(1)}%`}</p>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">Count: {data.value}</p>
+          <p className="text-sm text-muted-foreground">Share: {(data.percent * 100).toFixed(1)}%</p>
+        </div>
       </div>
     );
   }
@@ -342,7 +348,6 @@ const Reports = () => {
             </div>
             
             <div className="grid grid-cols-1 gap-6">
-              {/* Changed the grid layout to make all charts full width */}
               <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Monthly Revenue</h3>
@@ -378,46 +383,44 @@ const Reports = () => {
                 </div>
               </CustomCard>
               
-              {/* Made the invoice status chart wider by making it full width */}
               <CustomCard padding="md" variant="elevated">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
                     <PieChartIcon size={18} className="text-primary" />
-                    <h3 className="text-lg font-medium">Invoice Status</h3>
+                    <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
                   </div>
                 </div>
                 
-                <div className="h-[450px] mt-4">
+                <div className="h-[400px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="40%"
+                        cy="45%"
                         labelLine={false}
-                        outerRadius={130} /* Increased the chart size */
-                        innerRadius={60} /* Increased the inner radius for better proportion */
-                        paddingAngle={6}
+                        label={false}
+                        outerRadius={120}
+                        innerRadius={80}
+                        paddingAngle={8}
                         dataKey="value"
-                        label={renderCustomizedLabel}
                         strokeWidth={2}
                         stroke="var(--background)"
                       >
                         {statusData.map((entry, index) => (
                           <Cell 
                             key={`cell-${index}`} 
-                            fill={PIE_COLORS[index % PIE_COLORS.length]} 
-                            className="drop-shadow-md hover:opacity-85 transition-opacity"
+                            fill={PIE_COLORS[index % PIE_COLORS.length]}
+                            className="drop-shadow-md hover:opacity-85 transition-opacity cursor-pointer"
                           />
                         ))}
                       </Pie>
                       <Tooltip content={<CustomTooltip />} />
                       <Legend 
-                        content={renderLegend}
+                        content={<EnhancedLegend />}
                         layout="horizontal"
                         verticalAlign="bottom"
                         align="center"
-                        wrapperStyle={{ bottom: 0, left: 0, position: 'absolute', width: '100%' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
