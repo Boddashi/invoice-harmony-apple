@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -345,17 +346,21 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                 <DropdownMenuItem 
                   onClick={handleSend}
                   disabled={isSending}
+                  className="flex items-center text-white bg-blue-500 hover:bg-blue-600 rounded-md my-1 cursor-pointer"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   {isSending ? 'Sending...' : 'Send'}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleEdit}>
+                <DropdownMenuItem 
+                  onClick={handleEdit}
+                  className="flex items-center text-white bg-amber-500 hover:bg-amber-600 rounded-md my-1 cursor-pointer"
+                >
                   <Pencil className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleOpenDeleteDialog} 
-                  className="text-destructive"
+                  className="flex items-center text-white bg-red-500 hover:bg-red-600 rounded-md my-1 cursor-pointer"
                   disabled={isDeleting}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
@@ -369,11 +374,15 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                 <DropdownMenuItem 
                   onClick={handleMarkAsPaid}
                   disabled={isMarkingAsPaid}
+                  className="flex items-center text-white bg-green-500 hover:bg-green-600 rounded-md my-1 cursor-pointer"
                 >
                   <Check className="mr-2 h-4 w-4" />
                   {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDownload}>
+                <DropdownMenuItem 
+                  onClick={handleDownload}
+                  className="flex items-center text-white bg-purple-500 hover:bg-purple-600 rounded-md my-1 cursor-pointer"
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
@@ -381,7 +390,10 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
             )}
             
             {status === 'paid' && (
-              <DropdownMenuItem onClick={handleDownload}>
+              <DropdownMenuItem 
+                onClick={handleDownload}
+                className="flex items-center text-white bg-purple-500 hover:bg-purple-600 rounded-md my-1 cursor-pointer"
+              >
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
@@ -389,11 +401,17 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
             
             {status === 'overdue' && (
               <>
-                <DropdownMenuItem onClick={handleSendReminder}>
+                <DropdownMenuItem 
+                  onClick={handleSendReminder}
+                  className="flex items-center text-white bg-orange-500 hover:bg-orange-600 rounded-md my-1 cursor-pointer"
+                >
                   <Bell className="mr-2 h-4 w-4" />
                   Send Reminder
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleDownload}>
+                <DropdownMenuItem 
+                  onClick={handleDownload}
+                  className="flex items-center text-white bg-purple-500 hover:bg-purple-600 rounded-md my-1 cursor-pointer"
+                >
                   <Download className="mr-2 h-4 w-4" />
                   Download
                 </DropdownMenuItem>
