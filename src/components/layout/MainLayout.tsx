@@ -169,9 +169,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">More</span>
         </button>
 
-        {/* Full-screen More dialog */}
+        {/* Custom Dialog for More menu that slides from bottom */}
         <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
-          <DialogContent className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom">
+          <DialogContent 
+            className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+            hideCloseButton={true} // Hide the default close button
+          >
             <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
               <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
                 <h2 className="text-lg font-semibold">More Options</h2>
