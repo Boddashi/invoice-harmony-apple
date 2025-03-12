@@ -90,7 +90,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 textAnchor="end"
                 height={70}
                 tick={{ 
-                  fill: 'var(--muted-foreground)',
+                  fill: 'var(--foreground)',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
@@ -100,7 +100,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 tickFormatter={(value) => `${currencySymbol}${value}`}
                 width={80}
                 tick={{ 
-                  fill: 'var(--muted-foreground)',
+                  fill: 'var(--foreground)',
                   fontSize: 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}

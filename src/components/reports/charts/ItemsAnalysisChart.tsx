@@ -72,7 +72,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               textAnchor="end"
               height={70}
               tick={{ 
-                fill: 'var(--muted-foreground)',
+                fill: 'var(--foreground)',
                 fontSize: 12 
               }}
               axisLine={{ stroke: 'var(--border)' }}
@@ -82,7 +82,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               tickFormatter={(value) => `${currencySymbol}${value}`}
               width={80}
               tick={{ 
-                fill: 'var(--muted-foreground)',
+                fill: 'var(--foreground)',
                 fontSize: 12 
               }}
               axisLine={{ stroke: 'var(--border)' }}
