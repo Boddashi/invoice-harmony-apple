@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -337,12 +336,11 @@ const Reports = () => {
                         data={statusData}
                         cx="50%"
                         cy="50%"
-                        labelLine={true}
+                        labelLine={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '3' }}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
                         label={renderCustomizedLabel}
-                        labelLine={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '3' }}
                       >
                         {statusData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
