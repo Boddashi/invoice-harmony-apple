@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Download, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -96,19 +97,19 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
   const getTypeColor = (type: string, reportType: string) => {
     if (type === 'monthly' && reportType === 'Revenue') {
       switch (selectedPeriod) {
-        case 'daily': return 'bg-cyan-100 text-cyan-800';
-        case 'weekly': return 'bg-indigo-100 text-indigo-800';
-        case 'monthly': return 'bg-blue-100 text-blue-800';
-        case 'yearly': return 'bg-violet-100 text-violet-800';
-        default: return 'bg-blue-100 text-blue-800';
+        case 'daily': return 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100';
+        case 'weekly': return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-100';
+        case 'monthly': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100';
+        case 'yearly': return 'bg-violet-100 dark:bg-violet-900 text-violet-800 dark:text-violet-100';
+        default: return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100';
       }
     }
     
     switch (type) {
-      case 'status': return 'bg-green-100 text-green-800';
-      case 'client': return 'bg-purple-100 text-purple-800';
-      case 'item': return 'bg-amber-100 text-amber-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'status': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100';
+      case 'client': return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-100';
+      case 'item': return 'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-100';
+      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100';
     }
   };
 
@@ -125,10 +126,10 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {reports.map((report) => (
-            <Card key={report.id} className="overflow-hidden transition-all hover:shadow-md">
+            <Card key={report.id} className="overflow-hidden transition-all hover:shadow-md dark:hover:shadow-neon-sm">
               <CardContent className="p-0">
                 <div className="flex flex-col h-full">
-                  <div className="p-4 border-b">
+                  <div className="p-4 border-b border-border/40">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium truncate" title={report.title}>
                         {report.type === 'monthly' 
@@ -152,7 +153,7 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
                       variant="outline" 
                       size="sm"
                       onClick={() => handleExport(report)}
-                      className="flex items-center gap-2"
+                      className="flex items-center gap-2 transition-colors hover:bg-secondary/80 dark:hover:bg-secondary/30"
                     >
                       <FileText size={16} />
                       <span>Export CSV</span>
