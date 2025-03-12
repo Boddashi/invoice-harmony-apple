@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { generateInvoicePDF, saveInvoicePDF } from '@/utils/pdfGenerator';
 
 interface InvoiceActionsProps {
   invoiceId: string;
@@ -31,6 +32,7 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const [isSending, setIsSending] = React.useState(false);
 
   const handleEdit = () => {
     navigate(`/invoices/edit/${invoiceId}`);
@@ -81,11 +83,112 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
     }
   };
 
-  const handleSend = () => {
-    toast({
-      title: "Info",
-      description: "Send feature is not implemented yet."
-    });
+  const handleSend = async () => {
+    if (isSending) return;
+    
+    setIsSending(true);
+    try {
+      // First, update the invoice status to 'pending'
+      const { error: updateError } = await supabase
+        .from('invoices')
+        .update({ status: 'pending' })
+        .eq('id', invoiceId);
+      
+      if (updateError) throw updateError;
+      
+      // Get the invoice data to generate the PDF
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          client:clients(*)
+        `)
+        .eq('id', invoiceId)
+        .single();
+      
+      if (invoiceError) throw invoiceError;
+      
+      // Get the invoice items
+      const { data: invoiceItems, error: itemsError } = await supabase
+        .from('invoice_items')
+        .select(`
+          *,
+          items:item_id(*)
+        `)
+        .eq('invoice_id', invoiceId);
+      
+      if (itemsError) throw itemsError;
+      
+      // Get user info
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!invoice || !invoiceItems || !user) {
+        throw new Error("Could not retrieve all required data");
+      }
+      
+      // Format items for PDF generator
+      const itemsForPDF = invoiceItems.map(item => {
+        const itemData = item.items;
+        return {
+          description: itemData.title,
+          quantity: item.quantity,
+          unit_price: item.total_amount / item.quantity,
+          amount: item.total_amount,
+          vat_rate: itemData.vat
+        };
+      });
+      
+      // Calculate needed values
+      const subTotal = invoiceItems.reduce((sum, item) => sum + Number(item.total_amount), 0);
+      const taxAmount = invoice.tax_amount || 0;
+      
+      // Get currency symbol
+      const { data: settings } = await supabase
+        .from('company_settings')
+        .select('default_currency')
+        .eq('user_id', user.id)
+        .single();
+      
+      const currencySymbol = settings?.default_currency === 'USD' ? '$' : 
+                            settings?.default_currency === 'EUR' ? '€' : 
+                            settings?.default_currency === 'GBP' ? '£' : '$';
+      
+      // Generate the PDF
+      const pdfBase64 = await generateInvoicePDF({
+        id: invoiceId,
+        invoice_number: invoice.invoice_number,
+        issue_date: invoice.issue_date,
+        due_date: invoice.due_date,
+        client_name: invoice.client?.name || 'Client',
+        user_email: user.email || '',
+        items: itemsForPDF,
+        subTotal,
+        taxAmount,
+        total: Number(invoice.total_amount),
+        notes: invoice.notes,
+        currencySymbol
+      });
+      
+      // Save PDF to storage (automatically done in generateInvoicePDF)
+      
+      toast({
+        title: "Success",
+        description: "Invoice sent successfully and PDF generated"
+      });
+      
+      // Refresh the page to show updated status
+      window.location.reload();
+      
+    } catch (error: any) {
+      console.error('Error sending invoice:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send invoice"
+      });
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleDelete = async () => {
@@ -184,9 +287,12 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleSend}>
+              <DropdownMenuItem 
+                onClick={handleSend}
+                disabled={isSending}
+              >
                 <Send className="mr-2 h-4 w-4" />
-                Send
+                {isSending ? 'Sending...' : 'Send'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleEdit}>
                 <Pencil className="mr-2 h-4 w-4" />
