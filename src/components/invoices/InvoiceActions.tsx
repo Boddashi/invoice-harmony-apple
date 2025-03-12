@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send } from 'lucide-react';
@@ -162,7 +163,8 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: "Invoice sent successfully and PDF generated"
       });
       
-      window.location.reload();
+      // Replace window.location.reload() with navigate to prevent full page reload
+      navigate('/invoices', { replace: true });
       
     } catch (error: any) {
       console.error('Error sending invoice:', error);
@@ -207,9 +209,8 @@ const InvoiceActions = ({ invoiceId, status }: InvoiceActionsProps) => {
         description: "Invoice deleted successfully"
       });
       
-      setTimeout(() => {
-        navigate('/invoices', { replace: true });
-      }, 100);
+      // Use navigate instead of setTimeout and reload
+      navigate('/invoices', { replace: true });
       
     } catch (error: any) {
       console.error('Failed to delete invoice:', error);
