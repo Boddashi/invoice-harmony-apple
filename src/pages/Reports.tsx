@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -912,3 +913,28 @@ const Reports = () => {
                   {savedReports.map((report) => (
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">{report.title}</TableCell>
+                      <TableCell>{report.type.charAt(0).toUpperCase() + report.type.slice(1)}</TableCell>
+                      <TableCell>{report.date}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => handleExportReport(report)}
+                          title="Export Report"
+                        >
+                          <Download size={18} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
+      </div>
+    </MainLayout>
+  );
+};
+
+export default Reports;
