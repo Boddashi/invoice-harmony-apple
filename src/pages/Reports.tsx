@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import CustomCard from '@/components/ui/CustomCard';
 import { Button } from '@/components/ui/button';
-import { FileText, BarChart3, Download, PieChart as PieChartIcon } from 'lucide-react';
+import { FileText, BarChart3, Download, PieChart as PieChartIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -46,42 +46,44 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }) => {
   const RADIAN = Math.PI / 180;
-  const radius = outerRadius * 1.8;
+  const radius = outerRadius * 2.2;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   
   const displayText = `${name}: ${value}`;
+  
+  const pieColor = PIE_COLORS[index % PIE_COLORS.length];
 
   return (
     <g>
       <path 
         d={`M${cx + (outerRadius + 5) * Math.cos(-midAngle * RADIAN)},${cy + (outerRadius + 5) * Math.sin(-midAngle * RADIAN)}L${x},${y}`} 
-        stroke="#666" 
-        strokeWidth={1.5} 
+        stroke={pieColor}
+        strokeWidth={1.8} 
         fill="none" 
         strokeDasharray="3,3"
       />
-      <circle cx={x} cy={y} r={3} fill="#666" />
+      <circle cx={x} cy={y} r={4} fill={pieColor} />
       <text 
-        x={x + (x > cx ? 10 : -10)} 
+        x={x + (x > cx ? 14 : -14)} 
         y={y} 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
         fill="#333"
-        fontWeight="600"
-        fontSize="14"
-        letterSpacing="0.2px"
+        fontWeight="700"
+        fontSize="15"
+        letterSpacing="0.3px"
       >
         {displayText}
       </text>
       <text 
-        x={x + (x > cx ? 10 : -10)} 
-        y={y + 18} 
+        x={x + (x > cx ? 14 : -14)} 
+        y={y + 20} 
         textAnchor={x > cx ? 'start' : 'end'} 
         dominantBaseline="central"
-        fill="#555"
-        fontWeight="500"
-        fontSize="12"
+        fill={pieColor}
+        fontWeight="600"
+        fontSize="13"
       >
         {`(${(percent * 100).toFixed(0)}%)`}
       </text>
@@ -89,7 +91,48 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const PIE_COLORS = ['#6366F1', '#22C55E', '#F97316', '#9333EA'];
+const PIE_COLORS = ['#4ade80', '#f97316', '#8b5cf6', '#f43f5e'];
+
+const STATUS_ICONS = {
+  'Paid': <CheckCircle2 size={16} className="text-[#4ade80]" />,
+  'Pending': <Clock size={16} className="text-[#f97316]" />,
+  'Overdue': <AlertCircle size={16} className="text-[#f43f5e]" />
+};
+
+const renderLegend = (props) => {
+  const { payload } = props;
+  
+  return (
+    <div className="flex flex-col gap-2 mt-4">
+      {payload.map((entry, index) => (
+        <div key={`legend-${index}`} className="flex items-center gap-2">
+          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: entry.color }}></div>
+          <div className="flex items-center gap-1.5">
+            {STATUS_ICONS[entry.value]}
+            <span className="text-sm font-medium">{entry.value}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const CustomTooltip = ({ active, payload }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.payload.fill }}></div>
+          <p className="font-semibold">{data.name}</p>
+        </div>
+        <p className="text-sm">{`Count: ${data.value}`}</p>
+        <p className="text-sm">{`Percentage: ${(data.payload.percent * 100).toFixed(1)}%`}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const Reports = () => {
   const { user } = useAuth();
@@ -165,9 +208,9 @@ const Reports = () => {
       setMonthlyData(monthlyDataArray);
       
       const statusDataArray = [
-        { name: 'Paid', value: paidInvoices.length },
-        { name: 'Pending', value: pendingInvoices.length },
-        { name: 'Overdue', value: overdueInvoices.length }
+        { name: 'Paid', value: paidInvoices.length, fill: PIE_COLORS[0], percent: paidInvoices.length / invoices.length },
+        { name: 'Pending', value: pendingInvoices.length, fill: PIE_COLORS[1], percent: pendingInvoices.length / invoices.length },
+        { name: 'Overdue', value: overdueInvoices.length, fill: PIE_COLORS[2], percent: overdueInvoices.length / invoices.length }
       ];
       
       setStatusData(statusDataArray);
@@ -340,18 +383,17 @@ const Reports = () => {
                   </div>
                 </div>
                 
-                <div className="h-[350px] mt-4">
+                <div className="h-[400px] mt-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={statusData}
                         cx="50%"
-                        cy="50%"
+                        cy="40%"
                         labelLine={false}
-                        outerRadius={90}
-                        innerRadius={40}
-                        paddingAngle={4}
-                        fill="#8884d8"
+                        outerRadius={100}
+                        innerRadius={50}
+                        paddingAngle={6}
                         dataKey="value"
                         label={renderCustomizedLabel}
                         strokeWidth={2}
@@ -361,21 +403,17 @@ const Reports = () => {
                           <Cell 
                             key={`cell-${index}`} 
                             fill={PIE_COLORS[index % PIE_COLORS.length]} 
-                            className="drop-shadow-md hover:opacity-90 transition-opacity"
+                            className="drop-shadow-md hover:opacity-85 transition-opacity"
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        formatter={(value, name) => [`${value} invoices`, name]}
-                        contentStyle={{ 
-                          background: 'var(--card)', 
-                          border: '1px solid var(--border)',
-                          borderRadius: '0.5rem',
-                          boxShadow: 'var(--apple-sm)',
-                          padding: '10px',
-                          fontSize: '13px',
-                          fontWeight: '500'
-                        }}
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend 
+                        content={renderLegend}
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ bottom: 0, left: 0, position: 'absolute', width: '100%' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
