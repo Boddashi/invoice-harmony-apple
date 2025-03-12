@@ -11,6 +11,9 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Label } from '@/components/ui/label';
+import AddItemModal from '../items/AddItemModal';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
 
 interface Item {
   id: string;
@@ -89,6 +92,21 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                         {availableItem.title} - {currencySymbol}{availableItem.price}
                       </SelectItem>
                     ))}
+                    <Separator className="my-2" />
+                    <div className="p-2">
+                      <AddItemModal 
+                        onItemAdded={() => {}} 
+                        trigger={
+                          <Button 
+                            variant="ghost" 
+                            className="w-full justify-start text-apple-blue hover:text-apple-blue/80"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Add New Item
+                          </Button>
+                        }
+                      />
+                    </div>
                   </SelectGroup>
                 </SelectContent>
               </Select>
