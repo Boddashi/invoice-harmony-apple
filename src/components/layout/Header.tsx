@@ -17,6 +17,8 @@ const Header = () => {
         return 'Clients';
       case '/settings':
         return 'Settings';
+      case '/reports':
+        return 'Reports';
       case '/login':
         return 'Sign In';
       default:

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal, X } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal, X, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
@@ -37,6 +37,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
     { icon: Package, label: 'Items', href: '/items' },
+    { icon: BarChart, label: 'Reports', href: '/reports' },
   ];
 
   // Navigation items to display in the "More" fullscreen menu on mobile
@@ -44,6 +45,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
     { icon: Package, label: 'Items', href: '/items' },
+    { icon: BarChart, label: 'Reports', href: '/reports' },
     { icon: LogOut, label: 'Sign Out', href: null, onClick: () => { signOut(); setMoreMenuOpen(false); } },
   ];
 
