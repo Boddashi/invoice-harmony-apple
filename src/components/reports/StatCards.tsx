@@ -25,12 +25,12 @@ const StatCards: React.FC<StatCardsProps> = ({ invoiceStats, formatCurrency }) =
       
       <CustomCard>
         <h3 className="text-sm font-medium text-muted-foreground">Paid Invoices</h3>
-        <p className="text-2xl font-semibold mt-1 text-apple-green">{invoiceStats.paid}</p>
+        <p className="text-2xl font-semibold mt-1 text-green-500">{invoiceStats.paid}</p>
       </CustomCard>
       
       <CustomCard>
         <h3 className="text-sm font-medium text-muted-foreground">Pending</h3>
-        <p className="text-2xl font-semibold mt-1 text-apple-orange">{invoiceStats.pending}</p>
+        <p className="text-2xl font-semibold mt-1 text-orange-500">{invoiceStats.pending}</p>
       </CustomCard>
       
       <CustomCard>

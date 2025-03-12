@@ -77,10 +77,14 @@ interface InvoiceStatusChartProps {
     value: number; 
     fill: string; 
     percent: number;
+    count: number;
   }>;
 }
 
 const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
+  // Ensure we have valid data with non-zero values
+  const validData = data.filter(item => item.value > 0);
+  
   return (
     <CustomCard padding="md" variant="elevated">
       <div className="flex items-center justify-between mb-6">
@@ -91,38 +95,44 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
       </div>
       
       <div className="h-[400px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="45%"
-              labelLine={false}
-              label={false}
-              outerRadius={120}
-              innerRadius={80}
-              paddingAngle={8}
-              dataKey="value"
-              strokeWidth={2}
-              stroke="var(--background)"
-            >
-              {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={PIE_COLORS[index % PIE_COLORS.length]}
-                  className="drop-shadow-md hover:opacity-85 transition-opacity cursor-pointer"
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              content={<EnhancedLegend />}
-              layout="horizontal"
-              verticalAlign="bottom"
-              align="center"
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        {validData.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            No status data available
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={validData}
+                cx="50%"
+                cy="45%"
+                labelLine={false}
+                label={false}
+                outerRadius={120}
+                innerRadius={80}
+                paddingAngle={8}
+                dataKey="value"
+                strokeWidth={2}
+                stroke="var(--background)"
+              >
+                {validData.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                    className="drop-shadow-md hover:opacity-85 transition-opacity cursor-pointer"
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                content={<EnhancedLegend />}
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </CustomCard>
   );
