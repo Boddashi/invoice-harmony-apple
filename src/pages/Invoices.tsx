@@ -29,6 +29,8 @@ import {
 
 type InvoiceStatus = 'all' | 'draft' | 'pending' | 'paid' | 'overdue';
 type InvoiceDBStatus = 'draft' | 'pending' | 'paid' | 'overdue';
+type SortField = 'invoice_number' | 'client.name' | 'issue_date' | 'due_date' | 'total_amount' | 'status';
+type SortOrder = 'asc' | 'desc';
 
 interface Invoice {
   id: string;
@@ -65,6 +67,9 @@ const Invoices = () => {
   const filterParam = queryParams.get('filter') as InvoiceStatus | null;
   const [filter, setFilter] = useState<InvoiceStatus>(filterParam || 'all');
   
+  const [sortBy, setSortBy] = useState<SortField>('invoice_number');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
   useEffect(() => {
     if (filter === 'all') {
       navigate('/invoices', { replace: true });
@@ -179,30 +184,73 @@ const Invoices = () => {
     handleInvoiceStatusChange();
   }, [user, toast]);
 
-  const filteredInvoices = invoices
-    .filter(invoice => filter === 'all' || invoice.status === filter)
-    .filter(invoice => {
-      if (!searchQuery.trim()) return true;
+  const handleSort = (field: SortField) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortedInvoices = (invoices: Invoice[]) => {
+    return [...invoices].sort((a, b) => {
+      const multiplier = sortOrder === 'asc' ? 1 : -1;
       
-      const query = searchQuery.toLowerCase();
-      return (
-        invoice.invoice_number.toLowerCase().includes(query) ||
-        (invoice.client?.name && invoice.client.name.toLowerCase().includes(query)) ||
-        formatDate(invoice.issue_date).toLowerCase().includes(query) ||
-        formatDate(invoice.due_date).toLowerCase().includes(query) ||
-        invoice.total_amount.toString().includes(query)
-      );
+      switch (sortBy) {
+        case 'invoice_number':
+          return multiplier * a.invoice_number.localeCompare(b.invoice_number);
+        case 'client.name':
+          return multiplier * ((a.client?.name || '').localeCompare(b.client?.name || ''));
+        case 'issue_date':
+          return multiplier * (new Date(a.issue_date).getTime() - new Date(b.issue_date).getTime());
+        case 'due_date':
+          return multiplier * (new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
+        case 'total_amount':
+          return multiplier * (a.total_amount - b.total_amount);
+        case 'status':
+          return multiplier * a.status.localeCompare(b.status);
+        default:
+          return 0;
+      }
     });
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortBy !== field) {
+      return <ChevronDown size={16} className="text-muted-foreground/50" />;
+    }
+    return sortOrder === 'asc' ? 
+      <ChevronDown size={16} /> : 
+      <ChevronDown size={16} className="rotate-180 transform" />;
+  };
+
+  const sortedAndFilteredInvoices = getSortedInvoices(
+    invoices
+      .filter(invoice => filter === 'all' || invoice.status === filter)
+      .filter(invoice => {
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase();
+        return (
+          invoice.invoice_number.toLowerCase().includes(query) ||
+          (invoice.client?.name && invoice.client.name.toLowerCase().includes(query)) ||
+          formatDate(invoice.issue_date).toLowerCase().includes(query) ||
+          formatDate(invoice.due_date).toLowerCase().includes(query) ||
+          invoice.total_amount.toString().includes(query)
+        );
+      })
+  );
   
   useEffect(() => {
-    setTotalPages(Math.max(1, Math.ceil(filteredInvoices.length / itemsPerPage)));
+    setTotalPages(Math.max(1, Math.ceil(sortedAndFilteredInvoices.length / itemsPerPage)));
     
-    if (currentPage > Math.ceil(filteredInvoices.length / itemsPerPage)) {
+    if (currentPage > Math.ceil(sortedAndFilteredInvoices.length / itemsPerPage)) {
       setCurrentPage(1);
     }
-  }, [filteredInvoices, itemsPerPage, currentPage]);
+  }, [sortedAndFilteredInvoices, itemsPerPage, currentPage]);
   
-  const paginatedInvoices = filteredInvoices.slice(
+  const paginatedInvoices = sortedAndFilteredInvoices.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -337,7 +385,7 @@ const Invoices = () => {
             <div className="p-8 text-center">
               <p className="text-muted-foreground">Loading invoices...</p>
             </div>
-          ) : filteredInvoices.length === 0 ? (
+          ) : sortedAndFilteredInvoices.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-muted-foreground">
                 {searchQuery.trim() 
@@ -351,17 +399,60 @@ const Invoices = () => {
                 <table className="w-full min-w-full table-fixed">
                   <thead>
                     <tr className="border-b border-border bg-secondary/50">
-                      <th className="py-3 px-4 text-left font-medium">
+                      <th 
+                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('invoice_number')}
+                      >
                         <div className="flex items-center gap-1">
                           Invoice #
-                          <ChevronDown size={16} />
+                          {getSortIcon('invoice_number')}
                         </div>
                       </th>
-                      <th className="py-3 px-4 text-left font-medium">Client</th>
-                      <th className="py-3 px-4 text-left font-medium">Issue Date</th>
-                      <th className="py-3 px-4 text-left font-medium">Due Date</th>
-                      <th className="py-3 px-4 text-right font-medium">Amount</th>
-                      <th className="py-3 px-4 text-center font-medium">Status</th>
+                      <th 
+                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('client.name')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Client
+                          {getSortIcon('client.name')}
+                        </div>
+                      </th>
+                      <th 
+                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('issue_date')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Issue Date
+                          {getSortIcon('issue_date')}
+                        </div>
+                      </th>
+                      <th 
+                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('due_date')}
+                      >
+                        <div className="flex items-center gap-1">
+                          Due Date
+                          {getSortIcon('due_date')}
+                        </div>
+                      </th>
+                      <th 
+                        className="py-3 px-4 text-right font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('total_amount')}
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          Amount
+                          {getSortIcon('total_amount')}
+                        </div>
+                      </th>
+                      <th 
+                        className="py-3 px-4 text-center font-medium cursor-pointer hover:bg-secondary/80"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center justify-center gap-1">
+                          Status
+                          {getSortIcon('status')}
+                        </div>
+                      </th>
                       <th className="py-3 px-4 text-center font-medium">Actions</th>
                     </tr>
                   </thead>
