@@ -248,20 +248,6 @@ const Settings = () => {
                   </div>
                 </div>
                 
-                <div className="mt-8">
-                  <h3 className="font-medium mb-3">Profile Picture</h3>
-                  <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
-                      <User size={32} />
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      <button className="secondary-button">Upload New</button>
-                      <button className="ghost-button text-apple-red">Remove</button>
-                    </div>
-                  </div>
-                </div>
-                
                 <div className="mt-8 pt-6 border-t border-border flex justify-end">
                   <button className="apple-button">Save Changes</button>
                 </div>
