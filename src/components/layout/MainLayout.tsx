@@ -1,11 +1,17 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Users, Settings, LogOut, Package } from 'lucide-react';
+import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Header from './Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -15,6 +21,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -107,29 +114,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar - improved spacing and layout */}
+      {/* Mobile bottom navbar - with Settings and Sign Out on left, More dropdown on right */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.href || 
-            (item.href !== '/' && location.pathname.startsWith(item.href));
-          const Icon = item.icon;
-          
-          return (
-            <Link
-              key={item.href}
-              to={item.href}
-              className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-1",
-                isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70"
-              )}
-            >
-              <Icon size={20} />
-              <span className="text-xs font-medium">{item.label}</span>
-            </Link>
-          );
-        })}
-        
-        {/* Settings icon for mobile */}
+        {/* Settings - on left */}
         <Link
           to="/settings"
           className={cn(
@@ -141,7 +128,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">Settings</span>
         </Link>
         
-        {/* Sign out icon for mobile */}
+        {/* Sign Out - on left */}
         <button
           onClick={handleLogout}
           className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
@@ -149,6 +136,46 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <LogOut size={20} />
           <span className="text-xs font-medium">Sign Out</span>
         </button>
+        
+        {/* More dropdown - on right */}
+        <div className="flex flex-1 justify-center items-center">
+          <DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className="flex flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
+                aria-label="More navigation options"
+              >
+                <MoreHorizontal size={20} />
+                <span className="text-xs font-medium">More</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56 mb-20 bg-popover/95 backdrop-blur-sm border border-border"
+            >
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.href || 
+                  (item.href !== '/' && location.pathname.startsWith(item.href));
+                const Icon = item.icon;
+                
+                return (
+                  <DropdownMenuItem key={item.href} asChild>
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-2 py-2 w-full",
+                        isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+                      )}
+                    >
+                      <Icon size={18} />
+                      <span>{item.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );
