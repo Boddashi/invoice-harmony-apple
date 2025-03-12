@@ -21,6 +21,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { generateInvoicePDF } from '@/utils/pdfGenerator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface InvoiceActionsProps {
   invoiceId: string;
@@ -248,6 +256,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         description: "Invoice deleted successfully"
       });
       
+      setShowDeleteDialog(false);
       navigate('/invoices', { replace: true });
       
     } catch (error: any) {
@@ -259,19 +268,12 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       });
     } finally {
       setIsDeleting(false);
-      setShowDeleteDialog(false);
     }
   };
 
   const handleOpenDeleteDialog = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowDeleteDialog(true);
-  };
-
-  const handleCloseDeleteDialog = () => {
-    if (!isDeleting) {
-      setShowDeleteDialog(false);
-    }
   };
 
   const handleSendReminder = async (e: React.MouseEvent) => {
@@ -433,29 +435,35 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         )}
       </div>
 
-      <AlertDialog 
+      <Dialog 
         open={showDeleteDialog} 
-        onOpenChange={handleCloseDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Invoice</AlertDialogTitle>
-            <AlertDialogDescription>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Invoice</DialogTitle>
+            <DialogDescription>
               Are you sure you want to delete this invoice? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)} 
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
               onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
               {isDeleting ? 'Deleting...' : 'Delete'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
