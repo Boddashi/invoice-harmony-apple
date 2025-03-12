@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import { Check, ChevronDown, Plus, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
@@ -49,7 +49,7 @@ interface Invoice {
 
 const Invoices = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<InvoiceStatus>('all');
+  const location = useLocation();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,6 +60,25 @@ const Invoices = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  const queryParams = new URLSearchParams(location.search);
+  const filterParam = queryParams.get('filter') as InvoiceStatus | null;
+  const [filter, setFilter] = useState<InvoiceStatus>(filterParam || 'all');
+  
+  useEffect(() => {
+    if (filter === 'all') {
+      navigate('/invoices', { replace: true });
+    } else {
+      navigate(`/invoices?filter=${filter}`, { replace: true });
+    }
+  }, [filter, navigate]);
+  
+  useEffect(() => {
+    const filterParam = queryParams.get('filter') as InvoiceStatus | null;
+    if (filterParam && ['all', 'draft', 'pending', 'paid', 'overdue'].includes(filterParam)) {
+      setFilter(filterParam);
+    }
+  }, [location.search]);
   
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;

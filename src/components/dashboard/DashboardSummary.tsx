@@ -85,7 +85,8 @@ const DashboardSummary = () => {
             change: `${pendingInvoices.length} invoices`, 
             isPositive: false,
             icon: Clock,
-            color: 'bg-apple-orange/10 text-apple-orange'
+            color: 'bg-apple-orange/10 text-apple-orange',
+            link: '/invoices?filter=pending'
           },
           { 
             title: 'Paid Invoices', 
@@ -93,7 +94,8 @@ const DashboardSummary = () => {
             change: `${paidInvoices.length} invoices`, 
             isPositive: true,
             icon: CheckCircle,
-            color: 'bg-apple-blue/10 text-apple-blue'
+            color: 'bg-apple-blue/10 text-apple-blue',
+            link: '/invoices?filter=paid'
           },
           { 
             title: 'Overdue Invoices', 
@@ -101,7 +103,8 @@ const DashboardSummary = () => {
             change: `${overdueInvoices.length} invoices`, 
             isPositive: false,
             icon: AlertCircle,
-            color: 'bg-apple-red/10 text-apple-red'
+            color: 'bg-apple-red/10 text-apple-red',
+            link: '/invoices?filter=overdue'
           }
         ];
         
@@ -131,7 +134,8 @@ const DashboardSummary = () => {
             change: '0 invoices', 
             isPositive: false,
             icon: Clock,
-            color: 'bg-apple-orange/10 text-apple-orange'
+            color: 'bg-apple-orange/10 text-apple-orange',
+            link: '/invoices?filter=pending'
           },
           { 
             title: 'Paid Invoices', 
@@ -139,7 +143,8 @@ const DashboardSummary = () => {
             change: '0 invoices', 
             isPositive: true,
             icon: CheckCircle,
-            color: 'bg-apple-blue/10 text-apple-blue'
+            color: 'bg-apple-blue/10 text-apple-blue',
+            link: '/invoices?filter=paid'
           },
           { 
             title: 'Overdue Invoices', 
@@ -147,7 +152,8 @@ const DashboardSummary = () => {
             change: '0 invoices', 
             isPositive: false,
             icon: AlertCircle,
-            color: 'bg-apple-red/10 text-apple-red'
+            color: 'bg-apple-red/10 text-apple-red',
+            link: '/invoices?filter=overdue'
           }
         ]);
       } finally {
