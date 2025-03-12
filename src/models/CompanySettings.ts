@@ -20,6 +20,7 @@ export interface CompanySettings {
   iban: string;
   invoice_prefix: string;
   invoice_number_type: 'date' | 'incremental';
+  logo_url?: string;
 }
 
 export const defaultCompanySettings: CompanySettings = {
@@ -40,5 +41,6 @@ export const defaultCompanySettings: CompanySettings = {
   swift: '',
   iban: '',
   invoice_prefix: '',
-  invoice_number_type: 'incremental'
+  invoice_number_type: 'incremental',
+  logo_url: ''
 };

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { User, Building, CreditCard, Shield, Bell, Check, Loader2 } from 'lucide-react';
+import { User, Building, CreditCard, Shield, Bell, Check, Loader2, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -25,7 +25,9 @@ const Settings = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings>(defaultCompanySettings);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -67,7 +69,8 @@ const Settings = () => {
             ...data,
             postal_code: data.postal_code || '',
             invoice_prefix: data.invoice_prefix || '',
-            invoice_number_type: (data.invoice_number_type as 'date' | 'incremental') || 'date'
+            invoice_number_type: (data.invoice_number_type as 'date' | 'incremental') || 'date',
+            logo_url: data.logo_url || ''
           });
           
           if (data.default_currency) {
@@ -117,6 +120,132 @@ const Settings = () => {
         ...prev,
         [name]: value
       }));
+    }
+  };
+
+  const handleUploadLogoClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) {
+      return;
+    }
+    
+    const file = files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user.id}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    const filePath = `company-logos/${fileName}`;
+    
+    try {
+      setUploadingLogo(true);
+      
+      const { data: buckets, error: bucketError } = await supabase
+        .storage
+        .listBuckets();
+      
+      if (bucketError) {
+        throw bucketError;
+      }
+      
+      const bucketExists = buckets.some(bucket => bucket.name === 'company-logos');
+      
+      if (!bucketExists) {
+        const { error: createBucketError } = await supabase
+          .storage
+          .createBucket('company-logos', {
+            public: true
+          });
+        
+        if (createBucketError) {
+          throw createBucketError;
+        }
+      }
+      
+      const { error: uploadError } = await supabase
+        .storage
+        .from('company-logos')
+        .upload(fileName, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      const { data: publicURL } = supabase
+        .storage
+        .from('company-logos')
+        .getPublicUrl(fileName);
+      
+      if (!publicURL) {
+        throw new Error('Failed to get public URL for uploaded logo');
+      }
+      
+      setCompanySettings(prev => ({
+        ...prev,
+        logo_url: publicURL.publicUrl
+      }));
+      
+      toast({
+        title: "Logo uploaded",
+        description: "Your company logo has been uploaded successfully."
+      });
+      
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Failed to upload company logo. Please try again."
+      });
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+  
+  const handleRemoveLogo = async () => {
+    if (!user || !companySettings.logo_url) return;
+    
+    try {
+      setUploadingLogo(true);
+      
+      const fileName = companySettings.logo_url.split('/').pop();
+      
+      if (fileName) {
+        const { error: deleteError } = await supabase
+          .storage
+          .from('company-logos')
+          .remove([fileName]);
+        
+        if (deleteError) {
+          throw deleteError;
+        }
+      }
+      
+      setCompanySettings(prev => ({
+        ...prev,
+        logo_url: ''
+      }));
+      
+      toast({
+        title: "Logo removed",
+        description: "Your company logo has been removed successfully."
+      });
+      
+    } catch (error) {
+      console.error('Error removing logo:', error);
+      toast({
+        variant: "destructive",
+        title: "Removal failed",
+        description: "Failed to remove company logo. Please try again."
+      });
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -469,15 +598,60 @@ const Settings = () => {
                       <div>
                         <h3 className="text-base font-medium mb-4">Company Logo</h3>
                         <div className="flex items-center gap-5">
-                          <div className="w-20 h-20 rounded bg-secondary flex items-center justify-center text-muted-foreground">
-                            <Building size={32} />
+                          <div className="w-20 h-20 rounded bg-secondary flex items-center justify-center text-muted-foreground overflow-hidden border border-border">
+                            {companySettings.logo_url ? (
+                              <img 
+                                src={companySettings.logo_url} 
+                                alt="Company logo" 
+                                className="w-full h-full object-contain"
+                              />
+                            ) : (
+                              <Building size={32} />
+                            )}
                           </div>
                           
                           <div className="flex gap-3">
-                            <button type="button" className="secondary-button">Upload Logo</button>
-                            <button type="button" className="ghost-button text-apple-red">Remove</button>
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              accept="image/*"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                            <button 
+                              type="button" 
+                              className="secondary-button flex items-center gap-2"
+                              onClick={handleUploadLogoClick}
+                              disabled={uploadingLogo}
+                            >
+                              {uploadingLogo ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Uploading...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload size={16} />
+                                  Upload Logo
+                                </>
+                              )}
+                            </button>
+                            {companySettings.logo_url && (
+                              <button 
+                                type="button" 
+                                className="ghost-button text-apple-red flex items-center gap-2"
+                                onClick={handleRemoveLogo}
+                                disabled={uploadingLogo}
+                              >
+                                <X size={16} />
+                                Remove
+                              </button>
+                            )}
                           </div>
                         </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Recommended: Square image of at least 200x200 pixels
+                        </p>
                       </div>
                     </div>
                     
@@ -647,3 +821,5 @@ const Settings = () => {
 };
 
 export default Settings;
+
+
