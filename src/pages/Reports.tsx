@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -44,6 +45,28 @@ type InvoiceStats = {
 };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+// Custom label renderer that positions labels better
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name }) => {
+  const RADIAN = Math.PI / 180;
+  // Position the label further away from the pie to avoid overlap
+  const radius = outerRadius * 1.4;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  return (
+    <text 
+      x={x} 
+      y={y} 
+      fill="#666"
+      textAnchor={x > cx ? 'start' : 'end'} 
+      dominantBaseline="central"
+      fontSize="12"
+    >
+      {`${name}: ${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
 
 const Reports = () => {
   const { user } = useAuth();
@@ -300,7 +323,7 @@ const Reports = () => {
                 </div>
               </CustomCard>
               
-              {/* Invoice Status Chart */}
+              {/* Invoice Status Chart - Fixed overlapping labels */}
               <CustomCard padding="md">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium">Invoice Status</h3>
@@ -314,11 +337,12 @@ const Reports = () => {
                         data={statusData}
                         cx="50%"
                         cy="50%"
-                        labelLine={false}
-                        outerRadius={100}
+                        labelLine={true}
+                        outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        label={renderCustomizedLabel}
+                        labelLine={{ stroke: '#666', strokeWidth: 1, strokeDasharray: '3' }}
                       >
                         {statusData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -328,7 +352,12 @@ const Reports = () => {
                         contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)' }}
                         labelStyle={{ color: 'var(--foreground)' }}
                       />
-                      <Legend />
+                      <Legend 
+                        layout="horizontal"
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ paddingTop: '20px' }}
+                      />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -414,4 +443,3 @@ const Reports = () => {
 };
 
 export default Reports;
-
