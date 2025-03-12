@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Pencil, Trash2, Download, Send } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Download, Send, CheckCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import { generateInvoicePDF } from '@/utils/pdfGenerator';
 
 interface InvoiceActionsProps {
@@ -34,6 +35,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isSending, setIsSending] = React.useState(false);
+  const [isMarkingAsPaid, setIsMarkingAsPaid] = React.useState(false);
 
   const handleEdit = () => {
     navigate(`/invoices/edit/${invoiceId}`);
@@ -184,6 +186,41 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
+  const handleMarkAsPaid = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isMarkingAsPaid) return;
+    
+    setIsMarkingAsPaid(true);
+    try {
+      const { error } = await supabase
+        .from('invoices')
+        .update({ status: 'paid' })
+        .eq('id', invoiceId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Invoice marked as paid"
+      });
+      
+      // Call the callback to update parent component state
+      if (onStatusChange) {
+        onStatusChange();
+      }
+      
+    } catch (error: any) {
+      console.error('Error marking invoice as paid:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to mark invoice as paid"
+      });
+    } finally {
+      setIsMarkingAsPaid(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (isDeleting) return;
 
@@ -240,13 +277,43 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     setShowDeleteDialog(false);
   };
 
+  if (status === 'pending') {
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex items-center gap-1 text-apple-green border-apple-green/30 hover:bg-apple-green/10"
+          onClick={handleMarkAsPaid}
+          disabled={isMarkingAsPaid}
+        >
+          <CheckCircle size={14} />
+          {isMarkingAsPaid ? 'Updating...' : 'Mark Paid'}
+        </Button>
+        <button 
+          className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
+          title="Download"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload();
+          }}
+        >
+          <Download size={16} />
+        </button>
+      </div>
+    );
+  }
+
   if (status !== 'draft') {
     return (
       <div className="flex items-center gap-1">
         <button 
           className="p-1.5 rounded-full hover:bg-secondary transition-colors" 
           title="Download"
-          onClick={handleDownload}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDownload();
+          }}
         >
           <Download size={16} />
         </button>
