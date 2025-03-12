@@ -30,7 +30,35 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
     .select('*')
     .single();
     
-  const companySettings: CompanySettings = companyData || {};
+  const companySettings: CompanySettings = companyData 
+    ? {
+        ...companyData,
+        invoice_number_type: (companyData.invoice_number_type as string === "date" || 
+                              companyData.invoice_number_type as string === "incremental") 
+                              ? (companyData.invoice_number_type as "date" | "incremental") 
+                              : "incremental"
+      }
+    : {
+        company_name: '',
+        company_email: '',
+        company_phone: '',
+        company_website: '',
+        vat_number: '',
+        default_currency: 'USD',
+        street: '',
+        number: '',
+        bus: '',
+        postal_code: '',
+        city: '',
+        country: '',
+        bank_name: '',
+        account_number: '',
+        swift: '',
+        iban: '',
+        invoice_prefix: '',
+        invoice_number_type: 'incremental',
+        logo_url: ''
+      };
 
   const element = document.createElement('div');
   element.className = 'invoice-pdf-content';
