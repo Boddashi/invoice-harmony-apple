@@ -16,6 +16,7 @@ interface SummaryData {
   isPositive: boolean;
   icon: React.ElementType;
   color: string;
+  textColor: string;
   link?: string;
 }
 
@@ -77,6 +78,7 @@ const DashboardSummary = () => {
             isPositive: !percentChange.startsWith('-'),
             icon: DollarSign,
             color: 'bg-apple-green/10 text-apple-green',
+            textColor: 'text-apple-green',
             link: '/invoices'
           },
           { 
@@ -86,6 +88,7 @@ const DashboardSummary = () => {
             isPositive: false,
             icon: Clock,
             color: 'bg-apple-orange/10 text-apple-orange',
+            textColor: 'text-apple-orange',
             link: '/invoices?filter=pending'
           },
           { 
@@ -95,6 +98,7 @@ const DashboardSummary = () => {
             isPositive: true,
             icon: CheckCircle,
             color: 'bg-apple-blue/10 text-apple-blue',
+            textColor: 'text-apple-blue',
             link: '/invoices?filter=paid'
           },
           { 
@@ -104,6 +108,7 @@ const DashboardSummary = () => {
             isPositive: false,
             icon: AlertCircle,
             color: 'bg-apple-red/10 text-apple-red',
+            textColor: 'text-apple-red',
             link: '/invoices?filter=overdue'
           }
         ];
@@ -126,6 +131,7 @@ const DashboardSummary = () => {
             isPositive: true,
             icon: DollarSign,
             color: 'bg-apple-green/10 text-apple-green',
+            textColor: 'text-apple-green',
             link: '/invoices'
           },
           { 
@@ -135,6 +141,7 @@ const DashboardSummary = () => {
             isPositive: false,
             icon: Clock,
             color: 'bg-apple-orange/10 text-apple-orange',
+            textColor: 'text-apple-orange',
             link: '/invoices?filter=pending'
           },
           { 
@@ -144,6 +151,7 @@ const DashboardSummary = () => {
             isPositive: true,
             icon: CheckCircle,
             color: 'bg-apple-blue/10 text-apple-blue',
+            textColor: 'text-apple-blue',
             link: '/invoices?filter=paid'
           },
           { 
@@ -153,6 +161,7 @@ const DashboardSummary = () => {
             isPositive: false,
             icon: AlertCircle,
             color: 'bg-apple-red/10 text-apple-red',
+            textColor: 'text-apple-red',
             link: '/invoices?filter=overdue'
           }
         ]);
@@ -203,11 +212,17 @@ const DashboardSummary = () => {
                 <Icon size={20} />
               </div>
               <div className="flex items-center gap-1 text-sm">
-                <span className={cn(
-                  item.isPositive ? 'text-apple-green' : 'text-apple-red'
-                )}>
-                  {item.change}
-                </span>
+                {item.title === 'Pending Invoices' || item.title === 'Paid Invoices' || item.title === 'Overdue Invoices' ? (
+                  <span className={item.textColor}>
+                    {item.change}
+                  </span>
+                ) : (
+                  <span className={cn(
+                    item.isPositive ? 'text-apple-green' : 'text-apple-red'
+                  )}>
+                    {item.change}
+                  </span>
+                )}
                 {item.isPositive ? (
                   <ArrowUpRight size={16} className="text-apple-green" />
                 ) : (
