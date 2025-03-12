@@ -205,7 +205,11 @@ const DashboardSummary = () => {
                 <Icon size={20} />
               </div>
               <div className="flex items-center gap-1 text-sm">
-                {item.title === 'Pending Invoices' || item.title === 'Paid Invoices' || item.title === 'Overdue Invoices' ? (
+                {item.title === 'Total Revenue' ? (
+                  <span className="text-apple-blue">
+                    {item.change}
+                  </span>
+                ) : item.title === 'Pending Invoices' || item.title === 'Paid Invoices' || item.title === 'Overdue Invoices' ? (
                   <span className={item.textColor}>
                     {item.change}
                   </span>
@@ -216,17 +220,19 @@ const DashboardSummary = () => {
                     {item.change}
                   </span>
                 )}
-                {item.title === 'Pending Invoices' ? (
+                {item.title === 'Total Revenue' ? (
+                  item.isPositive ? (
+                    <ArrowUpRight size={16} className="text-apple-blue" />
+                  ) : (
+                    <ArrowDownRight size={16} className="text-apple-blue" />
+                  )
+                ) : item.title === 'Pending Invoices' ? (
                   <ArrowDownRight size={16} className="text-apple-orange" />
                 ) : item.title === 'Paid Invoices' ? (
                   <ArrowUpRight size={16} className="text-apple-blue" />
                 ) : item.title === 'Overdue Invoices' ? (
                   <ArrowDownRight size={16} className="text-apple-red" />
-                ) : item.isPositive ? (
-                  <ArrowUpRight size={16} className="text-apple-green" />
-                ) : (
-                  <ArrowDownRight size={16} className="text-apple-red" />
-                )}
+                ) : null}
               </div>
             </div>
             
