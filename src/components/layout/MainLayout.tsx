@@ -29,7 +29,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
     { icon: Package, label: 'Items', href: '/items' },
-    { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 
   const handleLogout = () => {
@@ -71,6 +70,20 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   </Link>
                 );
               })}
+              
+              {/* Settings link in the sidebar only */}
+              <Link
+                to="/settings"
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200",
+                  location.pathname === "/settings" 
+                    ? "bg-sidebar-primary/10 text-sidebar-primary font-medium" 
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/80 hover:text-sidebar-foreground"
+                )}
+              >
+                <Settings size={20} className={cn(location.pathname === "/settings" ? "text-sidebar-primary" : "text-sidebar-foreground/70")} />
+                <span>Settings</span>
+              </Link>
             </div>
             
             {/* Sign out button at bottom of sidebar */}
@@ -94,8 +107,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar */}
-      <div className="fixed bottom-0 left-0 right-0 h-16 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
+      {/* Mobile bottom navbar - improved spacing and layout */}
+      <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
             (item.href !== '/' && location.pathname.startsWith(item.href));
@@ -106,23 +119,35 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               key={item.href}
               to={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center justify-center gap-1 transition-all",
+                "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-1",
                 isActive ? "text-sidebar-primary" : "text-sidebar-foreground/70"
               )}
             >
-              <Icon size={22} />
-              <span className="text-xs">{item.label}</span>
+              <Icon size={20} />
+              <span className="text-xs font-medium">{item.label}</span>
             </Link>
           );
         })}
         
-        {/* Add sign out icon for mobile */}
+        {/* Settings icon for mobile */}
+        <Link
+          to="/settings"
+          className={cn(
+            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-1",
+            location.pathname === "/settings" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+          )}
+        >
+          <Settings size={20} />
+          <span className="text-xs font-medium">Settings</span>
+        </Link>
+        
+        {/* Sign out icon for mobile */}
         <button
           onClick={handleLogout}
-          className="flex flex-1 flex-col items-center justify-center gap-1 text-sidebar-foreground/70"
+          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
         >
-          <LogOut size={22} />
-          <span className="text-xs">Sign Out</span>
+          <LogOut size={20} />
+          <span className="text-xs font-medium">Sign Out</span>
         </button>
       </div>
     </div>
