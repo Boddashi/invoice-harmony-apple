@@ -114,7 +114,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar - with Settings and Sign Out on left, More dropdown on right */}
+      {/* Mobile bottom navbar - with Settings and More dropdown on left, Sign Out on right */}
       <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
         {/* Settings - on left */}
         <Link
@@ -128,16 +128,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">Settings</span>
         </Link>
         
-        {/* Sign Out - on left */}
-        <button
-          onClick={handleLogout}
-          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
-        >
-          <LogOut size={20} />
-          <span className="text-xs font-medium">Sign Out</span>
-        </button>
-        
-        {/* More dropdown - on right */}
+        {/* More dropdown - on left */}
         <div className="flex flex-1 justify-center items-center">
           <DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
             <DropdownMenuTrigger asChild>
@@ -176,6 +167,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        
+        {/* Sign Out - on right */}
+        <button
+          onClick={handleLogout}
+          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-1"
+        >
+          <LogOut size={20} />
+          <span className="text-xs font-medium">Sign Out</span>
+        </button>
       </div>
     </div>
   );
