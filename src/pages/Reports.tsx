@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { 
@@ -23,7 +24,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend
+  Legend,
+  LegendProps
 } from 'recharts';
 
 type Report = {
@@ -99,7 +101,12 @@ const STATUS_ICONS = {
   'Overdue': <AlertCircle size={16} className="text-[#f43f5e]" />
 };
 
-const EnhancedLegend = ({ payload }: { payload: any[] }) => {
+// Fix the type definition for the EnhancedLegend component
+interface EnhancedLegendProps {
+  payload?: any[];
+}
+
+const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
       {payload.map((entry, index) => (
@@ -123,7 +130,13 @@ const EnhancedLegend = ({ payload }: { payload: any[] }) => {
   );
 };
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+// Fix the CustomTooltip component type
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: any[];
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
