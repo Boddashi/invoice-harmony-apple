@@ -1,9 +1,9 @@
-
 import React from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { createCurrencyFormatter } from '@/utils/formatCurrency';
 import { useReportData } from '@/hooks/useReportData';
+import type { TimePeriod } from '@/components/reports/charts/RevenueChart';
 
 // Import Report Components
 import ReportFilters from '@/components/reports/ReportFilters';
@@ -103,8 +103,8 @@ interface ReportsContentProps {
   selectedItems: string[];
   formatCurrency: (amount: number) => string;
   currencySymbol: string;
-  selectedPeriod: string;
-  onPeriodChange: (period: any) => void;
+  selectedPeriod: TimePeriod;
+  onPeriodChange: (period: TimePeriod) => void;
 }
 
 const ReportsContent: React.FC<ReportsContentProps> = ({
