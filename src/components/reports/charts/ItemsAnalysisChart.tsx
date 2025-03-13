@@ -78,6 +78,10 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.8}/>
                 <stop offset="95%" stopColor="#10B981" stopOpacity={0.1}/>
               </linearGradient>
+              <linearGradient id="colorItemsHover" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#34D399" stopOpacity={1}/>
+                <stop offset="95%" stopColor="#34D399" stopOpacity={0.3}/>
+              </linearGradient>
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
@@ -121,6 +125,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
                   }}
                 />
               }
+              cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
             />
             <Bar 
               dataKey="amount" 
@@ -128,6 +133,24 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               radius={[4, 4, 0, 0]}
               maxBarSize={isMobile ? 30 : 50}
               name="Revenue"
+              className="cursor-pointer"
+              onMouseOver={(data, index) => {
+                document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
+                  if (i === index) {
+                    (elem as HTMLElement).style.fill = 'url(#colorItemsHover)';
+                    (elem as HTMLElement).style.filter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.3))';
+                    (elem as HTMLElement).style.transition = 'all 0.2s ease';
+                  }
+                });
+              }}
+              onMouseOut={(data, index) => {
+                document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
+                  if (i === index) {
+                    (elem as HTMLElement).style.fill = 'url(#colorItems)';
+                    (elem as HTMLElement).style.filter = 'none';
+                  }
+                });
+              }}
             />
           </BarChart>
         </ChartContainer>

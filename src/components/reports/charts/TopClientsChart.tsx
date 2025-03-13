@@ -80,6 +80,10 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
                   <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.8}/>
                   <stop offset="95%" stopColor="#0EA5E9" stopOpacity={0.1}/>
                 </linearGradient>
+                <linearGradient id="colorClientsHover" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38BDF8" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#38BDF8" stopOpacity={0.3}/>
+                </linearGradient>
               </defs>
               <CartesianGrid 
                 strokeDasharray="3 3" 
@@ -119,12 +123,31 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
                     formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
                   />
                 }
+                cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
               />
               <Bar 
                 dataKey="amount" 
                 fill="url(#colorClients)"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={isMobile ? 30 : 50}
+                className="cursor-pointer"
+                onMouseOver={(data, index) => {
+                  document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
+                    if (i === index) {
+                      (elem as HTMLElement).style.fill = 'url(#colorClientsHover)';
+                      (elem as HTMLElement).style.filter = 'drop-shadow(0 0 6px rgba(14, 165, 233, 0.3))';
+                      (elem as HTMLElement).style.transition = 'all 0.2s ease';
+                    }
+                  });
+                }}
+                onMouseOut={(data, index) => {
+                  document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
+                    if (i === index) {
+                      (elem as HTMLElement).style.fill = 'url(#colorClients)';
+                      (elem as HTMLElement).style.filter = 'none';
+                    }
+                  });
+                }}
               />
             </BarChart>
           </ChartContainer>
