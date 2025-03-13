@@ -2,6 +2,7 @@
 import React from 'react';
 import { PieChart as PieChartIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   PieChart,
   Pie,
@@ -81,6 +82,8 @@ interface InvoiceStatusChartProps {
 }
 
 const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
+  const isMobile = useIsMobile();
+  
   // Don't render the chart if there's no valid data
   if (!data || data.length === 0 || data.every(item => item.value === 0)) {
     return (
@@ -107,13 +110,13 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
         </div>
       </div>
       
-      <div className="h-[450px]">
+      <div className={isMobile ? "h-[520px]" : "h-[450px]"}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
-              cy="45%"
+              cy={isMobile ? "35%" : "45%"}
               labelLine={false}
               label={false}
               outerRadius={140}
