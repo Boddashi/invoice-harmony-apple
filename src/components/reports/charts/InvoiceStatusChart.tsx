@@ -50,11 +50,11 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
 
 const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+    <div className="grid grid-cols-1 gap-2 w-full">
       {payload.map((entry, index) => (
         <div 
           key={`legend-${index}`} 
-          className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50"
+          className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/50"
         >
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
@@ -63,7 +63,7 @@ const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
               <span className="font-medium">{entry.value}</span>
             </div>
           </div>
-          <span className="text-muted-foreground ml-auto">
+          <span className="text-muted-foreground">
             {entry.payload.value} ({(entry.payload.percent * 100).toFixed(0)}%)
           </span>
         </div>
@@ -94,7 +94,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
             <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
           </div>
         </div>
-        <div className="h-[400px] flex items-center justify-center">
+        <div className="h-72 flex items-center justify-center">
           <p className="text-muted-foreground">No status data available</p>
         </div>
       </CustomCard>
@@ -110,38 +110,47 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
         </div>
       </div>
       
-      <div className={isMobile ? "h-[380px]" : "h-[450px]"}>
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy={isMobile ? "45%" : "35%"}
-              labelLine={false}
-              label={false}
-              outerRadius={isMobile ? 110 : 140}
-              innerRadius={isMobile ? 70 : 90}
-              paddingAngle={8}
-              dataKey="value"
-              strokeWidth={2}
-              stroke="var(--background)"
-            >
-              {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
-                  fill={PIE_COLORS[index % PIE_COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              content={<EnhancedLegend />}
-              layout="horizontal"
-              verticalAlign="bottom"
-              align="center"
-            />
-          </PieChart>
-        </ResponsiveContainer>
+      {/* Redesigned layout with flex instead of absolute positioning */}
+      <div className="flex flex-col md:flex-row gap-6 md:items-center">
+        {/* Chart Container - fixed height for consistent display */}
+        <div className="h-52 md:h-64 w-full md:w-1/2">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={false}
+                outerRadius={isMobile ? 70 : 90}
+                innerRadius={isMobile ? 40 : 55}
+                paddingAngle={4}
+                dataKey="value"
+                strokeWidth={2}
+                stroke="var(--background)"
+              >
+                {data.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip content={<CustomTooltip />} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        
+        {/* Legend Container - takes remaining space */}
+        <div className="w-full md:w-1/2">
+          <EnhancedLegend 
+            payload={data.map((entry, index) => ({
+              value: entry.name,
+              color: PIE_COLORS[index % PIE_COLORS.length],
+              payload: entry
+            }))}
+          />
+        </div>
       </div>
     </CustomCard>
   );
