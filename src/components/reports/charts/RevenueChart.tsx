@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, TrendingUp } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -63,13 +63,29 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
     }
   };
 
+  // Helper function to format Y-axis values
+  const formatYAxisTick = (value: number) => {
+    if (isMobile) {
+      if (value >= 1000) {
+        return `${currencySymbol}${Math.floor(value / 1000)}k`;
+      }
+      return `${currencySymbol}${Math.round(value)}`;
+    }
+    return `${currencySymbol}${value}`;
+  };
+
   return (
-    <CustomCard padding="md">
+    <CustomCard padding="md" className="overflow-hidden transition-all duration-300 hover:shadow-md">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div className="flex flex-row items-center gap-2">
+          <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full">
+            <TrendingUp size={18} className="text-purple-600 dark:text-purple-400" />
+          </div>
           <h3 className="text-lg font-medium">Revenue</h3>
+        </div>
+        <div className="flex items-center justify-between w-full sm:w-auto gap-2">
           <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => onPeriodChange(value)}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-[120px] bg-background">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -81,8 +97,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               </SelectGroup>
             </SelectContent>
           </Select>
+          <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
         </div>
-        <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
       </div>
       
       {!hasValidData ? (
@@ -90,7 +106,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
           <p className="text-muted-foreground">No revenue data available</p>
         </div>
       ) : (
-        <div className={`${isMobile ? 'h-40' : 'h-60'} w-full`}>
+        <div className={`${isMobile ? 'h-48' : 'h-64'} w-full`}>
           <ChartContainer 
             config={chartConfig}
             className="w-full h-full"
@@ -116,6 +132,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 strokeDasharray="3 3" 
                 vertical={false}
                 stroke="var(--border)"
+                opacity={0.5}
               />
               <XAxis
                 dataKey="period"
@@ -131,11 +148,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 tickLine={{ stroke: 'var(--border)' }}
               />
               <YAxis
-                tickFormatter={(value) => 
-                  isMobile 
-                    ? `${currencySymbol}${Math.round(value)}`
-                    : `${currencySymbol}${value}`
-                }
+                tickFormatter={formatYAxisTick}
                 width={isMobile ? 50 : 80}
                 tick={{ 
                   fill: 'hsl(var(--foreground))',
@@ -145,9 +158,10 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 tickLine={{ stroke: 'var(--border)' }}
               />
               <ChartTooltip
+                cursor={{fill: 'var(--muted)'}}
                 content={
                   <ChartTooltipContent 
-                    formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
+                    formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
                   />
                 }
               />
@@ -156,6 +170,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 fill="url(#colorRevenue)"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={isMobile ? 30 : 50}
+                animationDuration={1500}
+                className="cursor-pointer hover:fill-purple-400 transition-colors duration-300"
               />
             </BarChart>
           </ChartContainer>
