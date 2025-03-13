@@ -1,13 +1,19 @@
+
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer
 } from 'recharts';
 
@@ -26,6 +32,28 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   currencySymbol,
   formatCurrency
 }) => {
+  const isMobile = useIsMobile();
+  
+  // Customize the data for mobile to shorten long names
+  const chartData = React.useMemo(() => {
+    return data.map(item => ({
+      ...item,
+      // Truncate long names on mobile
+      name: isMobile && item.name.length > 12 ? 
+        `${item.name.substring(0, 10)}...` : item.name
+    }));
+  }, [data, isMobile]);
+  
+  const chartConfig = {
+    revenue: {
+      label: "Revenue",
+      theme: {
+        light: "#10B981",
+        dark: "#10B981"
+      }
+    }
+  };
+
   return (
     <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
@@ -33,11 +61,17 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
         <BarChart3 size={20} className="text-muted-foreground" />
       </div>
       
-      <div className="h-80">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className={`${isMobile ? 'h-60' : 'h-80'}`}>
+        <ChartContainer 
+          config={chartConfig}
+          className="w-full h-full"
+        >
           <BarChart
-            data={data}
-            margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
+            data={chartData}
+            margin={isMobile 
+              ? { top: 20, right: 10, left: 10, bottom: 60 } 
+              : { top: 20, right: 30, left: 40, bottom: 70 }
+            }
           >
             <defs>
               <linearGradient id="colorItems" x1="0" y1="0" x2="0" y2="1">
@@ -52,50 +86,51 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
             />
             <XAxis
               dataKey="name"
-              angle={-45}
+              angle={isMobile ? -65 : -45}
               textAnchor="end"
-              height={70}
+              height={isMobile ? 70 : 70}
+              interval={0}
               tick={{ 
                 fill: 'hsl(var(--foreground))',
-                fontSize: 12 
+                fontSize: isMobile ? 10 : 12,
               }}
               axisLine={{ stroke: 'var(--border)' }}
               tickLine={{ stroke: 'var(--border)' }}
             />
             <YAxis
-              tickFormatter={(value) => `${currencySymbol}${value}`}
-              width={80}
+              tickFormatter={(value) => 
+                isMobile 
+                  ? `${currencySymbol}${Math.round(value)}`
+                  : `${currencySymbol}${value}`
+              }
+              width={isMobile ? 50 : 80}
               tick={{ 
                 fill: 'hsl(var(--foreground))',
-                fontSize: 12 
+                fontSize: isMobile ? 10 : 12 
               }}
               axisLine={{ stroke: 'var(--border)' }}
               tickLine={{ stroke: 'var(--border)' }}
             />
-            <Tooltip 
-              cursor={false}
-              formatter={(value, name) => {
-                if (name === 'amount') return [`${formatCurrency(Number(value))}`, 'Revenue'];
-                if (name === 'count') return [value, 'Units Sold'];
-                return [value, name];
-              }}
-              contentStyle={{ 
-                background: 'var(--background)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-              }}
-              labelStyle={{ color: 'var(--foreground)' }}
+            <ChartTooltip
+              content={
+                <ChartTooltipContent 
+                  formatter={(value, name) => {
+                    if (name === 'amount') return [`${formatCurrency(Number(value))}`, 'Revenue'];
+                    if (name === 'count') return [value, 'Units Sold'];
+                    return [value, name];
+                  }}
+                />
+              }
             />
             <Bar 
               dataKey="amount" 
               fill="url(#colorItems)"
               radius={[4, 4, 0, 0]}
-              maxBarSize={50}
+              maxBarSize={isMobile ? 30 : 50}
               name="Revenue"
             />
           </BarChart>
-        </ResponsiveContainer>
+        </ChartContainer>
       </div>
     </CustomCard>
   );

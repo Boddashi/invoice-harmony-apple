@@ -1,6 +1,13 @@
+
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 import {
   Select,
   SelectContent,
@@ -15,7 +22,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer
 } from 'recharts';
 
@@ -36,15 +42,36 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   onPeriodChange,
   selectedPeriod
 }) => {
+  const isMobile = useIsMobile();
   const hasValidData = data && data.length > 0;
+  
+  // Customize the data for mobile to shorten long period names
+  const chartData = React.useMemo(() => {
+    return data.map(item => ({
+      ...item,
+      // Truncate long period names on mobile
+      period: isMobile && item.period.length > 10 ? 
+        `${item.period.substring(0, 8)}...` : item.period
+    }));
+  }, [data, isMobile]);
+  
+  const chartConfig = {
+    revenue: {
+      label: "Revenue",
+      theme: {
+        light: "#8B5CF6",
+        dark: "#8B5CF6"
+      }
+    }
+  };
 
   return (
     <CustomCard padding="md">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+        <div className="flex flex-row items-center gap-2">
           <h3 className="text-lg font-medium">Revenue</h3>
           <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => onPeriodChange(value)}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Select period" />
             </SelectTrigger>
             <SelectContent>
@@ -57,7 +84,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
             </SelectContent>
           </Select>
         </div>
-        <BarChart3 size={20} className="text-muted-foreground" />
+        <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
       </div>
       
       {!hasValidData ? (
@@ -65,11 +92,17 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
           <p className="text-muted-foreground">No revenue data available</p>
         </div>
       ) : (
-        <div className="h-80">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className={`${isMobile ? 'h-60' : 'h-80'}`}>
+          <ChartContainer 
+            config={chartConfig}
+            className="w-full h-full"
+          >
             <BarChart
-              data={data}
-              margin={{ top: 20, right: 30, left: 40, bottom: 70 }}
+              data={chartData}
+              margin={isMobile 
+                ? { top: 20, right: 10, left: 10, bottom: 60 } 
+                : { top: 20, right: 30, left: 40, bottom: 70 }
+              }
             >
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -84,45 +117,46 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               />
               <XAxis
                 dataKey="period"
-                angle={-45}
+                angle={isMobile ? -65 : -45}
                 textAnchor="end"
-                height={70}
+                height={isMobile ? 70 : 70}
+                interval={0}
                 tick={{ 
                   fill: 'hsl(var(--foreground))',
-                  fontSize: 12 
+                  fontSize: isMobile ? 10 : 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
                 tickLine={{ stroke: 'var(--border)' }}
               />
               <YAxis
-                tickFormatter={(value) => `${currencySymbol}${value}`}
-                width={80}
+                tickFormatter={(value) => 
+                  isMobile 
+                    ? `${currencySymbol}${Math.round(value)}`
+                    : `${currencySymbol}${value}`
+                }
+                width={isMobile ? 50 : 80}
                 tick={{ 
                   fill: 'hsl(var(--foreground))',
-                  fontSize: 12 
+                  fontSize: isMobile ? 10 : 12 
                 }}
                 axisLine={{ stroke: 'var(--border)' }}
                 tickLine={{ stroke: 'var(--border)' }}
               />
-              <Tooltip 
-                cursor={false}
-                formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
-                contentStyle={{ 
-                  background: 'var(--background)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }}
-                labelStyle={{ color: 'var(--foreground)' }}
+              <ChartTooltip
+                content={
+                  <ChartTooltipContent 
+                    formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                  />
+                }
               />
               <Bar 
                 dataKey="amount" 
                 fill="url(#colorRevenue)"
                 radius={[4, 4, 0, 0]}
-                maxBarSize={50}
+                maxBarSize={isMobile ? 30 : 50}
               />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         </div>
       )}
     </CustomCard>

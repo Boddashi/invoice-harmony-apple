@@ -43,7 +43,7 @@ const Reports: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <ReportFilters
           items={items}
           clients={clients}
@@ -127,7 +127,7 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
         formatCurrency={formatCurrency} 
       />
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4">
         <RevenueChart 
           data={monthlyData} 
           currencySymbol={currencySymbol}
