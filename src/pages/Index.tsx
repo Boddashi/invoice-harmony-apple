@@ -10,20 +10,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 interface ClientRevenue {
   name: string;
   amount: number;
 }
+
 interface Stats {
   paid: number;
   pending: number;
   overdue: number;
   topClients: ClientRevenue[];
 }
+
 interface RevenueData {
   name: string;
   amount: number;
 }
+
 const Index = () => {
   const {
     currencySymbol
@@ -43,20 +48,18 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const isMobile = useIsMobile();
 
-  // Format amount with currency symbol
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
 
-  // Fetch revenue data based on selected period
   const fetchRevenueData = async () => {
     if (!user) return;
     try {
       const today = new Date();
       let startDate;
 
-      // Calculate start date based on selected period
       switch (selectedPeriod) {
         case 'monthly':
           startDate = subMonths(today, 6);
@@ -78,7 +81,6 @@ const Index = () => {
       });
       if (error) throw error;
 
-      // Group invoices by month and sum amounts
       const monthlyRevenue = new Map<string, number>();
       invoices?.forEach(invoice => {
         const monthKey = format(new Date(invoice.issue_date), 'MMM yyyy');
@@ -99,16 +101,17 @@ const Index = () => {
       });
     }
   };
+
   useEffect(() => {
     fetchRevenueData();
   }, [user, selectedPeriod]);
+
   useEffect(() => {
     const fetchStats = async () => {
       if (!user) return;
       try {
         setIsLoading(true);
 
-        // Fetch all invoices
         const {
           data: invoices,
           error: invoicesError
@@ -120,18 +123,15 @@ const Index = () => {
           throw invoicesError;
         }
 
-        // Calculate statistics
         const totalAmount = invoices?.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) || 0;
         const paidAmount = invoices?.filter(i => i.status === 'paid').reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) || 0;
         const pendingAmount = invoices?.filter(i => i.status === 'pending').reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) || 0;
         const overdueAmount = invoices?.filter(i => i.status === 'overdue').reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) || 0;
 
-        // Calculate percentages
         const paidPercent = totalAmount > 0 ? Math.round(paidAmount / totalAmount * 100) : 0;
         const pendingPercent = totalAmount > 0 ? Math.round(pendingAmount / totalAmount * 100) : 0;
         const overduePercent = totalAmount > 0 ? Math.round(overdueAmount / totalAmount * 100) : 0;
 
-        // Calculate top clients
         const clientMap = new Map<string, {
           name: string;
           amount: number;
@@ -172,26 +172,41 @@ const Index = () => {
     };
     fetchStats();
   }, [user, toast, currencySymbol]);
+
   return <MainLayout>
       <div className="max-w-6xl mx-auto space-y-7">
         <DashboardSummary />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Revenue Chart */}
           <CustomCard className="lg:col-span-2 min-h-[300px] animate-slide-up" style={{
           animationDelay: '0.2s'
         }}>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold">Revenue</h2>
               <div className="flex gap-1">
-                <button onClick={() => setSelectedPeriod('monthly')} className={`px-3 py-1 text-sm rounded-full ${selectedPeriod === 'monthly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'}`}>
-                  Monthly
+                <button onClick={() => setSelectedPeriod('monthly')} 
+                  className={`px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm rounded-full transition-colors ${
+                    selectedPeriod === 'monthly' 
+                      ? 'bg-apple-blue/10 text-apple-blue' 
+                      : 'hover:bg-secondary'
+                  }`}>
+                  {isMobile ? 'Month' : 'Monthly'}
                 </button>
-                <button onClick={() => setSelectedPeriod('quarterly')} className={`px-3 py-1 text-sm rounded-full ${selectedPeriod === 'quarterly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'}`}>
-                  Quarterly
+                <button onClick={() => setSelectedPeriod('quarterly')} 
+                  className={`px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm rounded-full transition-colors ${
+                    selectedPeriod === 'quarterly' 
+                      ? 'bg-apple-blue/10 text-apple-blue' 
+                      : 'hover:bg-secondary'
+                  }`}>
+                  {isMobile ? 'Quarter' : 'Quarterly'}
                 </button>
-                <button onClick={() => setSelectedPeriod('yearly')} className={`px-3 py-1 text-sm rounded-full ${selectedPeriod === 'yearly' ? 'bg-apple-blue/10 text-apple-blue' : 'hover:bg-secondary'}`}>
-                  Yearly
+                <button onClick={() => setSelectedPeriod('yearly')} 
+                  className={`px-2 py-1 text-xs sm:px-3 sm:py-1 sm:text-sm rounded-full transition-colors ${
+                    selectedPeriod === 'yearly' 
+                      ? 'bg-apple-blue/10 text-apple-blue' 
+                      : 'hover:bg-secondary'
+                  }`}>
+                  {isMobile ? 'Year' : 'Yearly'}
                 </button>
               </div>
             </div>
@@ -223,7 +238,6 @@ const Index = () => {
             </div>
           </CustomCard>
           
-          {/* Stats */}
           <CustomCard className="animate-slide-up" style={{
           animationDelay: '0.3s'
         }}>
@@ -305,4 +319,5 @@ const Index = () => {
       </div>
     </MainLayout>;
 };
+
 export default Index;
