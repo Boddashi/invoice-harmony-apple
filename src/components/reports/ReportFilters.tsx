@@ -63,6 +63,16 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
 
   const hasActiveFilters = selectedItems.length > 0 || selectedClients.length > 0;
 
+  // Function to clear only item filters
+  const clearItemFilters = () => {
+    setSearchItemQuery('');
+  };
+
+  // Function to clear only client filters
+  const clearClientFilters = () => {
+    setSearchClientQuery('');
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -121,7 +131,11 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                   variant="outline" 
                   size="sm" 
                   className="w-full flex items-center justify-center gap-1"
-                  onClick={() => setSearchItemQuery('')}
+                  onClick={() => {
+                    clearItemFilters();
+                    // Clear selected items
+                    selectedItems.forEach(itemId => toggleItemSelection(itemId));
+                  }}
                 >
                   <X size={14} />
                   Clear Item Filters
@@ -174,7 +188,11 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                   variant="outline" 
                   size="sm" 
                   className="w-full flex items-center justify-center gap-1"
-                  onClick={() => setSearchClientQuery('')}
+                  onClick={() => {
+                    clearClientFilters();
+                    // Clear selected clients
+                    selectedClients.forEach(clientId => toggleClientSelection(clientId));
+                  }}
                 >
                   <X size={14} />
                   Clear Client Filters
