@@ -67,8 +67,8 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
           <BarChart
             data={chartData}
             margin={isMobile 
-              ? { top: 5, right: 10, left: 10, bottom: 60 } 
-              : { top: 10, right: 30, left: 40, bottom: 70 }
+              ? { top: 5, right: 10, left: 10, bottom: 30 } 
+              : { top: 10, right: 30, left: 40, bottom: 35 }
             }
           >
             <defs>
@@ -90,7 +90,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               dataKey="name"
               angle={isMobile ? -65 : -45}
               textAnchor="end"
-              height={isMobile ? 70 : 70}
+              height={isMobile ? 40 : 45}
               interval={0}
               tick={{ 
                 fill: 'hsl(var(--foreground))',
