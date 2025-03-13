@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 
 interface CustomCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  variant?: 'default' | 'glass' | 'elevated' | 'neon';
+  variant?: 'default' | 'glass' | 'elevated' | 'neon' | 'forest' | 'coral' | 'lavender';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
@@ -24,6 +24,9 @@ const CustomCard = ({
         variant === 'glass' && "glass-card",
         variant === 'elevated' && "elevated-card",
         variant === 'neon' && "bg-card border border-neon-purple shadow-neon-sm dark:shadow-neon-md",
+        variant === 'forest' && "bg-white border-l-4 border-l-forest shadow-apple-sm dark:bg-card/80",
+        variant === 'coral' && "bg-white border-l-4 border-l-coral shadow-apple-sm dark:bg-card/80",
+        variant === 'lavender' && "bg-white border-l-4 border-l-lavender shadow-apple-sm dark:bg-card/80",
         // Padding
         padding === 'none' && "p-0",
         padding === 'sm' && "p-3",
