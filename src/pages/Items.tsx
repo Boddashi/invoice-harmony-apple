@@ -4,32 +4,14 @@ import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro } from 'lucid
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import AddItemModal from '@/components/items/AddItemModal';
 import EditItemModal from '@/components/items/EditItemModal';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CustomCard from '@/components/ui/CustomCard';
 import { Badge } from '@/components/ui/badge';
-
 interface Item {
   id: string;
   title: string;
@@ -37,41 +19,39 @@ interface Item {
   vat: string;
   created_at: string;
 }
-
 const Items = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<'title' | 'price' | 'vat'>('title');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const { user } = useAuth();
-  const { currencySymbol } = useCurrency();
-
+  const {
+    user
+  } = useAuth();
+  const {
+    currencySymbol
+  } = useCurrency();
   useEffect(() => {
     if (user) {
       fetchItems();
     }
   }, [user]);
-
   const fetchItems = async () => {
     if (!user) {
       setLoading(false);
       return;
     }
-    
     try {
       setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-        
+      const {
+        data,
+        error
+      } = await supabase.from('items').select('*').eq('user_id', user.id).order('created_at', {
+        ascending: false
+      });
       if (error) {
         throw error;
       }
-      
       setItems(data || []);
     } catch (error) {
       console.error('Error fetching items:', error);
@@ -80,17 +60,12 @@ const Items = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteItem = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user?.id);
-        
+      const {
+        error
+      } = await supabase.from('items').delete().eq('id', id).eq('user_id', user?.id);
       if (error) throw error;
-      
       setItems(items.filter(item => item.id !== id));
       toast.success('Item deleted successfully');
     } catch (error) {
@@ -98,15 +73,13 @@ const Items = () => {
       toast.error('Failed to delete item');
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
-      currencyDisplay: 'code',
+      currencyDisplay: 'code'
     }).format(amount).replace('EUR', '').trim();
   };
-
   const handleSort = (field: 'title' | 'price' | 'vat') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -115,40 +88,28 @@ const Items = () => {
       setSortDirection('asc');
     }
   };
-
   const getSortedItems = () => {
     return [...items].sort((a, b) => {
       if (sortField === 'title') {
-        return sortDirection === 'asc' 
-          ? a.title.localeCompare(b.title)
-          : b.title.localeCompare(a.title);
+        return sortDirection === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
       } else if (sortField === 'price') {
-        return sortDirection === 'asc' 
-          ? a.price - b.price
-          : b.price - a.price;
+        return sortDirection === 'asc' ? a.price - b.price : b.price - a.price;
       } else {
-        return sortDirection === 'asc' 
-          ? a.vat.localeCompare(b.vat)
-          : b.vat.localeCompare(a.vat);
+        return sortDirection === 'asc' ? a.vat.localeCompare(b.vat) : b.vat.localeCompare(a.vat);
       }
     });
   };
-
   if (!user) {
-    return (
-      <MainLayout>
+    return <MainLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold tracking-tight">Items</h1>
           <CustomCard>
             <p className="text-center py-4">Please log in to view and manage your items.</p>
           </CustomCard>
         </div>
-      </MainLayout>
-    );
+      </MainLayout>;
   }
-
-  return (
-    <MainLayout>
+  return <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -158,44 +119,29 @@ const Items = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <AddItemModal 
-              onItemAdded={fetchItems} 
-              trigger={
-                <Button variant="apple">
+            <AddItemModal onItemAdded={fetchItems} trigger={<Button variant="apple" className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Item
-                </Button>
-              }
-            />
+                </Button>} />
           </div>
         </div>
         
         <CustomCard className="p-0">
-          {loading ? (
-            <div className="flex justify-center p-12">
+          {loading ? <div className="flex justify-center p-12">
               <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="flex items-center justify-center p-12 rounded-lg">
+            </div> : items.length === 0 ? <div className="flex items-center justify-center p-12 rounded-lg">
               <div className="flex flex-col items-center text-center">
                 <Package size={48} className="mb-4 text-muted-foreground" />
                 <h2 className="text-xl font-semibold mb-2">No items yet</h2>
                 <p className="text-muted-foreground mb-4">
                   You haven't added any items to your inventory yet.
                 </p>
-                <AddItemModal
-                  trigger={
-                    <Button variant="apple">
+                <AddItemModal trigger={<Button variant="apple">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Your First Item
-                    </Button>
-                  }
-                  onItemAdded={fetchItems}
-                />
+                    </Button>} onItemAdded={fetchItems} />
               </div>
-            </div>
-          ) : (
-            <div>
+            </div> : <div>
               <div className="p-4 border-b">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Your Items</h3>
@@ -205,28 +151,19 @@ const Items = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead 
-                      className="w-[250px] cursor-pointer"
-                      onClick={() => handleSort('title')}
-                    >
+                    <TableHead className="w-[250px] cursor-pointer" onClick={() => handleSort('title')}>
                       <div className="flex items-center">
                         Item Name
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
                     </TableHead>
-                    <TableHead 
-                      className="text-right cursor-pointer"
-                      onClick={() => handleSort('price')}
-                    >
+                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('price')}>
                       <div className="flex items-center justify-end">
                         Price
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
                     </TableHead>
-                    <TableHead 
-                      className="cursor-pointer"
-                      onClick={() => handleSort('vat')}
-                    >
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('vat')}>
                       <div className="flex items-center">
                         VAT Rate
                         <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -236,8 +173,7 @@ const Items = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {getSortedItems().map((item) => (
-                    <TableRow key={item.id}>
+                  {getSortedItems().map(item => <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
@@ -252,10 +188,7 @@ const Items = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <EditItemModal 
-                            item={item}
-                            onItemUpdated={fetchItems}
-                          />
+                          <EditItemModal item={item} onItemUpdated={fetchItems} />
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button variant="destructive" size="icon">
@@ -271,10 +204,7 @@ const Items = () => {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => handleDeleteItem(item.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
+                                <AlertDialogAction onClick={() => handleDeleteItem(item.id)} className="bg-destructive hover:bg-destructive/90">
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -282,16 +212,12 @@ const Items = () => {
                           </AlertDialog>
                         </div>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
-            </div>
-          )}
+            </div>}
         </CustomCard>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>;
 };
-
 export default Items;
