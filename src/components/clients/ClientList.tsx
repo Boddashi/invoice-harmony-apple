@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
 import ClientActions from './ClientActions';
@@ -356,13 +356,16 @@ const ClientList = () => {
       </div>
       
       <div className="relative w-full">
-        <input
-          type="text"
-          placeholder="Search clients..."
-          className="w-full px-4 py-2 border border-border rounded-md"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search clients..."
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
       
       <CustomCard padding="none">

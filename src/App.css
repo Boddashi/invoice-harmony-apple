@@ -1,5 +1,4 @@
 
-
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -58,3 +57,11 @@
   @apply bg-background text-foreground py-2 px-3;
 }
 
+/* Dark mode search input */
+.dark .client-search-input {
+  @apply bg-secondary/20 border-secondary/30 focus:ring-2 focus:ring-primary/30;
+}
+
+.dark .client-search-input:focus {
+  @apply border-transparent;
+}
