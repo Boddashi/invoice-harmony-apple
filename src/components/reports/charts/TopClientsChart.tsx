@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -56,11 +57,11 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
       </div>
       
       {!hasValidData ? (
-        <div className="h-80 flex items-center justify-center">
+        <div className="h-40 flex items-center justify-center">
           <p className="text-muted-foreground">No client revenue data available</p>
         </div>
       ) : (
-        <div className={`${isMobile ? 'h-60' : 'h-80'}`}>
+        <div className={`${isMobile ? 'h-40' : 'h-60'} w-full`}>
           <ChartContainer 
             config={chartConfig}
             className="w-full h-full"
@@ -68,8 +69,8 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
             <BarChart
               data={chartData}
               margin={isMobile 
-                ? { top: 20, right: 10, left: 10, bottom: 60 } 
-                : { top: 20, right: 30, left: 40, bottom: 70 }
+                ? { top: 5, right: 10, left: 10, bottom: 60 } 
+                : { top: 10, right: 30, left: 40, bottom: 70 }
               }
             >
               <defs>
@@ -155,4 +156,3 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
 };
 
 export default TopClientsChart;
-
