@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FilterIcon, Users, X, RefreshCw } from 'lucide-react';
@@ -64,14 +63,14 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
 
   const hasActiveFilters = selectedItems.length > 0 || selectedClients.length > 0;
 
-  // Function to clear only item filters
   const clearItemFilters = () => {
     setSearchItemQuery('');
+    selectedItems.forEach(itemId => toggleItemSelection(itemId));
   };
 
-  // Function to clear only client filters
   const clearClientFilters = () => {
     setSearchClientQuery('');
+    selectedClients.forEach(clientId => toggleClientSelection(clientId));
   };
 
   return (
@@ -95,7 +94,15 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72" align="end">
+            <DropdownMenuContent 
+              className="w-72" 
+              align="end" 
+              side="bottom"
+              sideOffset={5}
+              alignOffset={0}
+              avoidCollisions={true}
+              collisionPadding={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <DropdownMenuLabel>Select Items</DropdownMenuLabel>
               <div className="px-2 py-2">
                 <Input
@@ -106,40 +113,38 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 />
               </div>
               <DropdownMenuSeparator />
-              <ScrollArea className="h-[250px]">
-                <div className="py-1 px-1">
-                  {filteredItems.length === 0 ? (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div>
-                  ) : (
-                    filteredItems.map((item) => (
-                      <DropdownMenuCheckboxItem
-                        key={item.id}
-                        checked={selectedItems.includes(item.id)}
-                        onCheckedChange={() => toggleItemSelection(item.id)}
-                        className="py-2"
-                      >
-                        <div className="flex flex-col">
-                          <span>{item.title}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {formatCurrency(item.price)}
-                          </span>
-                        </div>
-                      </DropdownMenuCheckboxItem>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="h-[200px] max-h-[40vh] overflow-auto">
+                <ScrollArea className="h-full">
+                  <div className="py-1 px-1">
+                    {filteredItems.length === 0 ? (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div>
+                    ) : (
+                      filteredItems.map((item) => (
+                        <DropdownMenuCheckboxItem
+                          key={item.id}
+                          checked={selectedItems.includes(item.id)}
+                          onCheckedChange={() => toggleItemSelection(item.id)}
+                          className="py-2"
+                        >
+                          <div className="flex flex-col">
+                            <span>{item.title}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatCurrency(item.price)}
+                            </span>
+                          </div>
+                        </DropdownMenuCheckboxItem>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
               <DropdownMenuSeparator />
-              <div className="p-2">
+              <div className="p-2 sticky bottom-0 bg-popover">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="w-full flex items-center justify-center gap-1"
-                  onClick={() => {
-                    clearItemFilters();
-                    // Clear selected items
-                    selectedItems.forEach(itemId => toggleItemSelection(itemId));
-                  }}
+                  onClick={clearItemFilters}
                 >
                   <X size={14} />
                   Clear Item Filters
@@ -160,7 +165,15 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72" align="end">
+            <DropdownMenuContent 
+              className="w-72" 
+              align="end" 
+              side="bottom"
+              sideOffset={5}
+              alignOffset={0}
+              avoidCollisions={true}
+              collisionPadding={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <DropdownMenuLabel>Select Clients</DropdownMenuLabel>
               <div className="px-2 py-2">
                 <Input
@@ -171,35 +184,33 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 />
               </div>
               <DropdownMenuSeparator />
-              <ScrollArea className="h-[250px]">
-                <div className="py-1 px-1">
-                  {filteredClients.length === 0 ? (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div>
-                  ) : (
-                    filteredClients.map((client) => (
-                      <DropdownMenuCheckboxItem
-                        key={client.id}
-                        checked={selectedClients.includes(client.id)}
-                        onCheckedChange={() => toggleClientSelection(client.id)}
-                        className="py-2"
-                      >
-                        <span>{client.name}</span>
-                      </DropdownMenuCheckboxItem>
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
+              <div className="h-[200px] max-h-[40vh] overflow-auto">
+                <ScrollArea className="h-full">
+                  <div className="py-1 px-1">
+                    {filteredClients.length === 0 ? (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div>
+                    ) : (
+                      filteredClients.map((client) => (
+                        <DropdownMenuCheckboxItem
+                          key={client.id}
+                          checked={selectedClients.includes(client.id)}
+                          onCheckedChange={() => toggleClientSelection(client.id)}
+                          className="py-2"
+                        >
+                          <span>{client.name}</span>
+                        </DropdownMenuCheckboxItem>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
               <DropdownMenuSeparator />
-              <div className="p-2">
+              <div className="p-2 sticky bottom-0 bg-popover">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="w-full flex items-center justify-center gap-1"
-                  onClick={() => {
-                    clearClientFilters();
-                    // Clear selected clients
-                    selectedClients.forEach(clientId => toggleClientSelection(clientId));
-                  }}
+                  onClick={clearClientFilters}
                 >
                   <X size={14} />
                   Clear Client Filters
