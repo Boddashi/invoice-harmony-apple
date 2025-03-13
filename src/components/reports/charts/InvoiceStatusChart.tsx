@@ -100,14 +100,14 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
 
   return (
     <CustomCard padding="md" variant="elevated">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PieChartIcon size={18} className="text-primary" />
           <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
         </div>
       </div>
       
-      <div className="h-[400px]">
+      <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -116,8 +116,8 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
               cy="45%"
               labelLine={false}
               label={false}
-              outerRadius={120}
-              innerRadius={80}
+              outerRadius={140}
+              innerRadius={90}
               paddingAngle={8}
               dataKey="value"
               strokeWidth={2}
@@ -127,7 +127,6 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
                 <Cell 
                   key={`cell-${index}`} 
                   fill={PIE_COLORS[index % PIE_COLORS.length]}
-                  className="drop-shadow-md hover:opacity-85 transition-opacity cursor-pointer"
                 />
               ))}
             </Pie>
