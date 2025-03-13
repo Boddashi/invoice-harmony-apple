@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -31,11 +30,9 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
   const isMobile = useIsMobile();
   const hasValidData = data && data.length > 0;
   
-  // Customize the data for mobile to shorten long names
   const chartData = React.useMemo(() => {
     return data.map(item => ({
       ...item,
-      // Truncate long names on mobile
       name: isMobile && item.name.length > 10 ? 
         `${item.name.substring(0, 8)}...` : item.name
     }));
@@ -120,7 +117,7 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
               <ChartTooltip
                 content={
                   <ChartTooltipContent 
-                    formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                    formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
                   />
                 }
                 cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
@@ -158,3 +155,4 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
 };
 
 export default TopClientsChart;
+

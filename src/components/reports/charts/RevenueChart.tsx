@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -45,11 +44,9 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   const isMobile = useIsMobile();
   const hasValidData = data && data.length > 0;
   
-  // Customize the data for mobile to shorten long period names
   const chartData = React.useMemo(() => {
     return data.map(item => ({
       ...item,
-      // Truncate long period names on mobile
       period: isMobile && item.period.length > 10 ? 
         `${item.period.substring(0, 8)}...` : item.period
     }));
@@ -149,7 +146,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
               <ChartTooltip
                 content={
                   <ChartTooltipContent 
-                    formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                    formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
                   />
                 }
                 cursor={{ fill: 'rgba(139, 92, 246, 0.05)' }}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -34,11 +33,9 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
 }) => {
   const isMobile = useIsMobile();
   
-  // Customize the data for mobile to shorten long names
   const chartData = React.useMemo(() => {
     return data.map(item => ({
       ...item,
-      // Truncate long names on mobile
       name: isMobile && item.name.length > 12 ? 
         `${item.name.substring(0, 10)}...` : item.name
     }));
@@ -119,8 +116,8 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               content={
                 <ChartTooltipContent 
                   formatter={(value, name) => {
-                    if (name === 'amount') return [`${formatCurrency(Number(value))}`, 'Revenue'];
-                    if (name === 'count') return [value, 'Units Sold'];
+                    if (name === 'amount') return [`${formatCurrency(Number(value))}`, ' Revenue'];
+                    if (name === 'count') return [value, ' Units Sold'];
                     return [value, name];
                   }}
                 />
