@@ -116,7 +116,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
             <Pie
               data={data}
               cx="50%"
-              cy="35%"
+              cy={isMobile ? "45%" : "35%"}
               labelLine={false}
               label={false}
               outerRadius={isMobile ? 110 : 140}
