@@ -48,8 +48,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   const chartData = React.useMemo(() => {
     return data.map(item => ({
       ...item,
-      period: isMobile && item.period.length > 10 ? 
-        `${item.period.substring(0, 8)}...` : item.period
+      period: isMobile && item.period.length > 6 ? 
+        `${item.period.substring(0, 4)}...` : item.period
     }));
   }, [data, isMobile]);
   
@@ -65,24 +65,27 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
 
   return (
     <CustomCard padding="md">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-        <div className="flex flex-row items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-2">
           <h3 className="text-lg font-medium">Revenue</h3>
-          <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => onPeriodChange(value)}>
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+          <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
         </div>
-        <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
+        <Select 
+          value={selectedPeriod} 
+          onValueChange={(value: TimePeriod) => onPeriodChange(value)}
+        >
+          <SelectTrigger className="w-[120px] h-8">
+            <SelectValue placeholder="Select period" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="weekly">Weekly</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+              <SelectItem value="yearly">Yearly</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
       </div>
       
       {!hasValidData ? (
@@ -90,74 +93,82 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
           <p className="text-muted-foreground">No revenue data available</p>
         </div>
       ) : (
-        <div className={`${isMobile ? 'h-40' : 'h-60'} w-full`}>
+        <div className="w-full h-[180px] sm:h-[240px]">
           <ChartContainer 
             config={chartConfig}
             className="w-full h-full"
           >
-            <BarChart
-              data={chartData}
-              margin={isMobile 
-                ? { top: 5, right: 10, left: 10, bottom: 30 } 
-                : { top: 10, right: 30, left: 40, bottom: 35 }
-              }
-            >
-              <defs>
-                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
-                </linearGradient>
-                <linearGradient id="colorRevenueHover" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#A78BFA" stopOpacity={1}/>
-                  <stop offset="95%" stopColor="#A78BFA" stopOpacity={0.3}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                vertical={false}
-                stroke="var(--border)"
-              />
-              <XAxis
-                dataKey="period"
-                angle={isMobile ? -65 : -45}
-                textAnchor="end"
-                height={isMobile ? 40 : 45}
-                interval={0}
-                tick={{ 
-                  fill: 'hsl(var(--foreground))',
-                  fontSize: isMobile ? 10 : 12 
-                }}
-                axisLine={{ stroke: 'var(--border)' }}
-                tickLine={{ stroke: 'var(--border)' }}
-              />
-              <YAxis
-                tickFormatter={(value) => 
-                  isMobile 
-                    ? `${currencySymbol}${Math.round(value)}`
-                    : `${currencySymbol}${value}`
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={isMobile 
+                  ? { top: 5, right: 5, left: 0, bottom: 20 } 
+                  : { top: 10, right: 30, left: 40, bottom: 35 }
                 }
-                width={isMobile ? 50 : 80}
-                tick={{ 
-                  fill: 'hsl(var(--foreground))',
-                  fontSize: isMobile ? 10 : 12 
-                }}
-                axisLine={{ stroke: 'var(--border)' }}
-                tickLine={{ stroke: 'var(--border)' }}
-              />
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent 
-                    formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
-                  />
-                }
-              />
-              <Bar 
-                dataKey="amount" 
-                fill="url(#colorRevenue)"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={isMobile ? 30 : 50}
-              />
-            </BarChart>
+                barSize={isMobile ? 12 : 30}
+                barGap={2}
+              >
+                <defs>
+                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid 
+                  strokeDasharray="3 3" 
+                  vertical={false}
+                  stroke="var(--border)"
+                  opacity={0.5}
+                />
+                <XAxis
+                  dataKey="period"
+                  angle={isMobile ? -45 : -45}
+                  textAnchor="end"
+                  height={isMobile ? 30 : 45}
+                  interval={isMobile ? 1 : 0}
+                  tick={{ 
+                    fill: 'hsl(var(--foreground))',
+                    fontSize: isMobile ? 9 : 12 
+                  }}
+                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={{ stroke: 'var(--border)' }}
+                />
+                <YAxis
+                  tickFormatter={(value) => 
+                    isMobile 
+                      ? `${currencySymbol}${Math.round(value)}`
+                      : `${currencySymbol}${value}`
+                  }
+                  width={isMobile ? 40 : 80}
+                  tick={{ 
+                    fill: 'hsl(var(--foreground))',
+                    fontSize: isMobile ? 9 : 12 
+                  }}
+                  axisLine={{ stroke: 'var(--border)' }}
+                  tickLine={{ stroke: 'var(--border)' }}
+                  tickCount={isMobile ? 4 : 6}
+                />
+                <ChartTooltip
+                  cursor={{ fill: 'var(--primary-light)', opacity: 0.1 }}
+                  content={
+                    <ChartTooltipContent 
+                      formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
+                      labelFormatter={(label) => 
+                        isMobile && label.includes('...') 
+                          ? data.find(item => item.period.startsWith(label.substring(0, 4)))?.period || label
+                          : label
+                      }
+                    />
+                  }
+                />
+                <Bar 
+                  dataKey="amount" 
+                  fill="url(#colorRevenue)"
+                  radius={[4, 4, 0, 0]}
+                  animationDuration={800}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </div>
       )}
