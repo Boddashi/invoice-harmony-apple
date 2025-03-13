@@ -34,14 +34,20 @@ const StatCards: React.FC<StatCardsProps> = ({ invoiceStats, formatCurrency }) =
         <p className="text-2xl font-semibold mt-1">{invoiceStats.total}</p>
       </CustomCard>
       
-      <CustomCard>
+      <CustomCard 
+        className={cn("cursor-pointer hover:ring-1 hover:ring-primary/20 transition-transform duration-300 hover:translate-y-[-2px]")}
+        onClick={() => handleCardClick('/invoices?filter=paid')}
+      >
         <h3 className="text-sm font-medium text-muted-foreground">Paid Invoices</h3>
         <p className="text-2xl font-semibold mt-1 text-green-500">{invoiceStats.paid}</p>
       </CustomCard>
       
-      <CustomCard>
+      <CustomCard 
+        className={cn("cursor-pointer hover:ring-1 hover:ring-primary/20 transition-transform duration-300 hover:translate-y-[-2px]")}
+        onClick={() => handleCardClick('/invoices?filter=pending')}
+      >
         <h3 className="text-sm font-medium text-muted-foreground">Pending</h3>
-        <p className="text-2xl font-semibold mt-1 text-orange-500">{invoiceStats.pending}</p>
+        <p className="text-2xl font-semibold mt-1 text-[#ff9269]">{invoiceStats.pending}</p>
       </CustomCard>
       
       <CustomCard 
