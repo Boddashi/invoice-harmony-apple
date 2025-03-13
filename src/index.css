@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     
-    --primary: 211 100% 50%;
+    --primary: 242 67% 76%; /* Changed to lavender */
     --primary-foreground: 0 0% 100%;
     
     --secondary: 240 4.8% 95.9%;
@@ -30,7 +31,7 @@
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 211 100% 50%;
+    --ring: 242 67% 76%; /* Changed to lavender */
 
     --radius: 0.8rem;
 
@@ -41,7 +42,7 @@
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 242 67% 76%; /* Changed to lavender */
   }
 
   .dark {

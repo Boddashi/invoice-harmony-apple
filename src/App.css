@@ -1,5 +1,4 @@
 
-
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -7,10 +6,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #9e9de9aa); /* Changed from #646cffaa to lavender */
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em #9e9de9aa); /* Changed from #61dafbaa to lavender */
 }
 
 @keyframes logo-spin {
@@ -57,4 +56,3 @@
 .client-select-dropdown option {
   @apply bg-background text-foreground py-2 px-3;
 }
-
