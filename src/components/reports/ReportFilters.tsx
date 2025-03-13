@@ -62,7 +62,7 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                   </Badge>}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-72">
+            <DropdownMenuContent className="w-72 overflow-y-scroll">
               <DropdownMenuLabel>Select Items</DropdownMenuLabel>
               <div className="px-2 py-2">
                 <Input placeholder="Search items..." value={searchItemQuery} onChange={e => setSearchItemQuery(e.target.value)} className="mb-2" />
