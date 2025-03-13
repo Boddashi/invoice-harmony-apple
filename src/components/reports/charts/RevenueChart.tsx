@@ -2,7 +2,7 @@
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile, useIsExtraSmall } from '@/hooks/use-mobile';
 import {
   ChartContainer,
   ChartTooltip,
@@ -43,6 +43,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   selectedPeriod
 }) => {
   const isMobile = useIsMobile();
+  const isXs = useIsExtraSmall();
   const hasValidData = data && data.length > 0;
   
   const chartData = React.useMemo(() => {
@@ -53,6 +54,17 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
         : item.period
     }));
   }, [data, isMobile]);
+  
+  // Define chart configuration similar to other charts
+  const chartConfig = {
+    revenue: {
+      label: "Revenue",
+      theme: {
+        light: "#8B5CF6",
+        dark: "#8B5CF6"
+      }
+    }
+  };
   
   // Different bar color gradients for light/dark mode
   const gradientId = "revenueGradient";
@@ -91,7 +103,10 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
         </div>
       ) : (
         <div className="flex-1 w-full min-h-[180px]">
-          <ChartContainer className="w-full h-full">
+          <ChartContainer 
+            config={chartConfig}
+            className="w-full h-full"
+          >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
