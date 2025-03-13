@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro } from 'lucide-react';
@@ -159,7 +158,15 @@ const Items = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <AddItemModal onItemAdded={fetchItems} />
+            <AddItemModal 
+              onItemAdded={fetchItems} 
+              trigger={
+                <Button variant="apple">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Item
+                </Button>
+              }
+            />
           </div>
         </div>
         
@@ -178,7 +185,7 @@ const Items = () => {
                 </p>
                 <AddItemModal
                   trigger={
-                    <Button className="bg-apple-blue hover:bg-apple-blue/90">
+                    <Button variant="apple">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Your First Item
                     </Button>

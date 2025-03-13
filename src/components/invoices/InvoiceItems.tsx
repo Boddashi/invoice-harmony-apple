@@ -98,8 +98,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                         onItemAdded={() => {}} 
                         trigger={
                           <Button 
-                            variant="ghost" 
-                            className="w-full justify-start text-apple-blue hover:text-apple-blue/80"
+                            variant="apple" 
+                            className="w-full justify-start"
                           >
                             <Plus className="mr-2 h-4 w-4" />
                             Add New Item

@@ -144,7 +144,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-apple-blue hover:bg-apple-blue/90">
+          <Button variant="apple">
             <Plus className="mr-2 h-4 w-4" /> Add Item
           </Button>
         )}
@@ -219,7 +219,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
             </Button>
             <Button 
               type="submit" 
-              className="bg-apple-blue hover:bg-apple-blue/90"
+              variant="apple"
               disabled={loading || fetchingVatRates || vatRates.length === 0}
             >
               {loading ? 'Adding...' : 'Add Item'}

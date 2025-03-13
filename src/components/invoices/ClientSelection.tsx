@@ -62,8 +62,8 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
             </SelectGroup>
             <div className="px-2 py-1.5">
               <Button 
-                variant="ghost" 
-                className="w-full justify-start text-apple-blue hover:text-apple-blue hover:bg-accent/50"
+                variant="apple" 
+                className="w-full justify-start"
                 onClick={() => setIsAddClientModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" /> Add New Client
