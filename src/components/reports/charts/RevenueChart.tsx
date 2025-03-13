@@ -54,22 +54,15 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
     }));
   }, [data, isMobile]);
   
-  const chartConfig = {
-    revenue: {
-      label: "Revenue",
-      theme: {
-        light: "#8B5CF6",
-        dark: "#8B5CF6"
-      }
-    }
-  };
-
+  // Different bar color gradients for light/dark mode
+  const gradientId = "revenueGradient";
+  
   return (
     <CustomCard padding="md" className="flex flex-col h-full">
-      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2 mb-4">
+      <div className="flex flex-col space-y-2 xs:space-y-0 xs:flex-row xs:items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-medium">Revenue</h3>
-          <BarChart3 size={20} className="text-muted-foreground hidden sm:block" />
+          <BarChart3 size={20} className="text-purple-500" />
+          <h3 className="text-lg font-medium">Revenue Overview</h3>
         </div>
         <Select 
           value={selectedPeriod} 
@@ -91,28 +84,28 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
       
       {!hasValidData ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">No revenue data available</p>
+          <div className="text-center">
+            <BarChart3 size={40} className="mx-auto text-muted-foreground opacity-40 mb-2" />
+            <p className="text-muted-foreground">No revenue data available</p>
+          </div>
         </div>
       ) : (
-        <div className="flex-1 w-full min-h-[160px]">
-          <ChartContainer 
-            config={chartConfig}
-            className="w-full h-full"
-          >
+        <div className="flex-1 w-full min-h-[180px]">
+          <ChartContainer className="w-full h-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
                 margin={isMobile 
                   ? { top: 5, right: 5, left: 0, bottom: 5 } 
-                  : { top: 10, right: 10, left: 5, bottom: 20 }
+                  : { top: 10, right: 10, left: 0, bottom: 20 }
                 }
-                barSize={isMobile ? 8 : 20}
-                barGap={2}
+                barSize={isMobile ? 12 : 24}
+                barGap={4}
               >
                 <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.9}/>
+                    <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0.2}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid 
@@ -128,29 +121,38 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                   height={isMobile ? 40 : 30}
                   tick={{ 
                     fill: 'hsl(var(--foreground))',
-                    fontSize: isMobile ? 9 : 12,
+                    fontSize: isMobile ? 10 : 12,
                     dy: isMobile ? 5 : 0
                   }}
                   axisLine={{ stroke: 'var(--border)' }}
                   tickLine={{ stroke: 'var(--border)' }}
                 />
                 <YAxis
-                  tickFormatter={(value) => 
-                    isMobile 
-                      ? `${currencySymbol}${Math.round(value/1000)}k`
-                      : `${currencySymbol}${value}`
-                  }
-                  width={isMobile ? 40 : 60}
+                  tickFormatter={(value) => {
+                    if (isMobile) {
+                      if (value >= 1000) {
+                        return `${currencySymbol}${Math.round(value/1000)}k`;
+                      }
+                      return `${currencySymbol}${value}`;
+                    }
+                    return `${currencySymbol}${value}`;
+                  }}
+                  width={isMobile ? 45 : 60}
                   tick={{ 
                     fill: 'hsl(var(--foreground))',
-                    fontSize: isMobile ? 9 : 12 
+                    fontSize: isMobile ? 10 : 12 
                   }}
                   axisLine={{ stroke: 'var(--border)' }}
                   tickLine={{ stroke: 'var(--border)' }}
                   tickCount={isMobile ? 3 : 5}
                 />
                 <ChartTooltip
-                  cursor={{ fill: 'var(--primary-light)', opacity: 0.1 }}
+                  cursor={{ 
+                    fill: 'hsl(var(--primary))', 
+                    opacity: 0.05,
+                    rx: 4,
+                    ry: 4
+                  }}
                   content={
                     <ChartTooltipContent 
                       formatter={(value) => [`${formatCurrency(Number(value))}`, 'Revenue']}
@@ -167,9 +169,10 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 />
                 <Bar 
                   dataKey="amount" 
-                  fill="url(#colorRevenue)"
+                  fill={`url(#${gradientId})`}
                   radius={[4, 4, 0, 0]}
                   animationDuration={800}
+                  className="hover:opacity-80 transition-opacity"
                 />
               </BarChart>
             </ResponsiveContainer>
