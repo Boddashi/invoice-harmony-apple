@@ -9,6 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 // Custom color palette
 export const customColors = {
   lavender: '#9e9de9',
-  forest: '#004738',
-  coral: '#ff9269',
+  darkGreen: '#004738',
+  coral: '#ff9269'
 }

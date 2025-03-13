@@ -31,10 +31,6 @@ export default {
         ],
       },
       colors: {
-        lavender: '#9e9de9',
-        forest: '#004738',
-        coral: '#ff9269',
-        
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

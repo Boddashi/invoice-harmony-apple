@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
     
-    --primary: 241 93% 76%;
+    --primary: 211 100% 50%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 240 4.8% 95.9%;
@@ -23,7 +22,7 @@
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     
-    --accent: 240 95% 76%;
+    --accent: 210 40% 96.1%;
     --accent-foreground: 240 5.9% 10%;
     
     --destructive: 0 84.2% 60.2%;
@@ -31,18 +30,18 @@
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 241 93% 76%;
+    --ring: 211 100% 50%;
 
     --radius: 0.8rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 241 93% 76%;
+    --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 241 93% 76%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -55,7 +54,7 @@
     --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 241 93% 76%;
+    --primary: 263 85% 74%;
     --primary-foreground: 240 5.9% 10%;
     
     --secondary: 240 3.7% 15.9%;
@@ -64,7 +63,7 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     
-    --accent: 241 93% 76%;
+    --accent: 263 85% 74%;
     --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 60.6%;
@@ -72,16 +71,16 @@
 
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 241 93% 76%;
+    --ring: 263 85% 74%;
 
     --sidebar-background: 240 10% 6%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 241 93% 76%;
+    --sidebar-primary: 263 85% 74%;
     --sidebar-primary-foreground: 240 5.9% 10%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 241 93% 76%;
+    --sidebar-ring: 263 85% 74%;
   }
 
   * {
@@ -93,88 +92,71 @@
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
-  /* Light mode styling with custom colors */
+  /* Light mode styling */
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border-l-4 border-l-lavender border border-white/20 shadow-apple-sm rounded-xl;
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-apple-sm rounded-xl;
   }
   
   .elevated-card {
-    @apply bg-white shadow-apple-md rounded-xl transition-all duration-300 hover:shadow-apple-lg border-l-4 border-l-lavender;
+    @apply bg-white shadow-apple-md rounded-xl transition-all duration-300 hover:shadow-apple-lg;
   }
   
   .input-field {
-    @apply bg-secondary/50 border border-lavender/20 rounded-lg px-4 py-2 focus:ring-2 focus:ring-lavender/30 transition-all duration-200;
+    @apply bg-secondary/50 border-0 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200;
   }
   
   .apple-button {
-    @apply rounded-full bg-lavender text-white font-medium px-6 py-2.5 
-           transition-all duration-300 hover:bg-lavender/90 
-           focus:outline-none focus:ring-2 focus:ring-lavender/30 
+    @apply rounded-full bg-apple-blue text-white font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-opacity-90 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
            active:scale-[0.98] shadow-apple-sm;
   }
   
   .secondary-button {
-    @apply rounded-full bg-white text-forest font-medium px-6 py-2.5 border border-forest/20
-           transition-all duration-300 hover:bg-forest/5 
-           focus:outline-none focus:ring-2 focus:ring-forest/20 
+    @apply rounded-full bg-secondary text-foreground font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-secondary/80 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
            active:scale-[0.98] shadow-apple-sm;
   }
   
   .ghost-button {
-    @apply rounded-full bg-transparent text-lavender font-medium px-6 py-2.5 
-           transition-all duration-300 hover:bg-lavender/10 
-           focus:outline-none focus:ring-2 focus:ring-lavender/20 
+    @apply rounded-full bg-transparent text-foreground font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-secondary/50 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
            active:scale-[0.98];
   }
 
-  /* Custom color-themed cards */
-  .forest-card {
-    @apply bg-white border-l-4 border-l-forest rounded-xl shadow-apple-sm;
-  }
-  
-  .coral-card {
-    @apply bg-white border-l-4 border-l-coral rounded-xl shadow-apple-sm;
-  }
-
-  /* Dark mode styling with custom colors */
+  /* Dark mode styling */
   .dark .glass-card {
-    @apply bg-card/40 backdrop-blur-md border-l-4 border-l-lavender border border-lavender/10 shadow-sm;
+    @apply bg-card/40 backdrop-blur-md border border-white/5 shadow-neon-sm;
   }
   
   .dark .elevated-card {
-    @apply bg-card shadow-sm rounded-xl transition-all duration-300 hover:shadow-md border-l-4 border-l-lavender;
+    @apply bg-card shadow-neon-sm rounded-xl transition-all duration-300 hover:shadow-neon-md;
   }
   
   .dark .apple-button {
-    @apply bg-lavender text-white shadow-sm hover:shadow-md;
+    @apply bg-neon-purple text-white shadow-neon-sm hover:shadow-neon-md;
   }
   
   .dark .secondary-button {
-    @apply bg-transparent text-lavender border border-lavender/20 hover:bg-lavender/10;
+    @apply bg-secondary border border-white/10;
   }
   
   .dark .ghost-button {
-    @apply text-lavender hover:bg-lavender/10;
-  }
-  
-  .dark .forest-card {
-    @apply bg-card/80 border-l-4 border-l-forest;
-  }
-  
-  .dark .coral-card {
-    @apply bg-card/80 border-l-4 border-l-coral;
+    @apply text-white hover:bg-white/10;
   }
   
   .neon-border {
-    @apply border border-lavender;
+    @apply border border-neon-purple;
   }
   
   .dark .neon-border {
-    @apply border border-lavender shadow-sm;
+    @apply border border-neon-purple shadow-neon-sm;
   }
   
   .neon-text {
-    @apply text-lavender;
+    @apply text-neon-purple;
   }
   
   .neon-glow {
@@ -193,16 +175,16 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-lavender/30 rounded-full;
+    @apply bg-muted rounded-full;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-lavender/50;
+    @apply bg-muted-foreground/30;
   }
   
   /* For Firefox */
   * {
-    scrollbar-color: hsl(var(--lavender)) transparent;
+    scrollbar-color: hsl(var(--muted)) transparent;
     scrollbar-width: thin;
   }
   
