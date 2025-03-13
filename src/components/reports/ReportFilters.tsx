@@ -1,29 +1,18 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FilterIcon, Users, X, RefreshCw } from 'lucide-react';
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-
 interface Item {
   id: string;
   title: string;
   price: number;
 }
-
 interface Client {
   id: string;
   name: string;
 }
-
 interface ReportFiltersProps {
   items: Item[];
   clients: Client[];
@@ -38,7 +27,6 @@ interface ReportFiltersProps {
   clearFilters: () => void;
   formatCurrency: (amount: number) => string;
 }
-
 const ReportFilters: React.FC<ReportFiltersProps> = ({
   items,
   clients,
@@ -51,20 +39,12 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
   setSearchItemQuery,
   setSearchClientQuery,
   clearFilters,
-  formatCurrency,
+  formatCurrency
 }) => {
-  const filteredItems = items.filter(item => 
-    item.title.toLowerCase().includes(searchItemQuery.toLowerCase())
-  );
-
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchClientQuery.toLowerCase())
-  );
-
+  const filteredItems = items.filter(item => item.title.toLowerCase().includes(searchItemQuery.toLowerCase()));
+  const filteredClients = clients.filter(client => client.name.toLowerCase().includes(searchClientQuery.toLowerCase()));
   const hasActiveFilters = selectedItems.length > 0 || selectedClients.length > 0;
-
-  return (
-    <>
+  return <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-1">Reports & Analytics</h1>
@@ -77,52 +57,30 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               <Button variant="outline" className="flex items-center gap-2">
                 <FilterIcon size={16} />
                 Filter by Items
-                {selectedItems.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
+                {selectedItems.length > 0 && <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
                     {selectedItems.length}
-                  </Badge>
-                )}
+                  </Badge>}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-72">
               <DropdownMenuLabel>Select Items</DropdownMenuLabel>
               <div className="px-2 py-2">
-                <Input
-                  placeholder="Search items..."
-                  value={searchItemQuery}
-                  onChange={(e) => setSearchItemQuery(e.target.value)}
-                  className="mb-2"
-                />
+                <Input placeholder="Search items..." value={searchItemQuery} onChange={e => setSearchItemQuery(e.target.value)} className="mb-2" />
               </div>
               <DropdownMenuSeparator />
-              <div className="max-h-[300px] overflow-y-auto py-1">
-                {filteredItems.length === 0 ? (
-                  <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div>
-                ) : (
-                  filteredItems.map((item) => (
-                    <DropdownMenuCheckboxItem
-                      key={item.id}
-                      checked={selectedItems.includes(item.id)}
-                      onCheckedChange={() => toggleItemSelection(item.id)}
-                    >
+              <div className="max-h-[300px] overflow-y-scroll py-1">
+                {filteredItems.length === 0 ? <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div> : filteredItems.map(item => <DropdownMenuCheckboxItem key={item.id} checked={selectedItems.includes(item.id)} onCheckedChange={() => toggleItemSelection(item.id)}>
                       <div className="flex flex-col">
                         <span>{item.title}</span>
                         <span className="text-xs text-muted-foreground">
                           {formatCurrency(item.price)}
                         </span>
                       </div>
-                    </DropdownMenuCheckboxItem>
-                  ))
-                )}
+                    </DropdownMenuCheckboxItem>)}
               </div>
               <DropdownMenuSeparator />
               <div className="p-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full flex items-center justify-center gap-1"
-                  onClick={() => setSearchItemQuery('')}
-                >
+                <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1" onClick={() => setSearchItemQuery('')}>
                   <X size={14} />
                   Clear Item Filters
                 </Button>
@@ -135,47 +93,25 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               <Button variant="outline" className="flex items-center gap-2">
                 <Users size={16} />
                 Filter by Clients
-                {selectedClients.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
+                {selectedClients.length > 0 && <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
                     {selectedClients.length}
-                  </Badge>
-                )}
+                  </Badge>}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-72">
               <DropdownMenuLabel>Select Clients</DropdownMenuLabel>
               <div className="px-2 py-2">
-                <Input
-                  placeholder="Search clients..."
-                  value={searchClientQuery}
-                  onChange={(e) => setSearchClientQuery(e.target.value)}
-                  className="mb-2"
-                />
+                <Input placeholder="Search clients..." value={searchClientQuery} onChange={e => setSearchClientQuery(e.target.value)} className="mb-2" />
               </div>
               <DropdownMenuSeparator />
               <div className="max-h-[300px] overflow-y-auto py-1">
-                {filteredClients.length === 0 ? (
-                  <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div>
-                ) : (
-                  filteredClients.map((client) => (
-                    <DropdownMenuCheckboxItem
-                      key={client.id}
-                      checked={selectedClients.includes(client.id)}
-                      onCheckedChange={() => toggleClientSelection(client.id)}
-                    >
+                {filteredClients.length === 0 ? <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div> : filteredClients.map(client => <DropdownMenuCheckboxItem key={client.id} checked={selectedClients.includes(client.id)} onCheckedChange={() => toggleClientSelection(client.id)}>
                       <span>{client.name}</span>
-                    </DropdownMenuCheckboxItem>
-                  ))
-                )}
+                    </DropdownMenuCheckboxItem>)}
               </div>
               <DropdownMenuSeparator />
               <div className="p-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full flex items-center justify-center gap-1"
-                  onClick={() => setSearchClientQuery('')}
-                >
+                <Button variant="outline" size="sm" className="w-full flex items-center justify-center gap-1" onClick={() => setSearchClientQuery('')}>
                   <X size={14} />
                   Clear Client Filters
                 </Button>
@@ -185,67 +121,44 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
         </div>
       </div>
       
-      {hasActiveFilters && (
-        <div className="mt-4 flex items-center justify-between bg-secondary/30 rounded-lg p-3 animate-fade-in">
+      {hasActiveFilters && <div className="mt-4 flex items-center justify-between bg-secondary/30 rounded-lg p-3 animate-fade-in">
           <div className="flex flex-wrap items-center gap-2">
-            {selectedItems.length > 0 && (
-              <div className="flex items-center">
+            {selectedItems.length > 0 && <div className="flex items-center">
                 <span className="text-sm text-muted-foreground mr-2">Items:</span>
                 <div className="flex flex-wrap gap-1">
                   {selectedItems.map(itemId => {
-                    const item = items.find(i => i.id === itemId);
-                    return item && (
-                      <Badge key={itemId} variant="outline" className="flex items-center gap-1">
+              const item = items.find(i => i.id === itemId);
+              return item && <Badge key={itemId} variant="outline" className="flex items-center gap-1">
                         {item.title}
-                        <button 
-                          onClick={() => toggleItemSelection(itemId)}
-                          className="ml-1 hover:text-destructive"
-                        >
+                        <button onClick={() => toggleItemSelection(itemId)} className="ml-1 hover:text-destructive">
                           <X size={12} />
                         </button>
-                      </Badge>
-                    );
-                  })}
+                      </Badge>;
+            })}
                 </div>
-              </div>
-            )}
+              </div>}
             
-            {selectedClients.length > 0 && (
-              <div className="flex items-center">
+            {selectedClients.length > 0 && <div className="flex items-center">
                 <span className="text-sm text-muted-foreground mr-2">Clients:</span>
                 <div className="flex flex-wrap gap-1">
                   {selectedClients.map(clientId => {
-                    const client = clients.find(c => c.id === clientId);
-                    return client && (
-                      <Badge key={clientId} variant="outline" className="flex items-center gap-1">
+              const client = clients.find(c => c.id === clientId);
+              return client && <Badge key={clientId} variant="outline" className="flex items-center gap-1">
                         {client.name}
-                        <button 
-                          onClick={() => toggleClientSelection(clientId)}
-                          className="ml-1 hover:text-destructive"
-                        >
+                        <button onClick={() => toggleClientSelection(clientId)} className="ml-1 hover:text-destructive">
                           <X size={12} />
                         </button>
-                      </Badge>
-                    );
-                  })}
+                      </Badge>;
+            })}
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
           
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            onClick={clearFilters}
-            className="whitespace-nowrap flex items-center gap-1"
-          >
+          <Button variant="secondary" size="sm" onClick={clearFilters} className="whitespace-nowrap flex items-center gap-1">
             <RefreshCw size={14} />
             Reset Filters
           </Button>
-        </div>
-      )}
-    </>
-  );
+        </div>}
+    </>;
 };
-
 export default ReportFilters;
