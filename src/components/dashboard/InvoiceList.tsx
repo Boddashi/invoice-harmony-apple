@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -8,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import InvoiceActions from '../invoices/InvoiceActions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'draft';
 
@@ -63,6 +65,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onStatusChange }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const formatAmount = (amount: number) => {
     return `${currencySymbol}${amount.toFixed(2)}`;
@@ -72,7 +75,7 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onStatusChange }) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
-      month: 'long', 
+      month: isMobile ? 'short' : 'long', 
       day: 'numeric' 
     });
   };
@@ -154,41 +157,91 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onStatusChange }) => {
               <Link 
                 key={invoice.id} 
                 to={`/invoices/${invoice.id}`}
-                className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors"
+                className="block rounded-lg hover:bg-secondary/50 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center",
-                    status.color
-                  )}>
-                    <StatusIcon size={18} />
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center justify-between p-3">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-10 h-10 rounded-full flex items-center justify-center",
+                      status.color
+                    )}>
+                      <StatusIcon size={18} />
+                    </div>
+                    
+                    <div>
+                      <h3 className="font-medium">{invoice.client?.name || "Unknown Client"}</h3>
+                      <p className="text-sm text-muted-foreground">{invoice.invoice_number} • {formatDate(invoice.issue_date)}</p>
+                    </div>
                   </div>
                   
-                  <div>
-                    <h3 className="font-medium">{invoice.client?.name || "Unknown Client"}</h3>
-                    <p className="text-sm text-muted-foreground">{invoice.invoice_number} • {formatDate(invoice.issue_date)}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold">{formatAmount(invoice.total_amount)}</p>
+                      <p className="text-sm text-muted-foreground">Due {formatDate(invoice.due_date)}</p>
+                    </div>
+                    
+                    <div className={cn(
+                      "px-3 py-1 text-xs font-medium border rounded-full",
+                      status.color
+                    )}>
+                      {status.label}
+                    </div>
+                    
+                    <div onClick={(e) => e.preventDefault()}>
+                      <InvoiceActions 
+                        invoiceId={invoice.id} 
+                        status={invoice.status} 
+                        onStatusChange={handleStatusChange} 
+                      />
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-semibold">{formatAmount(invoice.total_amount)}</p>
-                    <p className="text-sm text-muted-foreground">Due {formatDate(invoice.due_date)}</p>
+                {/* Mobile Layout */}
+                <div className="md:hidden p-3 relative">
+                  {/* Top row: icon, client name, and status badge */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center",
+                        status.color
+                      )}>
+                        <StatusIcon size={16} />
+                      </div>
+                      
+                      <h3 className="font-medium text-sm truncate max-w-[120px]">
+                        {invoice.client?.name || "Unknown Client"}
+                      </h3>
+                    </div>
+                    
+                    <div className={cn(
+                      "px-2 py-0.5 text-xs font-medium border rounded-full",
+                      status.color
+                    )}>
+                      {status.label}
+                    </div>
                   </div>
                   
-                  <div className={cn(
-                    "px-3 py-1 text-xs font-medium border rounded-full",
-                    status.color
-                  )}>
-                    {status.label}
+                  {/* Middle row: invoice number, amount */}
+                  <div className="flex justify-between mb-1">
+                    <p className="text-xs text-muted-foreground">{invoice.invoice_number}</p>
+                    <p className="font-semibold text-sm">{formatAmount(invoice.total_amount)}</p>
                   </div>
                   
-                  <div onClick={(e) => e.preventDefault()}>
-                    <InvoiceActions 
-                      invoiceId={invoice.id} 
-                      status={invoice.status} 
-                      onStatusChange={handleStatusChange} 
-                    />
+                  {/* Bottom row: dates and actions */}
+                  <div className="flex justify-between items-center">
+                    <p className="text-xs text-muted-foreground">
+                      Due {formatDate(invoice.due_date)}
+                    </p>
+                    
+                    <div onClick={(e) => e.preventDefault()} className="z-10">
+                      <InvoiceActions 
+                        invoiceId={invoice.id} 
+                        status={invoice.status} 
+                        onStatusChange={handleStatusChange} 
+                      />
+                    </div>
                   </div>
                 </div>
               </Link>
