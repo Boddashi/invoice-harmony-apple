@@ -12,7 +12,6 @@ import EditItemModal from '@/components/items/EditItemModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CustomCard from '@/components/ui/CustomCard';
 import { Badge } from '@/components/ui/badge';
-
 interface Item {
   id: string;
   title: string;
@@ -20,7 +19,6 @@ interface Item {
   vat: string;
   created_at: string;
 }
-
 const Items = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,13 +31,11 @@ const Items = () => {
   const {
     currencySymbol
   } = useCurrency();
-
   useEffect(() => {
     if (user) {
       fetchItems();
     }
   }, [user]);
-
   const fetchItems = async () => {
     if (!user) {
       setLoading(false);
@@ -64,7 +60,6 @@ const Items = () => {
       setLoading(false);
     }
   };
-
   const handleDeleteItem = async (id: string) => {
     try {
       const {
@@ -78,7 +73,6 @@ const Items = () => {
       toast.error('Failed to delete item');
     }
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
@@ -86,7 +80,6 @@ const Items = () => {
       currencyDisplay: 'code'
     }).format(amount).replace('EUR', '').trim();
   };
-
   const handleSort = (field: 'title' | 'price' | 'vat') => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -95,7 +88,6 @@ const Items = () => {
       setSortDirection('asc');
     }
   };
-
   const getSortedItems = () => {
     return [...items].sort((a, b) => {
       if (sortField === 'title') {
@@ -107,7 +99,6 @@ const Items = () => {
       }
     });
   };
-
   if (!user) {
     return <MainLayout>
         <div className="space-y-6">
@@ -118,7 +109,6 @@ const Items = () => {
         </div>
       </MainLayout>;
   }
-
   return <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -132,7 +122,7 @@ const Items = () => {
             <AddItemModal onItemAdded={fetchItems} trigger={<Button variant="apple" className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Item
-                </Button>} />
+                </Button>} className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full" />
           </div>
         </div>
         
@@ -230,5 +220,4 @@ const Items = () => {
       </div>
     </MainLayout>;
 };
-
 export default Items;
