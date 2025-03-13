@@ -116,8 +116,8 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
               cy="40%"
               labelLine={false}
               label={false}
-              outerRadius={140}
-              innerRadius={90}
+              outerRadius={100}
+              innerRadius={65}
               paddingAngle={8}
               dataKey="value"
               strokeWidth={2}
