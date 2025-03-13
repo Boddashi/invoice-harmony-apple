@@ -150,7 +150,6 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                     formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
                   />
                 }
-                cursor={{ fill: 'rgba(139, 92, 246, 0.05)' }}
               />
               <Bar 
                 dataKey="amount" 

@@ -123,7 +123,6 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
                   }}
                 />
               }
-              cursor={{ fill: 'rgba(16, 185, 129, 0.05)' }}
             />
             <Bar 
               dataKey="amount" 

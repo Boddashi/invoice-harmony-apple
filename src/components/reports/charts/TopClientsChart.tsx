@@ -121,7 +121,6 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
                     formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
                   />
                 }
-                cursor={{ fill: 'rgba(14, 165, 233, 0.05)' }}
               />
               <Bar 
                 dataKey="amount" 
