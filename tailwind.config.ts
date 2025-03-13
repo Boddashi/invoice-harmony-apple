@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -76,12 +75,12 @@ export default {
           ring: 'hsl(var(--sidebar-ring))'
         },
         apple: {
-          blue: '#9e9de9', // Changed from #007AFF to lavender
+          blue: '#007AFF',
           indigo: '#5E5CE6',
           purple: '#BF5AF2',
           pink: '#FF2D55',
-          red: '#FF3B30', // Keeping red the same
-          orange: '#ff9269', // Changed from #FF9500 to coral
+          red: '#FF3B30',
+          orange: '#FF9500',
           yellow: '#FFCC00',
           green: '#34C759',
           teal: '#5AC8FA',
@@ -90,10 +89,10 @@ export default {
         neon: {
           purple: '#8B5CF6',
           pink: '#D946EF',
-          blue: '#9e9de9', // Changed from #0EA5E9 to lavender
+          blue: '#0EA5E9',
           green: '#10B981',
-          red: '#EF4444', // Keeping red the same
-          orange: '#ff9269', // Changed from #F97316 to coral
+          red: '#EF4444',
+          orange: '#F97316',
           yellow: '#FACC15',
         },
       },

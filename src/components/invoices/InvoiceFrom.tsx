@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import CustomCard from '../ui/CustomCard';
 import { supabase } from '@/integrations/supabase/client';
