@@ -1,5 +1,4 @@
 
-
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -7,10 +6,10 @@
   transition: filter 300ms;
 }
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+  filter: drop-shadow(0 0 2em #9e9de9aa);
 }
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+  filter: drop-shadow(0 0 2em #9e9de9aa);
 }
 
 @keyframes logo-spin {
@@ -38,17 +37,17 @@
 
 /* Inputs */
 .input-field {
-  @apply rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-lavender focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 /* Apple styled button */
 .apple-button {
-  @apply rounded-lg bg-apple-blue px-4 py-2 text-white shadow-md transition-colors hover:bg-apple-blue/90 focus:outline-none focus:ring-2 focus:ring-apple-blue/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
+  @apply rounded-lg bg-custom-lavender px-4 py-2 text-white shadow-md transition-colors hover:bg-custom-lavender/90 focus:outline-none focus:ring-2 focus:ring-custom-lavender/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50;
 }
 
 /* Client dropdown styling */
 .client-select-dropdown {
-  @apply rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-apple-blue focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  @apply rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-custom-lavender focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   appearance: revert;
   position: relative;
   z-index: 30;
@@ -57,4 +56,3 @@
 .client-select-dropdown option {
   @apply bg-background text-foreground py-2 px-3;
 }
-

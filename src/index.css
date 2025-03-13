@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,57 +6,57 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --foreground: 157 100% 14%; /* Changed to forest green */
     
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 157 100% 14%; /* Changed to forest green */
     
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 157 100% 14%; /* Changed to forest green */
     
-    --primary: 211 100% 50%;
+    --primary: 241 70% 76%; /* Changed to lavender */
     --primary-foreground: 0 0% 100%;
     
     --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary-foreground: 157 100% 14%; /* Changed to forest green */
     
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
     
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 240 5.9% 10%;
+    --accent: 14 100% 71%; /* Changed to coral */
+    --accent-foreground: 157 100% 14%; /* Changed to forest green */
     
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84.2% 60.2%; /* Keeping red as requested */
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    --ring: 211 100% 50%;
+    --ring: 241 70% 76%; /* Changed to lavender */
 
     --radius: 0.8rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-background: 241 70% 95%; /* Light lavender */
+    --sidebar-foreground: 157 100% 14%; /* Forest green */
+    --sidebar-primary: 241 70% 76%; /* Lavender */
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 14 100% 71%; /* Coral */
+    --sidebar-accent-foreground: 157 100% 14%; /* Forest green */
+    --sidebar-border: 241 70% 85%; /* Medium lavender */
+    --sidebar-ring: 241 70% 76%; /* Lavender */
   }
 
   .dark {
-    --background: 240 10% 8%;
+    --background: 157 100% 9%; /* Dark forest green */
     --foreground: 0 0% 98%;
     
-    --card: 240 10% 10%;
+    --card: 157 100% 8%; /* Darker forest green */
     --card-foreground: 0 0% 98%;
     
-    --popover: 240 10% 8%;
+    --popover: 157 100% 9%; /* Dark forest green */
     --popover-foreground: 0 0% 98%;
     
-    --primary: 263 85% 74%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 241 70% 76%; /* Lavender */
+    --primary-foreground: 157 100% 14%; /* Forest green */
     
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -63,24 +64,24 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
     
-    --accent: 263 85% 74%;
+    --accent: 14 100% 71%; /* Coral */
     --accent-foreground: 0 0% 98%;
     
-    --destructive: 0 62.8% 60.6%;
+    --destructive: 0 62.8% 60.6%; /* Keeping red as requested */
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 263 85% 74%;
+    --border: 157 100% 20%; /* Medium forest green */
+    --input: 157 100% 15%; /* Light forest green */
+    --ring: 241 70% 76%; /* Lavender */
 
-    --sidebar-background: 240 10% 6%;
+    --sidebar-background: 157 100% 6%; /* Darker forest green */
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 263 85% 74%;
-    --sidebar-primary-foreground: 240 5.9% 10%;
-    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-primary: 241 70% 76%; /* Lavender */
+    --sidebar-primary-foreground: 157 100% 14%; /* Forest green */
+    --sidebar-accent: 14 100% 71%; /* Coral */
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 263 85% 74%;
+    --sidebar-border: 157 100% 15%; /* Medium forest green */
+    --sidebar-ring: 241 70% 76%; /* Lavender */
   }
 
   * {
@@ -94,7 +95,7 @@
 
   /* Light mode styling */
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-apple-sm rounded-xl;
+    @apply bg-white/80 backdrop-blur-md border border-custom-lavender/20 shadow-apple-sm rounded-xl;
   }
   
   .elevated-card {
@@ -102,18 +103,18 @@
   }
   
   .input-field {
-    @apply bg-secondary/50 border-0 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200;
+    @apply bg-secondary/50 border-0 rounded-lg px-4 py-2 focus:ring-2 focus:ring-custom-lavender/20 transition-all duration-200;
   }
   
   .apple-button {
-    @apply rounded-full bg-apple-blue text-white font-medium px-6 py-2.5 
+    @apply rounded-full bg-custom-lavender text-white font-medium px-6 py-2.5 
            transition-all duration-300 hover:bg-opacity-90 
            focus:outline-none focus:ring-2 focus:ring-primary/30 
            active:scale-[0.98] shadow-apple-sm;
   }
   
   .secondary-button {
-    @apply rounded-full bg-secondary text-foreground font-medium px-6 py-2.5 
+    @apply rounded-full bg-secondary text-custom-forest font-medium px-6 py-2.5 
            transition-all duration-300 hover:bg-secondary/80 
            focus:outline-none focus:ring-2 focus:ring-primary/30 
            active:scale-[0.98] shadow-apple-sm;
@@ -128,7 +129,7 @@
 
   /* Dark mode styling */
   .dark .glass-card {
-    @apply bg-card/40 backdrop-blur-md border border-white/5 shadow-neon-sm;
+    @apply bg-card/40 backdrop-blur-md border border-custom-lavender/10 shadow-neon-sm;
   }
   
   .dark .elevated-card {
@@ -136,7 +137,7 @@
   }
   
   .dark .apple-button {
-    @apply bg-neon-purple text-white shadow-neon-sm hover:shadow-neon-md;
+    @apply bg-custom-lavender text-white shadow-neon-sm hover:shadow-neon-md;
   }
   
   .dark .secondary-button {
@@ -148,15 +149,15 @@
   }
   
   .neon-border {
-    @apply border border-neon-purple;
+    @apply border border-custom-lavender;
   }
   
   .dark .neon-border {
-    @apply border border-neon-purple shadow-neon-sm;
+    @apply border border-custom-lavender shadow-neon-sm;
   }
   
   .neon-text {
-    @apply text-neon-purple;
+    @apply text-custom-lavender;
   }
   
   .neon-glow {
