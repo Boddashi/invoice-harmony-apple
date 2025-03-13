@@ -85,13 +85,13 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
   if (!data || data.length === 0 || data.every(item => item.value === 0)) {
     return (
       <CustomCard padding="md" variant="elevated">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <PieChartIcon size={18} className="text-primary" />
             <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
           </div>
         </div>
-        <div className="h-[480px] flex items-center justify-center">
+        <div className="h-[400px] flex items-center justify-center">
           <p className="text-muted-foreground">No status data available</p>
         </div>
       </CustomCard>
@@ -100,20 +100,20 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
 
   return (
     <CustomCard padding="md" variant="elevated">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PieChartIcon size={18} className="text-primary" />
           <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
         </div>
       </div>
       
-      <div className="h-[480px]">
+      <div className="h-[450px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
-              cy="40%"
+              cy="45%"
               labelLine={false}
               label={false}
               outerRadius={140}
