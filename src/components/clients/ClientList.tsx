@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
@@ -11,32 +10,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
-
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 interface Client {
   id: string;
   type: string;
@@ -54,54 +30,49 @@ interface Client {
   invoices?: number;
   totalSpent?: number;
 }
-
 const ClientList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
-  const { currencySymbol } = useCurrency();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  
+  const {
+    currencySymbol
+  } = useCurrency();
+  const {
+    toast
+  } = useToast();
+  const {
+    user
+  } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
-  
   const formatAmount = (amount: number | string) => {
     if (typeof amount === 'string') {
       return amount;
     }
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
-  
   const fetchClients = async () => {
     if (!user) return;
-    
     try {
       setIsLoading(true);
-      
-      const { data: clientsData, error: clientsError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('user_id', user.id);
-      
+      const {
+        data: clientsData,
+        error: clientsError
+      } = await supabase.from('clients').select('*').eq('user_id', user.id);
       if (clientsError) {
         throw clientsError;
       }
-      
-      const { data: invoicesData, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('client_id, total_amount')
-        .eq('user_id', user.id);
-      
+      const {
+        data: invoicesData,
+        error: invoicesError
+      } = await supabase.from('invoices').select('client_id, total_amount').eq('user_id', user.id);
       if (invoicesError) {
         throw invoicesError;
       }
-      
       const clientInvoiceMap = new Map();
-      
       invoicesData.forEach(invoice => {
         const clientId = invoice.client_id;
         if (!clientInvoiceMap.has(clientId)) {
@@ -110,16 +81,16 @@ const ClientList = () => {
             total: 0
           });
         }
-        
         const clientData = clientInvoiceMap.get(clientId);
         clientData.count += 1;
         clientData.total += Number(invoice.total_amount);
         clientInvoiceMap.set(clientId, clientData);
       });
-      
       const transformedData = clientsData.map(client => {
-        const invoiceData = clientInvoiceMap.get(client.id) || { count: 0, total: 0 };
-        
+        const invoiceData = clientInvoiceMap.get(client.id) || {
+          count: 0,
+          total: 0
+        };
         return {
           ...client,
           vatNumber: client.vat_number,
@@ -127,7 +98,6 @@ const ClientList = () => {
           totalSpent: invoiceData.total
         };
       });
-      
       setClients(transformedData);
     } catch (error: any) {
       console.error('Error fetching clients with invoice data:', error);
@@ -140,38 +110,21 @@ const ClientList = () => {
       setIsLoading(false);
     }
   };
-  
   useEffect(() => {
     fetchClients();
   }, [user, toast]);
-
   const filteredClients = clients.filter(client => {
     if (!searchQuery.trim()) return true;
-    
     const query = searchQuery.toLowerCase();
-    return (
-      client.name.toLowerCase().includes(query) ||
-      client.email.toLowerCase().includes(query) ||
-      (client.phone && client.phone.toLowerCase().includes(query)) ||
-      (client.city && client.city.toLowerCase().includes(query)) ||
-      (client.country && client.country.toLowerCase().includes(query)) ||
-      (client.vat_number && client.vat_number.toLowerCase().includes(query))
-    );
+    return client.name.toLowerCase().includes(query) || client.email.toLowerCase().includes(query) || client.phone && client.phone.toLowerCase().includes(query) || client.city && client.city.toLowerCase().includes(query) || client.country && client.country.toLowerCase().includes(query) || client.vat_number && client.vat_number.toLowerCase().includes(query);
   });
-  
   useEffect(() => {
     setTotalPages(Math.max(1, Math.ceil(filteredClients.length / itemsPerPage)));
-    
     if (currentPage > Math.ceil(filteredClients.length / itemsPerPage)) {
       setCurrentPage(1);
     }
   }, [filteredClients, itemsPerPage, currentPage]);
-  
-  const paginatedClients = filteredClients.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
+  const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const handleAddClient = async (newClient: any) => {
     try {
       if (!user) {
@@ -182,7 +135,6 @@ const ClientList = () => {
         });
         return;
       }
-      
       const clientData = {
         user_id: user.id,
         type: newClient.type,
@@ -197,17 +149,13 @@ const ClientList = () => {
         country: newClient.country || null,
         vat_number: newClient.vatNumber || null
       };
-      
-      const { data, error } = await supabase
-        .from('clients')
-        .insert(clientData)
-        .select()
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('clients').insert(clientData).select().single();
       if (error) {
         throw error;
       }
-      
       if (data) {
         const clientWithInvoiceData = {
           ...data,
@@ -215,10 +163,8 @@ const ClientList = () => {
           invoices: 0,
           totalSpent: 0
         };
-        
         setClients([...clients, clientWithInvoiceData]);
       }
-      
       toast({
         title: "Success",
         description: "Client added successfully."
@@ -232,7 +178,6 @@ const ClientList = () => {
       });
     }
   };
-
   const handleUpdateClient = async (updatedClient: any) => {
     try {
       if (!user) {
@@ -243,7 +188,6 @@ const ClientList = () => {
         });
         return;
       }
-      
       const clientData = {
         user_id: user.id,
         type: updatedClient.type,
@@ -258,18 +202,13 @@ const ClientList = () => {
         country: updatedClient.country || null,
         vat_number: updatedClient.vatNumber || null
       };
-      
-      const { data, error } = await supabase
-        .from('clients')
-        .update(clientData)
-        .eq('id', updatedClient.id)
-        .select()
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from('clients').update(clientData).eq('id', updatedClient.id).select().single();
       if (error) {
         throw error;
       }
-      
       if (data) {
         const existingClient = clients.find(c => c.id === updatedClient.id);
         const clientWithInvoiceData = {
@@ -278,12 +217,8 @@ const ClientList = () => {
           invoices: existingClient?.invoices || 0,
           totalSpent: existingClient?.totalSpent || 0
         };
-        
-        setClients(clients.map(client => 
-          client.id === updatedClient.id ? clientWithInvoiceData : client
-        ));
+        setClients(clients.map(client => client.id === updatedClient.id ? clientWithInvoiceData : client));
       }
-      
       toast({
         title: "Success",
         description: "Client updated successfully."
@@ -297,7 +232,6 @@ const ClientList = () => {
       });
     }
   };
-
   const handleEditClient = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     if (client) {
@@ -305,51 +239,43 @@ const ClientList = () => {
       setIsModalOpen(true);
     }
   };
-
   const handleOpenModal = () => {
     setClientToEdit(null);
     setIsModalOpen(true);
   };
-
   const handleCloseModal = () => {
     setClientToEdit(null);
     setIsModalOpen(false);
   };
-  
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
     }
   };
-  
   const handleItemsPerPageChange = (value: string) => {
     const newItemsPerPage = parseInt(value, 10);
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
-  
   const generatePaginationItems = () => {
     if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
+      return Array.from({
+        length: totalPages
+      }, (_, i) => i + 1);
     }
-    
     const items = new Set([1, totalPages, currentPage]);
-    
     if (currentPage > 1) items.add(currentPage - 1);
     if (currentPage < totalPages) items.add(currentPage + 1);
-    
     return Array.from(items).sort((a, b) => a - b);
   };
-
-  return (
-    <div className="space-y-5 animate-fade-in">
+  return <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-xl font-semibold">Your Clients</h2>
-        <Button 
-          className="gap-2 w-full sm:w-auto"
-          onClick={handleOpenModal}
-        >
+        <Button onClick={handleOpenModal} className="apple-button gap-2 w-full sm:w-auto">
           <Plus size={18} />
           <span>Add Client</span>
         </Button>
@@ -358,31 +284,18 @@ const ClientList = () => {
       <div className="relative w-full">
         <div className="relative">
           <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search clients..."
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <input type="text" placeholder="Search clients..." className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
       </div>
       
       <CustomCard padding="none">
-        {isLoading ? (
-          <div className="p-8 text-center">
+        {isLoading ? <div className="p-8 text-center">
             <p className="text-muted-foreground">Loading clients...</p>
-          </div>
-        ) : filteredClients.length === 0 ? (
-          <div className="p-8 text-center">
+          </div> : filteredClients.length === 0 ? <div className="p-8 text-center">
             <p className="text-muted-foreground">
-              {searchQuery.trim() 
-                ? "No clients match your search. Try a different search term." 
-                : "No clients found. Add your first client to get started."}
+              {searchQuery.trim() ? "No clients match your search. Try a different search term." : "No clients found. Add your first client to get started."}
             </p>
-          </div>
-        ) : (
-          <>
+          </div> : <>
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -396,14 +309,11 @@ const ClientList = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedClients.map((client) => (
-                    <TableRow key={client.id}>
+                  {paginatedClients.map(client => <TableRow key={client.id}>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{client.name}</span>
-                          {client.type === 'business' && client.vat_number && (
-                            <span className="text-xs text-muted-foreground mt-1">VAT: {client.vat_number}</span>
-                          )}
+                          {client.type === 'business' && client.vat_number && <span className="text-xs text-muted-foreground mt-1">VAT: {client.vat_number}</span>}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -412,25 +322,17 @@ const ClientList = () => {
                             <Mail size={14} className="text-muted-foreground" />
                             <span className="text-sm">{client.email}</span>
                           </div>
-                          {client.phone && (
-                            <div className="flex items-center gap-2 mt-1">
+                          {client.phone && <div className="flex items-center gap-2 mt-1">
                               <Phone size={14} className="text-muted-foreground" />
                               <span className="text-sm">{client.phone}</span>
-                            </div>
-                          )}
+                            </div>}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col text-sm">
-                          {client.street && (
-                            <span>{client.street} {client.number} {client.bus}</span>
-                          )}
-                          {client.postcode && client.city && (
-                            <span>{client.postcode} {client.city}</span>
-                          )}
-                          {client.country && (
-                            <span className="text-muted-foreground">{client.country}</span>
-                          )}
+                          {client.street && <span>{client.street} {client.number} {client.bus}</span>}
+                          {client.postcode && client.city && <span>{client.postcode} {client.city}</span>}
+                          {client.country && <span className="text-muted-foreground">{client.country}</span>}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">{client.invoices}</TableCell>
@@ -438,21 +340,15 @@ const ClientList = () => {
                         {client.totalSpent !== undefined ? formatAmount(client.totalSpent) : '$0.00'}
                       </TableCell>
                       <TableCell>
-                        <ClientActions 
-                          clientId={client.id} 
-                          onEditClient={handleEditClient}
-                          onClientDeleted={fetchClients}
-                        />
+                        <ClientActions clientId={client.id} onEditClient={handleEditClient} onClientDeleted={fetchClients} />
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
             </div>
 
             <div className="md:hidden divide-y divide-border">
-              {paginatedClients.map((client) => (
-                <div key={client.id} className="p-4">
+              {paginatedClients.map(client => <div key={client.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-medium">{client.name}</h3>
@@ -460,31 +356,19 @@ const ClientList = () => {
                         <Mail size={12} />
                         {client.email}
                       </p>
-                      {client.phone && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      {client.phone && <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                           <Phone size={12} />
                           {client.phone}
-                        </p>
-                      )}
+                        </p>}
                     </div>
-                    <ClientActions 
-                      clientId={client.id} 
-                      onEditClient={handleEditClient}
-                      onClientDeleted={fetchClients}
-                    />
+                    <ClientActions clientId={client.id} onEditClient={handleEditClient} onClientDeleted={fetchClients} />
                   </div>
                   
-                  {client.street && (
-                    <div className="text-sm mt-2">
+                  {client.street && <div className="text-sm mt-2">
                       <div>{client.street} {client.number} {client.bus}</div>
-                      {client.postcode && client.city && (
-                        <div>{client.postcode} {client.city}</div>
-                      )}
-                      {client.country && (
-                        <div className="text-muted-foreground">{client.country}</div>
-                      )}
-                    </div>
-                  )}
+                      {client.postcode && client.city && <div>{client.postcode} {client.city}</div>}
+                      {client.country && <div className="text-muted-foreground">{client.country}</div>}
+                    </div>}
                   
                   <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border">
                     <div>
@@ -498,19 +382,14 @@ const ClientList = () => {
                       </p>
                     </div>
                   </div>
-                </div>
-              ))}
+                </div>)}
             </div>
             
-            {totalPages > 1 && (
-              <div className="p-4 border-t border-border">
+            {totalPages > 1 && <div className="p-4 border-t border-border">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                   <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
                     <span className="text-muted-foreground whitespace-nowrap">Rows per page:</span>
-                    <Select
-                      value={itemsPerPage.toString()}
-                      onValueChange={handleItemsPerPageChange}
-                    >
+                    <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
                       <SelectTrigger className="w-20 h-8">
                         <SelectValue placeholder="10" />
                       </SelectTrigger>
@@ -529,105 +408,52 @@ const ClientList = () => {
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(1)}
-                          disabled={currentPage === 1}
-                          className={cn(
-                            "flex items-center justify-center h-9 w-9 rounded-md text-sm",
-                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                          aria-label="Go to first page"
-                        >
+                        <button onClick={() => handlePageChange(1)} disabled={currentPage === 1} className={cn("flex items-center justify-center h-9 w-9 rounded-md text-sm", currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary")} aria-label="Go to first page">
                           <ChevronsLeft size={16} />
                         </button>
                       </PaginationItem>
                       
                       <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
-                            currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                        >
+                        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-sm", currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary")}>
                           <ChevronLeft size={16} />
                           <span className="hidden sm:inline">Previous</span>
                         </button>
                       </PaginationItem>
                       
                       {generatePaginationItems().map((page, index, array) => {
-                        const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
-                        
-                        return (
-                          <React.Fragment key={page}>
-                            {showEllipsisBefore && (
-                              <PaginationItem className="hidden sm:inline-block">
+                  const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
+                  return <React.Fragment key={page}>
+                            {showEllipsisBefore && <PaginationItem className="hidden sm:inline-block">
                                 <PaginationEllipsis />
-                              </PaginationItem>
-                            )}
+                              </PaginationItem>}
                             <PaginationItem>
-                              <button
-                                onClick={() => handlePageChange(page)}
-                                className={cn(
-                                  "flex items-center justify-center h-9 w-9 rounded-md text-sm",
-                                  currentPage === page 
-                                    ? "bg-primary text-primary-foreground" 
-                                    : "hover:bg-secondary"
-                                )}
-                              >
+                              <button onClick={() => handlePageChange(page)} className={cn("flex items-center justify-center h-9 w-9 rounded-md text-sm", currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
                                 {page}
                               </button>
                             </PaginationItem>
-                          </React.Fragment>
-                        );
-                      })}
+                          </React.Fragment>;
+                })}
                       
                       <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                          className={cn(
-                            "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
-                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                        >
+                        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-sm", currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary")}>
                           <span className="hidden sm:inline">Next</span>
                           <ChevronRight size={16} />
                         </button>
                       </PaginationItem>
                       
                       <PaginationItem>
-                        <button
-                          onClick={() => handlePageChange(totalPages)}
-                          disabled={currentPage === totalPages}
-                          className={cn(
-                            "flex items-center justify-center h-9 w-9 rounded-md text-sm",
-                            currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary"
-                          )}
-                          aria-label="Go to last page"
-                        >
+                        <button onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages} className={cn("flex items-center justify-center h-9 w-9 rounded-md text-sm", currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary")} aria-label="Go to last page">
                           <ChevronsRight size={16} />
                         </button>
                       </PaginationItem>
                     </PaginationContent>
                   </Pagination>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              </div>}
+          </>}
       </CustomCard>
 
-      <AddClientModal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        onAddClient={handleAddClient}
-        onUpdateClient={handleUpdateClient}
-        clientToEdit={clientToEdit}
-      />
-    </div>
-  );
+      <AddClientModal isOpen={isModalOpen} onClose={handleCloseModal} onAddClient={handleAddClient} onUpdateClient={handleUpdateClient} clientToEdit={clientToEdit} />
+    </div>;
 };
-
 export default ClientList;
