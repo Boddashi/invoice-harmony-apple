@@ -136,7 +136,7 @@
   }
   
   .dark .apple-button {
-    @apply bg-neon-purple text-white shadow-neon-sm hover:shadow-neon-md;
+    @apply bg-neon-purple text-white shadow-neon-sm hover:shadow-neon-md hover:bg-neon-blue;
   }
   
   .dark .secondary-button {
