@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
@@ -23,6 +22,10 @@ interface Invoice {
   client?: {
     name: string;
   };
+}
+
+interface InvoiceListProps {
+  onStatusChange?: () => void;
 }
 
 const getStatusConfig = (status: InvoiceStatus) => {
@@ -54,7 +57,7 @@ const getStatusConfig = (status: InvoiceStatus) => {
   }
 };
 
-const InvoiceList = () => {
+const InvoiceList: React.FC<InvoiceListProps> = ({ onStatusChange }) => {
   const { currencySymbol } = useCurrency();
   const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,46 +77,55 @@ const InvoiceList = () => {
     });
   };
   
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('invoices')
-          .select(`
-            *,
-            client:clients(name)
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
-        
-        if (error) {
-          throw error;
-        }
-        
-        const typedData = data?.map(invoice => ({
-          ...invoice,
-          status: invoice.status as InvoiceStatus
-        })) || [];
-        
-        setRecentInvoices(typedData);
-      } catch (error: any) {
-        console.error('Error fetching recent invoices:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Failed to fetch recent invoices."
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchInvoices = async () => {
+    if (!user) return;
     
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          client:clients(name)
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) {
+        throw error;
+      }
+      
+      const typedData = data?.map(invoice => ({
+        ...invoice,
+        status: invoice.status as InvoiceStatus
+      })) || [];
+      
+      setRecentInvoices(typedData);
+    } catch (error: any) {
+      console.error('Error fetching recent invoices:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to fetch recent invoices."
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
     fetchInvoices();
   }, [user, toast]);
+
+  const handleStatusChange = () => {
+    fetchInvoices(); // Refresh the invoice list when status changes
+    
+    // Also notify parent component if callback is provided
+    if (onStatusChange) {
+      onStatusChange();
+    }
+  };
 
   return (
     <CustomCard className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -172,7 +184,11 @@ const InvoiceList = () => {
                   </div>
                   
                   <div onClick={(e) => e.preventDefault()}>
-                    <InvoiceActions invoiceId={invoice.id} status={invoice.status} />
+                    <InvoiceActions 
+                      invoiceId={invoice.id} 
+                      status={invoice.status} 
+                      onStatusChange={handleStatusChange} 
+                    />
                   </div>
                 </div>
               </Link>

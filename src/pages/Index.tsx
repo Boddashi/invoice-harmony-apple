@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import DashboardSummary from '../components/dashboard/DashboardSummary';
@@ -30,15 +31,9 @@ interface RevenueData {
 }
 
 const Index = () => {
-  const {
-    currencySymbol
-  } = useCurrency();
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { currencySymbol } = useCurrency();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState<Stats>({
     paid: 74,
     pending: 19,
@@ -48,6 +43,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'quarterly' | 'yearly'>('monthly');
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const isMobile = useIsMobile();
 
   const formatAmount = (amount: number) => {
@@ -73,12 +69,15 @@ const Index = () => {
         default:
           startDate = subMonths(today, 6);
       }
-      const {
-        data: invoices,
-        error
-      } = await supabase.from('invoices').select('issue_date, total_amount').eq('user_id', user.id).eq('status', 'paid').gte('issue_date', startOfMonth(startDate).toISOString()).lte('issue_date', endOfMonth(today).toISOString()).order('issue_date', {
-        ascending: true
-      });
+      const { data: invoices, error } = await supabase
+        .from('invoices')
+        .select('issue_date, total_amount')
+        .eq('user_id', user.id)
+        .eq('status', 'paid')
+        .gte('issue_date', startOfMonth(startDate).toISOString())
+        .lte('issue_date', endOfMonth(today).toISOString())
+        .order('issue_date', { ascending: true });
+        
       if (error) throw error;
 
       const monthlyRevenue = new Map<string, number>();
@@ -104,7 +103,7 @@ const Index = () => {
 
   useEffect(() => {
     fetchRevenueData();
-  }, [user, selectedPeriod]);
+  }, [user, selectedPeriod, refreshTrigger]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -112,13 +111,13 @@ const Index = () => {
       try {
         setIsLoading(true);
 
-        const {
-          data: invoices,
-          error: invoicesError
-        } = await supabase.from('invoices').select(`
+        const { data: invoices, error: invoicesError } = await supabase
+          .from('invoices')
+          .select(`
             *,
             client:clients(name)
-          `).eq('user_id', user.id);
+          `)
+          .eq('user_id', user.id);
         if (invoicesError) {
           throw invoicesError;
         }
@@ -171,7 +170,11 @@ const Index = () => {
       }
     };
     fetchStats();
-  }, [user, toast, currencySymbol]);
+  }, [user, toast, currencySymbol, refreshTrigger]);
+
+  const handleDataRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return <MainLayout>
       <div className="max-w-6xl mx-auto space-y-7">
@@ -315,7 +318,7 @@ const Index = () => {
           </CustomCard>
         </div>
         
-        <InvoiceList />
+        <InvoiceList onStatusChange={handleDataRefresh} />
       </div>
     </MainLayout>;
 };
