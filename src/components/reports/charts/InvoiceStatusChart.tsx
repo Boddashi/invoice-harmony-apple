@@ -20,6 +20,7 @@ interface EnhancedLegendProps {
   payload?: any[];
 }
 
+// Updated color palette for better visual appeal
 const PIE_COLORS = ['#4ade80', '#f97316', '#f43f5e'];
 
 const STATUS_ICONS = {
@@ -32,7 +33,7 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-background border border-border shadow-lg rounded-lg p-4">
+      <div className="bg-background/95 backdrop-blur-sm border border-border/50 shadow-lg rounded-lg p-4 animate-fade-in">
         <div className="flex items-center gap-2 mb-2">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.fill }}></div>
           <p className="font-semibold">{data.name}</p>
@@ -53,16 +54,21 @@ const EnhancedLegend = ({ payload = [] }: EnhancedLegendProps) => {
       {payload.map((entry, index) => (
         <div 
           key={`legend-${index}`} 
-          className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/50"
+          className="flex items-center gap-3 p-3 rounded-lg border border-border/50 bg-background/50 hover:bg-background/80 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
+            <div 
+              className="w-4 h-4 rounded-full flex items-center justify-center" 
+              style={{ backgroundColor: entry.color }}
+            >
+              <div className="w-2 h-2 rounded-full bg-white/70"></div>
+            </div>
             <div className="flex items-center gap-1.5">
               {STATUS_ICONS[entry.value]}
               <span className="font-medium">{entry.value}</span>
             </div>
           </div>
-          <span className="text-muted-foreground ml-auto">
+          <span className="text-muted-foreground ml-auto font-mono">
             {entry.payload.value} ({(entry.payload.percent * 100).toFixed(0)}%)
           </span>
         </div>
@@ -116,8 +122,8 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
               cy="40%"
               labelLine={false}
               label={false}
-              outerRadius={100}
-              innerRadius={65}
+              outerRadius={95}
+              innerRadius={70}
               paddingAngle={8}
               dataKey="value"
               strokeWidth={2}
@@ -127,6 +133,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
                 <Cell 
                   key={`cell-${index}`} 
                   fill={PIE_COLORS[index % PIE_COLORS.length]}
+                  className="drop-shadow-lg"
                 />
               ))}
             </Pie>
