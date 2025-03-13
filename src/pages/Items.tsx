@@ -122,7 +122,7 @@ const Items = () => {
             <AddItemModal onItemAdded={fetchItems} trigger={<Button variant="apple" className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Item
-                </Button>} />
+                </Button>} className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full" />
           </div>
         </div>
         
