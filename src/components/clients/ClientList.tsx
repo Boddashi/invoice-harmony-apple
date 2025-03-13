@@ -275,7 +275,7 @@ const ClientList = () => {
   return <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-xl font-semibold">Your Clients</h2>
-        <Button onClick={handleOpenModal} className="apple-button flex items-center gap-2 w-full sm:w-auto">
+        <Button onClick={handleOpenModal} className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
           <Plus size={18} />
           <span>Add Client</span>
         </Button>
