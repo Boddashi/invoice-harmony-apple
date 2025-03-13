@@ -110,17 +110,17 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
         </div>
       </div>
       
-      <div className={isMobile ? "h-[420px]" : "h-[450px]"}>
+      <div className={isMobile ? "h-[380px]" : "h-[450px]"}>
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               cx="50%"
-              cy="40%"
+              cy="35%"
               labelLine={false}
               label={false}
-              outerRadius={140}
-              innerRadius={90}
+              outerRadius={isMobile ? 110 : 140}
+              innerRadius={isMobile ? 70 : 90}
               paddingAngle={8}
               dataKey="value"
               strokeWidth={2}
