@@ -130,24 +130,6 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               radius={[4, 4, 0, 0]}
               maxBarSize={isMobile ? 30 : 50}
               name="Revenue"
-              className="cursor-pointer"
-              onMouseOver={(data, index) => {
-                document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
-                  if (i === index) {
-                    (elem as HTMLElement).style.fill = 'url(#colorItemsHover)';
-                    (elem as HTMLElement).style.filter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.3))';
-                    (elem as HTMLElement).style.transition = 'all 0.2s ease';
-                  }
-                });
-              }}
-              onMouseOut={(data, index) => {
-                document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
-                  if (i === index) {
-                    (elem as HTMLElement).style.fill = 'url(#colorItems)';
-                    (elem as HTMLElement).style.filter = 'none';
-                  }
-                });
-              }}
             />
           </BarChart>
         </ChartContainer>

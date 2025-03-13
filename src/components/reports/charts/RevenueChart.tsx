@@ -156,24 +156,6 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 fill="url(#colorRevenue)"
                 radius={[4, 4, 0, 0]}
                 maxBarSize={isMobile ? 30 : 50}
-                className="cursor-pointer"
-                onMouseOver={(data, index) => {
-                  document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
-                    if (i === index) {
-                      (elem as HTMLElement).style.fill = 'url(#colorRevenueHover)';
-                      (elem as HTMLElement).style.filter = 'drop-shadow(0 0 6px rgba(139, 92, 246, 0.3))';
-                      (elem as HTMLElement).style.transition = 'all 0.2s ease';
-                    }
-                  });
-                }}
-                onMouseOut={(data, index) => {
-                  document.querySelectorAll('.recharts-bar-rectangle').forEach((elem, i) => {
-                    if (i === index) {
-                      (elem as HTMLElement).style.fill = 'url(#colorRevenue)';
-                      (elem as HTMLElement).style.filter = 'none';
-                    }
-                  });
-                }}
               />
             </BarChart>
           </ChartContainer>
