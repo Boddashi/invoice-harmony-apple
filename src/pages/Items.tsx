@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
-import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro } from 'lucide-react';
+import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import EditItemModal from '@/components/items/EditItemModal';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import CustomCard from '@/components/ui/CustomCard';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 interface Item {
   id: string;
@@ -27,6 +29,7 @@ const Items = () => {
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
   const [sortField, setSortField] = useState<'title' | 'price' | 'vat'>('title');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
   const {
     user
   } = useAuth();
@@ -96,8 +99,20 @@ const Items = () => {
     }
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const getFilteredItems = () => {
+    return items.filter(item => 
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.vat.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.price.toString().includes(searchQuery)
+    );
+  };
+
   const getSortedItems = () => {
-    return [...items].sort((a, b) => {
+    return [...getFilteredItems()].sort((a, b) => {
       if (sortField === 'title') {
         return sortDirection === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title);
       } else if (sortField === 'price') {
@@ -158,9 +173,18 @@ const Items = () => {
               </div>
             </div> : <div>
               <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <h3 className="text-lg font-medium">Your Items</h3>
-                  <p className="text-sm text-muted-foreground">{items.length} items total</p>
+                  <div className="flex-1 max-w-md relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search items..."
+                      value={searchQuery}
+                      onChange={handleSearch}
+                      className="pl-9 w-full"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground hidden sm:block">{getSortedItems().length} of {items.length} items</p>
                 </div>
               </div>
               <Table>
@@ -188,7 +212,14 @@ const Items = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {getSortedItems().map(item => <TableRow key={item.id}>
+                  {getSortedItems().length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6">
+                        <p>No items found matching your search.</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    getSortedItems().map(item => <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end space-x-2">
@@ -227,7 +258,8 @@ const Items = () => {
                           </AlertDialog>
                         </div>
                       </TableCell>
-                    </TableRow>)}
+                    </TableRow>)
+                  )}
                 </TableBody>
               </Table>
             </div>}
