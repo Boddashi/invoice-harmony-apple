@@ -10,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<{success: boolean, message: string}>;
   signOut: () => Promise<void>;
 }
 
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   isLoading: true,
   signIn: async () => {},
-  signUp: async () => {},
+  signUp: async () => ({ success: false, message: '' }),
   signOut: async () => {},
 });
 
@@ -106,15 +106,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       toast({
-        title: "Success",
-        description: "Check your email for the confirmation link",
+        title: "Registration successful",
+        description: "Please check your email for the confirmation link",
       });
+      
+      return { success: true, message: "Please check your email for the confirmation link" };
     } catch (error: any) {
+      const errorMessage = error.message || "An error occurred during registration";
+      
       toast({
         variant: "destructive",
-        title: "Sign up failed",
-        description: error.message || "An error occurred during sign up",
+        title: "Registration failed",
+        description: errorMessage,
       });
+      
+      return { success: false, message: errorMessage };
     }
   };
 
