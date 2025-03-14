@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react';
+import { Mail, Phone, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search, ArrowUpDown } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
 import AddClientModal from './AddClientModal';
 import ClientActions from './ClientActions';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 interface Client {
   id: string;
   type: string;
@@ -30,30 +31,32 @@ interface Client {
   invoices?: number;
   totalSpent?: number;
 }
+
+type SortField = 'name' | 'email' | 'city' | 'invoices' | 'totalSpent';
+type SortDirection = 'asc' | 'desc';
+
 const ClientList = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
-  const {
-    currencySymbol
-  } = useCurrency();
-  const {
-    toast
-  } = useToast();
-  const {
-    user
-  } = useAuth();
+  const { currencySymbol } = useCurrency();
+  const { toast } = useToast();
+  const { user } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
   const formatAmount = (amount: number | string) => {
     if (typeof amount === 'string') {
       return amount;
     }
     return `${currencySymbol}${amount.toFixed(2)}`;
   };
+
   const fetchClients = async () => {
     if (!user) return;
     try {
@@ -110,21 +113,78 @@ const ClientList = () => {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchClients();
   }, [user, toast]);
+
   const filteredClients = clients.filter(client => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return client.name.toLowerCase().includes(query) || client.email.toLowerCase().includes(query) || client.phone && client.phone.toLowerCase().includes(query) || client.city && client.city.toLowerCase().includes(query) || client.country && client.country.toLowerCase().includes(query) || client.vat_number && client.vat_number.toLowerCase().includes(query);
   });
+
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    if (sortField === 'name' || sortField === 'email') {
+      const aValue = a[sortField]?.toLowerCase() || '';
+      const bValue = b[sortField]?.toLowerCase() || '';
+      
+      if (sortDirection === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    } else if (sortField === 'city') {
+      const aValue = a.city?.toLowerCase() || '';
+      const bValue = b.city?.toLowerCase() || '';
+      
+      if (sortDirection === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    } else if (sortField === 'invoices' || sortField === 'totalSpent') {
+      const aValue = a[sortField] || 0;
+      const bValue = b[sortField] || 0;
+      
+      if (sortDirection === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    }
+    
+    return 0;
+  });
+
   useEffect(() => {
     setTotalPages(Math.max(1, Math.ceil(filteredClients.length / itemsPerPage)));
     if (currentPage > Math.ceil(filteredClients.length / itemsPerPage)) {
       setCurrentPage(1);
     }
   }, [filteredClients, itemsPerPage, currentPage]);
-  const paginatedClients = filteredClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const paginatedClients = sortedClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField === field) {
+      return <ArrowUpDown size={16} className={cn(
+        "ml-1 inline-block transition-transform", 
+        sortDirection === 'desc' ? "transform rotate-180" : ""
+      )} />;
+    }
+    return <ArrowUpDown size={16} className="ml-1 inline-block text-gray-400" />;
+  };
+
   const handleAddClient = async (newClient: any) => {
     try {
       if (!user) {
@@ -178,6 +238,7 @@ const ClientList = () => {
       });
     }
   };
+
   const handleUpdateClient = async (updatedClient: any) => {
     try {
       if (!user) {
@@ -232,6 +293,7 @@ const ClientList = () => {
       });
     }
   };
+
   const handleEditClient = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     if (client) {
@@ -239,14 +301,17 @@ const ClientList = () => {
       setIsModalOpen(true);
     }
   };
+
   const handleOpenModal = () => {
     setClientToEdit(null);
     setIsModalOpen(true);
   };
+
   const handleCloseModal = () => {
     setClientToEdit(null);
     setIsModalOpen(false);
   };
+
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -256,11 +321,13 @@ const ClientList = () => {
       });
     }
   };
+
   const handleItemsPerPageChange = (value: string) => {
     const newItemsPerPage = parseInt(value, 10);
     setItemsPerPage(newItemsPerPage);
     setCurrentPage(1);
   };
+
   const generatePaginationItems = () => {
     if (totalPages <= 5) {
       return Array.from({
@@ -272,6 +339,7 @@ const ClientList = () => {
     if (currentPage < totalPages) items.add(currentPage + 1);
     return Array.from(items).sort((a, b) => a - b);
   };
+
   return <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-xl font-semibold">Your Clients</h2>
@@ -300,11 +368,19 @@ const ClientList = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+                      Name {renderSortIcon('name')}
+                    </TableHead>
                     <TableHead>Contact</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead className="text-right">Invoices</TableHead>
-                    <TableHead className="text-right">Total Spent</TableHead>
+                    <TableHead className="cursor-pointer" onClick={() => handleSort('city')}>
+                      Address {renderSortIcon('city')}
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('invoices')}>
+                      Invoices {renderSortIcon('invoices')}
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer" onClick={() => handleSort('totalSpent')}>
+                      Total Spent {renderSortIcon('totalSpent')}
+                    </TableHead>
                     <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -450,10 +526,6 @@ const ClientList = () => {
                   </Pagination>
                 </div>
               </div>}
-          </>}
-      </CustomCard>
+          </>
 
-      <AddClientModal isOpen={isModalOpen} onClose={handleCloseModal} onAddClient={handleAddClient} onUpdateClient={handleUpdateClient} clientToEdit={clientToEdit} />
-    </div>;
-};
-export default ClientList;
+
