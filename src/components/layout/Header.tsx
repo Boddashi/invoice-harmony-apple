@@ -19,6 +19,8 @@ const Header = () => {
         return 'Settings';
       case '/reports':
         return 'Reports';
+      case '/items':
+        return 'Items';
       case '/login':
         return 'Sign In';
       default:
@@ -40,7 +42,7 @@ const Header = () => {
   }
 
   return (
-    <header className="w-full h-16 border-b border-border/40 backdrop-blur-apple bg-background/80 sticky top-0 z-30 flex items-center px-6">
+    <header className="w-full h-16 border-b border-border/40 sticky top-0 z-30 flex items-center px-6 bg-gradient-header backdrop-blur-apple">
       <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
         <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">{getTitle()}</h1>
         

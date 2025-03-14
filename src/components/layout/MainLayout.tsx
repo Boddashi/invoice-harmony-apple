@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutGrid, FileText, Users, Settings, LogOut, Package, MoreHorizontal, X, BarChart } from 'lucide-react';
@@ -72,7 +73,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <Header />
       
       <div className="flex flex-1 w-full">
-        <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 bg-sidebar text-sidebar-foreground backdrop-blur-sm bg-sidebar/90">
+        <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 backdrop-blur-sm bg-gradient-sidebar">
           <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col p-4 gap-2">
               {navItems.map((item) => {
@@ -130,7 +131,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
+      <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
         <Link
           to="/settings"
           className={cn(
@@ -166,7 +167,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
             hideCloseButton={true}
           >
-            <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+            <div className="flex flex-col h-full bg-gradient-sidebar">
               <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
                 <h2 className="text-lg font-semibold">More Options</h2>
                 <button 

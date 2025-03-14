@@ -44,6 +44,7 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
     
     --gradient-start: 255, 255, 255;
+    --gradient-mid: 242, 238, 255;
     --gradient-end: 229, 222, 255;
   }
 
@@ -86,6 +87,7 @@
     --sidebar-ring: 263 85% 74%;
     
     --gradient-start: 25, 23, 36;
+    --gradient-mid: 40, 35, 60; 
     --gradient-end: 65, 48, 97;
   }
 

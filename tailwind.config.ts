@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -173,6 +174,8 @@ export default {
       backgroundImage: {
         'gradient-purple': 'linear-gradient(135deg, rgb(255, 255, 255) 0%, rgb(229, 222, 255) 100%)',
         'gradient-purple-dark': 'linear-gradient(135deg, rgb(25, 23, 36) 0%, rgb(65, 48, 97) 100%)',
+        'gradient-sidebar': 'linear-gradient(180deg, rgb(var(--gradient-start)) 0%, rgb(var(--gradient-mid)) 100%)',
+        'gradient-header': 'linear-gradient(90deg, rgb(var(--gradient-start)) 0%, rgb(var(--gradient-mid)) 100%)',
       }
     }
   },
