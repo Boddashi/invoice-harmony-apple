@@ -20,10 +20,10 @@ const CustomCard = ({
       className={cn(
         "rounded-xl overflow-hidden",
         // Variants
-        variant === 'default' && "bg-card border border-border/40 shadow-apple-sm dark:shadow-none",
+        variant === 'default' && "bg-card/95 border border-border/40 shadow-apple-sm dark:shadow-none backdrop-blur-[2px]",
         variant === 'glass' && "glass-card",
         variant === 'elevated' && "elevated-card",
-        variant === 'neon' && "bg-card border border-neon-purple shadow-neon-sm dark:shadow-neon-md",
+        variant === 'neon' && "bg-card/95 border border-neon-purple shadow-neon-sm dark:shadow-neon-md backdrop-blur-[2px]",
         // Padding
         padding === 'none' && "p-0",
         padding === 'sm' && "p-3",

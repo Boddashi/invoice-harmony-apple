@@ -42,6 +42,9 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --gradient-start: 255, 255, 255;
+    --gradient-end: 229, 222, 255;
   }
 
   .dark {
@@ -81,6 +84,9 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 263 85% 74%;
+    
+    --gradient-start: 25, 23, 36;
+    --gradient-end: 65, 48, 97;
   }
 
   * {
@@ -90,6 +96,9 @@
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, rgb(var(--gradient-start)) 0%, rgb(var(--gradient-end)) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   /* Light mode styling */
