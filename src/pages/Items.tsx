@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Package, Loader2, Plus, Pencil, Trash2, ArrowUpDown, Euro, Search } from 'lucide-react';
@@ -156,6 +155,19 @@ const Items = () => {
           </div>
         </div>
         
+        <div className="relative w-full">
+          <div className="relative">
+            <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <input 
+              type="text" 
+              placeholder="Search items..." 
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors" 
+              value={searchQuery} 
+              onChange={handleSearch} 
+            />
+          </div>
+        </div>
+        
         <CustomCard className="p-0">
           {loading ? <div className="flex justify-center p-12">
               <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
@@ -173,18 +185,9 @@ const Items = () => {
               </div>
             </div> : <div>
               <div className="p-4 border-b">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Your Items</h3>
-                  <div className="flex-1 max-w-md relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search items..."
-                      value={searchQuery}
-                      onChange={handleSearch}
-                      className="pl-9 w-full"
-                    />
-                  </div>
-                  <p className="text-sm text-muted-foreground hidden sm:block">{getSortedItems().length} of {items.length} items</p>
+                  <p className="text-sm text-muted-foreground">{getSortedItems().length} of {items.length} items</p>
                 </div>
               </div>
               <Table>
