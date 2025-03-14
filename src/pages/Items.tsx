@@ -130,8 +130,13 @@ const Items = () => {
           </div>
           <div className="flex items-center gap-2">
             <AddItemModal 
-              onItemAdded={fetchItems}
-              className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full"
+              onItemAdded={fetchItems} 
+              trigger={
+                <Button variant="apple" className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Item
+                </Button>
+              } 
             />
           </div>
         </div>
@@ -146,7 +151,10 @@ const Items = () => {
                 <p className="text-muted-foreground mb-4">
                   You haven't added any items to your inventory yet.
                 </p>
-                <AddItemModal onItemAdded={fetchItems} />
+                <AddItemModal trigger={<Button variant="apple">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Your First Item
+                    </Button>} onItemAdded={fetchItems} />
               </div>
             </div> : <div>
               <div className="p-4 border-b">
