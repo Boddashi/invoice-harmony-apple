@@ -13,6 +13,7 @@ import { useCurrency } from '@/contexts/CurrencyContext';
 interface AddItemModalProps {
   onItemAdded: () => void;
   trigger?: React.ReactNode;
+  className?: string;
 }
 
 interface VatRate {
@@ -20,7 +21,7 @@ interface VatRate {
   amount: number | null;
 }
 
-const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
+const AddItemModal = ({ onItemAdded, trigger, className }: AddItemModalProps) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
@@ -144,7 +145,7 @@ const AddItemModal = ({ onItemAdded, trigger }: AddItemModalProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="apple">
+          <Button variant="apple" className={className}>
             <Plus className="mr-2 h-4 w-4" /> Add Item
           </Button>
         )}
