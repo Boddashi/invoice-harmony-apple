@@ -340,7 +340,8 @@ const ClientList = () => {
     return Array.from(items).sort((a, b) => a - b);
   };
 
-  return <div className="space-y-5 animate-fade-in">
+  return (
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h2 className="text-xl font-semibold">Your Clients</h2>
         <Button onClick={handleOpenModal} className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full">
@@ -357,13 +358,18 @@ const ClientList = () => {
       </div>
       
       <CustomCard padding="none">
-        {isLoading ? <div className="p-8 text-center">
+        {isLoading ? (
+          <div className="p-8 text-center">
             <p className="text-muted-foreground">Loading clients...</p>
-          </div> : filteredClients.length === 0 ? <div className="p-8 text-center">
+          </div>
+        ) : filteredClients.length === 0 ? (
+          <div className="p-8 text-center">
             <p className="text-muted-foreground">
               {searchQuery.trim() ? "No clients match your search. Try a different search term." : "No clients found. Add your first client to get started."}
             </p>
-          </div> : <>
+          </div>
+        ) : (
+          <>
             <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -385,7 +391,8 @@ const ClientList = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedClients.map(client => <TableRow key={client.id}>
+                  {paginatedClients.map(client => (
+                    <TableRow key={client.id}>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{client.name}</span>
@@ -398,10 +405,12 @@ const ClientList = () => {
                             <Mail size={14} className="text-muted-foreground" />
                             <span className="text-sm">{client.email}</span>
                           </div>
-                          {client.phone && <div className="flex items-center gap-2 mt-1">
+                          {client.phone && (
+                            <div className="flex items-center gap-2 mt-1">
                               <Phone size={14} className="text-muted-foreground" />
                               <span className="text-sm">{client.phone}</span>
-                            </div>}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -418,13 +427,15 @@ const ClientList = () => {
                       <TableCell>
                         <ClientActions clientId={client.id} onEditClient={handleEditClient} onClientDeleted={fetchClients} />
                       </TableCell>
-                    </TableRow>)}
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </div>
 
             <div className="md:hidden divide-y divide-border">
-              {paginatedClients.map(client => <div key={client.id} className="p-4">
+              {paginatedClients.map(client => (
+                <div key={client.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-medium">{client.name}</h3>
@@ -432,19 +443,23 @@ const ClientList = () => {
                         <Mail size={12} />
                         {client.email}
                       </p>
-                      {client.phone && <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      {client.phone && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
                           <Phone size={12} />
                           {client.phone}
-                        </p>}
+                        </p>
+                      )}
                     </div>
                     <ClientActions clientId={client.id} onEditClient={handleEditClient} onClientDeleted={fetchClients} />
                   </div>
                   
-                  {client.street && <div className="text-sm mt-2">
+                  {client.street && (
+                    <div className="text-sm mt-2">
                       <div>{client.street} {client.number} {client.bus}</div>
                       {client.postcode && client.city && <div>{client.postcode} {client.city}</div>}
                       {client.country && <div className="text-muted-foreground">{client.country}</div>}
-                    </div>}
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-border">
                     <div>
@@ -458,10 +473,12 @@ const ClientList = () => {
                       </p>
                     </div>
                   </div>
-                </div>)}
+                </div>
+              ))}
             </div>
             
-            {totalPages > 1 && <div className="p-4 border-t border-border">
+            {totalPages > 1 && (
+              <div className="p-4 border-t border-border">
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
                   <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
                     <span className="text-muted-foreground whitespace-nowrap">Rows per page:</span>
@@ -497,18 +514,22 @@ const ClientList = () => {
                       </PaginationItem>
                       
                       {generatePaginationItems().map((page, index, array) => {
-                  const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
-                  return <React.Fragment key={page}>
-                            {showEllipsisBefore && <PaginationItem className="hidden sm:inline-block">
+                        const showEllipsisBefore = index > 0 && page > array[index - 1] + 1;
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsisBefore && (
+                              <PaginationItem className="hidden sm:inline-block">
                                 <PaginationEllipsis />
-                              </PaginationItem>}
+                              </PaginationItem>
+                            )}
                             <PaginationItem>
                               <button onClick={() => handlePageChange(page)} className={cn("flex items-center justify-center h-9 w-9 rounded-md text-sm", currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-secondary")}>
                                 {page}
                               </button>
                             </PaginationItem>
-                          </React.Fragment>;
-                })}
+                          </React.Fragment>
+                        );
+                      })}
                       
                       <PaginationItem>
                         <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-sm", currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary")}>
@@ -525,7 +546,21 @@ const ClientList = () => {
                     </PaginationContent>
                   </Pagination>
                 </div>
-              </div>}
+              </div>
+            )}
           </>
+        )}
+      </CustomCard>
+      
+      <AddClientModal 
+        isOpen={isModalOpen} 
+        onClose={handleCloseModal} 
+        onAddClient={handleAddClient}
+        onUpdateClient={handleUpdateClient}
+        clientToEdit={clientToEdit}
+      />
+    </div>
+  );
+};
 
-
+export default ClientList;
