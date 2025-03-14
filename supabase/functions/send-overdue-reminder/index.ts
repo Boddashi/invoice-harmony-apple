@@ -35,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
     const formattedAmount = `${currencySymbol}${amount.toFixed(2)}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Invoicing <onboarding@resend.dev>",
+      from: "PowerPeppol <info@powerpeppol.com>",
       to: [clientEmail],
       subject: `Overdue Invoice Reminder - Invoice #${invoiceNumber}`,
       html: `
@@ -46,7 +46,7 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Outstanding amount: ${formattedAmount}</p>
           <p>Please process this payment at your earliest convenience.</p>
           <p>If you have already made the payment, please disregard this reminder.</p>
-          <p>Best regards,<br>Your Company Name</p>
+          <p>Best regards,<br>PowerPeppol</p>
         </div>
       `,
     });
