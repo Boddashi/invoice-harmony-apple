@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PieChart as PieChartIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -84,10 +83,9 @@ interface InvoiceStatusChartProps {
 const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
   const isMobile = useIsMobile();
   
-  // Don't render the chart if there's no valid data
   if (!data || data.length === 0 || data.every(item => item.value === 0)) {
     return (
-      <CustomCard padding="md" variant="elevated">
+      <CustomCard padding="md">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <PieChartIcon size={18} className="text-primary" />
@@ -102,7 +100,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
   }
 
   return (
-    <CustomCard padding="md" variant="elevated">
+    <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PieChartIcon size={18} className="text-primary" />
@@ -110,9 +108,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
         </div>
       </div>
       
-      {/* Redesigned layout with flex instead of absolute positioning */}
       <div className="flex flex-col md:flex-row gap-6 md:items-center">
-        {/* Chart Container - fixed height for consistent display */}
         <div className="h-52 md:h-64 w-full md:w-1/2">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -141,7 +137,6 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
           </ResponsiveContainer>
         </div>
         
-        {/* Legend Container - takes remaining space */}
         <div className="w-full md:w-1/2">
           <EnhancedLegend 
             payload={data.map((entry, index) => ({
