@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +33,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const fetchSession = async () => {
       setIsLoading(true);
       try {
-        // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -54,7 +52,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     fetchSession();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
