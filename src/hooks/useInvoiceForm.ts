@@ -566,10 +566,20 @@ export const useInvoiceForm = () => {
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
+        console.log("Terms and conditions URL:", termsAndConditionsUrl);
       }
 
       try {
         const includeAttachments = true;
+        
+        console.log("Invoking send-invoice-email function with params:", {
+          clientName: selectedClient.name,
+          clientEmail: selectedClient.email,
+          invoiceNumber,
+          pdfUrl: publicUrlData.publicUrl,
+          termsAndConditionsUrl,
+          includeAttachments
+        });
         
         const response = await supabase.functions.invoke('send-invoice-email', {
           body: {
@@ -595,7 +605,7 @@ export const useInvoiceForm = () => {
 
         toast({
           title: "Email Sent",
-          description: `Invoice has been sent to ${selectedClient.email}${includeAttachments ? ' with attachments' : ' without attachments'}`
+          description: `Invoice has been sent to ${selectedClient.email} with attachments`
         });
       } catch (error: any) {
         console.error('Error calling edge function:', error);
@@ -939,4 +949,3 @@ export const useInvoiceForm = () => {
     fetchAvailableItems
   };
 };
-

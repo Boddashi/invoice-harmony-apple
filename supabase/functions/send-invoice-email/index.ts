@@ -37,7 +37,6 @@ const handler = async (req: Request): Promise<Response> => {
       pdfUrl, 
       termsAndConditionsUrl, 
       companyName,
-      // Set includeAttachments to true by default
       includeAttachments = true
     }: SendInvoiceEmailRequest = requestData;
 
@@ -48,25 +47,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending invoice email to ${clientEmail}`);
     console.log(`Include attachments: ${includeAttachments}`);
+    console.log(`PDF URL: ${pdfUrl || 'Not provided'}`);
+    console.log(`Terms URL: ${termsAndConditionsUrl || 'Not provided'}`);
     
     const attachments = [];
     
-    // Only fetch and attach PDFs if includeAttachments is true
-    if (includeAttachments && pdfUrl) {
-      console.log(`PDF URL: ${pdfUrl}`);
-      
+    // Helper function to fetch and process PDF files
+    async function fetchAndProcessPdf(url: string, filename: string): Promise<{ content: string, filename: string, type: string } | null> {
       try {
-        // Fetch the PDF content to attach to the email
-        console.log("Fetching PDF content...");
-        const pdfResponse = await fetch(pdfUrl);
-        if (!pdfResponse.ok) {
-          console.error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
-          throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+        console.log(`Fetching ${filename} from: ${url}`);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch ${filename}: ${response.status} ${response.statusText}`);
+          return null;
         }
         
-        // Get the PDF data as ArrayBuffer
-        const pdfBuffer = await pdfResponse.arrayBuffer();
-        const uint8Array = new Uint8Array(pdfBuffer);
+        const buffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+        
+        console.log(`Successfully fetched ${filename}, size: ${uint8Array.length} bytes`);
         
         // Convert to base64 in smaller chunks to avoid call stack issues
         let binary = '';
@@ -78,65 +78,53 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
         
-        const pdfBase64 = btoa(binary);
-        console.log("PDF content fetched and encoded successfully");
-
-        attachments.push({
-          content: pdfBase64,
-          filename: `invoice-${invoiceNumber}.pdf`,
+        const base64Content = btoa(binary);
+        console.log(`Successfully encoded ${filename} to base64`);
+        
+        return {
+          content: base64Content,
+          filename: filename,
           type: "application/pdf",
-        });
+        };
       } catch (error) {
-        console.error("Error processing invoice PDF:", error);
-        // Continue without PDF if there's an error
+        console.error(`Error processing ${filename}:`, error);
+        return null;
+      }
+    }
+    
+    // Only fetch and attach PDFs if includeAttachments is true
+    if (includeAttachments) {
+      // Process invoice PDF if URL is provided
+      if (pdfUrl) {
+        const invoicePdfAttachment = await fetchAndProcessPdf(pdfUrl, `invoice-${invoiceNumber}.pdf`);
+        if (invoicePdfAttachment) {
+          attachments.push(invoicePdfAttachment);
+          console.log("Invoice PDF added to attachments");
+        } else {
+          console.log("Failed to add invoice PDF to attachments");
+        }
+      } else {
+        console.log("No PDF URL provided for invoice");
       }
 
-      // Add Terms and Conditions if available
+      // Process terms and conditions PDF if URL is provided
       if (termsAndConditionsUrl) {
-        try {
-          console.log("Fetching terms and conditions...");
-          const termsResponse = await fetch(termsAndConditionsUrl);
-          if (termsResponse.ok) {
-            const termsBuffer = await termsResponse.arrayBuffer();
-            const uint8Array = new Uint8Array(termsBuffer);
-            
-            // Convert to base64 in smaller chunks
-            let binary = '';
-            const chunkSize = 1024;
-            for (let i = 0; i < uint8Array.length; i += chunkSize) {
-              const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
-              for (let j = 0; j < chunk.length; j++) {
-                binary += String.fromCharCode(chunk[j]);
-              }
-            }
-            
-            const termsBase64 = btoa(binary);
-            console.log("Terms and conditions fetched and encoded successfully");
-            
-            attachments.push({
-              content: termsBase64,
-              filename: "terms-and-conditions.pdf",
-              type: "application/pdf",
-            });
-          } else {
-            console.error(`Failed to fetch terms: ${termsResponse.status} ${termsResponse.statusText}`);
-          }
-        } catch (error) {
-          console.error("Error attaching terms and conditions:", error);
-          // Continue without terms if there's an error
+        console.log("Processing terms and conditions PDF");
+        const termsPdfAttachment = await fetchAndProcessPdf(termsAndConditionsUrl, "terms-and-conditions.pdf");
+        if (termsPdfAttachment) {
+          attachments.push(termsPdfAttachment);
+          console.log("Terms and conditions PDF added to attachments");
+        } else {
+          console.log("Failed to add terms and conditions PDF to attachments, but continuing with email");
         }
+      } else {
+        console.log("No terms and conditions URL provided");
       }
     }
 
-    console.log("Sending email via Resend...");
-    console.log("Email configuration:", {
-      from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
-      to: [clientEmail],
-      subject: `Invoice #${invoiceNumber}`,
-      attachmentsCount: attachments.length
-    });
+    console.log(`Preparing to send email with ${attachments.length} attachments`);
     
-    const emailResponse = await resend.emails.send({
+    const emailConfig = {
       from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
       to: [clientEmail],
       subject: `Invoice #${invoiceNumber}`,
@@ -152,8 +140,16 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
         </div>
       `,
+    };
+    
+    console.log("Sending email via Resend with config:", {
+      from: emailConfig.from,
+      to: emailConfig.to,
+      subject: emailConfig.subject,
+      attachmentsCount: emailConfig.attachments.length
     });
-
+    
+    const emailResponse = await resend.emails.send(emailConfig);
     console.log("Email sent successfully:", emailResponse);
 
     return new Response(JSON.stringify(emailResponse), {
@@ -165,8 +161,13 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error sending invoice email:", error);
+    
+    // Return a more detailed error response
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
