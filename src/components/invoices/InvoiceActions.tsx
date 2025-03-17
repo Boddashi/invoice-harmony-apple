@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -34,6 +33,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [isSending, setIsSending] = React.useState(false);
   const [isMarkingAsPaid, setIsMarkingAsPaid] = React.useState(false);
+  const [isSendingReminder, setIsSendingReminder] = React.useState(false);
 
   const handleEdit = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -220,6 +220,64 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     }
   };
 
+  const handleSendReminder = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (isSendingReminder) return;
+    
+    setIsSendingReminder(true);
+    try {
+      const { data: invoice, error: invoiceError } = await supabase
+        .from('invoices')
+        .select(`
+          *,
+          client:clients(*)
+        `)
+        .eq('id', invoiceId)
+        .single();
+      
+      if (invoiceError) throw invoiceError;
+      
+      const { data: settings } = await supabase
+        .from('company_settings')
+        .select('default_currency')
+        .single();
+      
+      const currencySymbol = settings?.default_currency === 'USD' ? '$' : 
+                             settings?.default_currency === 'EUR' ? '€' : 
+                             settings?.default_currency === 'GBP' ? '£' : '$';
+      
+      const { data, error } = await supabase.functions.invoke('send-overdue-reminder', {
+        body: {
+          clientName: invoice.client.name,
+          clientEmail: invoice.client.email,
+          invoiceNumber: invoice.invoice_number,
+          dueDate: invoice.due_date,
+          amount: invoice.total_amount,
+          currencySymbol: currencySymbol
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Failed to send reminder');
+      }
+
+      toast({
+        title: "Success",
+        description: "Reminder email sent successfully"
+      });
+      
+    } catch (error: any) {
+      console.error('Error sending reminder:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send reminder"
+      });
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (isDeleting) return;
 
@@ -275,56 +333,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
   const handleCloseDeleteDialog = () => {
     if (!isDeleting) {
       setShowDeleteDialog(false);
-    }
-  };
-
-  const handleSendReminder = async (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    
-    try {
-      const { data: invoice, error: invoiceError } = await supabase
-        .from('invoices')
-        .select(`
-          *,
-          client:clients(*)
-        `)
-        .eq('id', invoiceId)
-        .single();
-      
-      if (invoiceError) throw invoiceError;
-      
-      const response = await fetch('/functions/v1/send-overdue-reminder', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({
-          clientName: invoice.client.name,
-          clientEmail: invoice.client.email,
-          invoiceNumber: invoice.invoice_number,
-          dueDate: invoice.due_date,
-          amount: invoice.total_amount,
-          currencySymbol: '$'
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send reminder');
-      }
-
-      toast({
-        title: "Success",
-        description: "Reminder email sent successfully"
-      });
-      
-    } catch (error: any) {
-      console.error('Error sending reminder:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to send reminder"
-      });
     }
   };
 
@@ -404,9 +412,10 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                 <DropdownMenuItem 
                   onClick={handleSendReminder}
                   className="flex items-center text-orange-700 hover:bg-orange-50/80 hover:!text-orange-700 rounded-md my-1 cursor-pointer"
+                  disabled={isSendingReminder}
                 >
                   <Bell className="mr-2 h-4 w-4" />
-                  Send Reminder
+                  {isSendingReminder ? 'Sending...' : 'Send Reminder'}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={handleDownload}
@@ -456,3 +465,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 };
 
 export default InvoiceActions;
+
+
+
