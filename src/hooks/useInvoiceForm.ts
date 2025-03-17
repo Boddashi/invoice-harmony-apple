@@ -569,7 +569,7 @@ export const useInvoiceForm = () => {
       }
 
       try {
-        const includeAttachments = isEditMode;
+        const includeAttachments = true;
         
         const response = await supabase.functions.invoke('send-invoice-email', {
           body: {

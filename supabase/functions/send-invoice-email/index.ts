@@ -37,6 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
       pdfUrl, 
       termsAndConditionsUrl, 
       companyName,
+      // Set includeAttachments to true by default
       includeAttachments = true
     }: SendInvoiceEmailRequest = requestData;
 
