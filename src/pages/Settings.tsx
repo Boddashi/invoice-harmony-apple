@@ -68,7 +68,8 @@ const Settings = () => {
             postal_code: data.postal_code || '',
             invoice_prefix: data.invoice_prefix || '',
             invoice_number_type: (data.invoice_number_type as 'date' | 'incremental') || 'date',
-            logo_url: data.logo_url || ''
+            logo_url: data.logo_url || '',
+            yuki_email: data.yuki_email || ''
           });
           
           if (data.default_currency) {
@@ -711,6 +712,27 @@ const Settings = () => {
                       </div>
                       
                       <div>
+                        <h3 className="text-base font-medium mb-4">Yuki</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                          <div className="md:col-span-2">
+                            <Label htmlFor="yuki_email">Yuki Email Address</Label>
+                            <Input
+                              id="yuki_email"
+                              name="yuki_email"
+                              type="email"
+                              placeholder="Enter Yuki email address"
+                              value={companySettings.yuki_email || ''}
+                              onChange={handleInputChange}
+                              className="mt-1"
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Email address used for Yuki integration
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div>
                         <h3 className="text-base font-medium mb-4">Payment Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           <div className="md:col-span-2">
@@ -786,4 +808,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
