@@ -18,6 +18,7 @@ const NewInvoice = () => {
     isLoading,
     isSubmitting,
     isGeneratingPDF,
+    isSendingEmail,
     isAddClientModalOpen,
     invoiceNumber,
     selectedClientId,
@@ -48,6 +49,7 @@ const NewInvoice = () => {
     handleAddItem,
     handleRemoveItem,
     handleDownloadPDF,
+    handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
     handleSubmit,
@@ -78,10 +80,12 @@ const NewInvoice = () => {
           pdfUrl={pdfUrl}
           isSubmitting={isSubmitting}
           isGeneratingPDF={isGeneratingPDF}
+          isSendingEmail={isSendingEmail}
           status={status}
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
+          handleSendEmail={pdfUrl ? handleSendEmail : undefined}
         />
         
         <form id="invoice-form" onSubmit={handleSubmit} className="space-y-6">

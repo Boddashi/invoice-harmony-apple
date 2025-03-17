@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +10,7 @@ import { generateInvoicePDF, InvoiceData } from '@/utils/pdfGenerator';
 interface Client {
   id: string;
   name: string;
+  email?: string;
 }
 
 interface InvoiceItem {
@@ -50,10 +52,11 @@ export const useInvoiceForm = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
-  const [selectedClient, setSelectedClient] = useState<{ name: string } | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [issueDate, setIssueDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [status, setStatus] = useState<'draft' | 'pending'>('draft');
@@ -73,6 +76,7 @@ export const useInvoiceForm = () => {
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
   const [vats, setVats] = useState<Vat[]>([]);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [companySettings, setCompanySettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -81,7 +85,7 @@ export const useInvoiceForm = () => {
         setIsLoading(true);
         const { data, error } = await supabase
           .from('clients')
-          .select('id, name')
+          .select('id, name, email')
           .eq('user_id', user.id);
           
         if (error) {
@@ -101,6 +105,27 @@ export const useInvoiceForm = () => {
     };
     fetchClients();
   }, [user, toast]);
+
+  // Fetch company settings
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('company_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (error) throw error;
+        setCompanySettings(data);
+      } catch (error) {
+        console.error('Error fetching company settings:', error);
+      }
+    };
+    
+    fetchCompanySettings();
+  }, [user]);
 
   const fetchAvailableItems = useCallback(async () => {
     try {
@@ -371,7 +396,8 @@ export const useInvoiceForm = () => {
       
       setClients([...clients, {
         id: data.id,
-        name: data.name
+        name: data.name,
+        email: data.email
       }]);
       setSelectedClientId(data.id);
     } catch (error: any) {
@@ -502,6 +528,68 @@ export const useInvoiceForm = () => {
     }
   };
 
+  const handleSendEmail = async () => {
+    if (!selectedClient || !pdfUrl) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Client information or PDF is missing"
+      });
+      return;
+    }
+
+    if (!selectedClient.email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Client email is not available"
+      });
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const { data: publicUrlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(`${id || 'temp'}/invoice.pdf`);
+
+      // Get terms and conditions URL if available
+      let termsAndConditionsUrl = null;
+      if (companySettings?.terms_and_conditions_url) {
+        termsAndConditionsUrl = companySettings.terms_and_conditions_url;
+      }
+
+      const response = await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          clientName: selectedClient.name,
+          clientEmail: selectedClient.email,
+          invoiceNumber: invoiceNumber,
+          pdfUrl: publicUrlData.publicUrl,
+          termsAndConditionsUrl: termsAndConditionsUrl,
+          companyName: companySettings?.company_name || 'PowerPeppol'
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to send email");
+      }
+
+      toast({
+        title: "Email Sent",
+        description: `Invoice has been sent to ${selectedClient.email}`
+      });
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast({
+        variant: "destructive",
+        title: "Error Sending Email",
+        description: error.message || "Failed to send invoice by email"
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     if (!pdfUrl) return;
     
@@ -614,10 +702,20 @@ export const useInvoiceForm = () => {
           const pdfBase64 = await generatePDF(id);
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
-            const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
-            if (shouldDownload) {
-              handleDownloadPDF();
+            
+            // If client has an email and it's a pending status, automatically send email
+            if (selectedClient?.email) {
+              setTimeout(() => {
+                handleSendEmail();
+              }, 500);
+            } else {
+              // If no email, just show PDF
+              const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
+              if (shouldDownload) {
+                handleDownloadPDF();
+              }
             }
+            
             navigate('/invoices');
             return;
           }
@@ -665,10 +763,20 @@ export const useInvoiceForm = () => {
           const pdfBase64 = await generatePDF(invoiceId);
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
-            const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
-            if (shouldDownload) {
-              handleDownloadPDF();
+            
+            // If client has an email and it's a pending status, automatically send email
+            if (selectedClient?.email) {
+              setTimeout(() => {
+                handleSendEmail();
+              }, 500);
+            } else {
+              // If no email, just show PDF
+              const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
+              if (shouldDownload) {
+                handleDownloadPDF();
+              }
             }
+            
             navigate('/invoices');
             return;
           }
@@ -724,6 +832,7 @@ export const useInvoiceForm = () => {
     isLoading,
     isSubmitting,
     isGeneratingPDF,
+    isSendingEmail,
     isAddClientModalOpen,
     invoiceNumber,
     selectedClientId,
@@ -758,6 +867,7 @@ export const useInvoiceForm = () => {
     handleAddItem,
     handleRemoveItem,
     handleDownloadPDF,
+    handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
     handleSubmit,

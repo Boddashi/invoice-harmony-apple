@@ -1,17 +1,20 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileDown } from 'lucide-react';
+import { ArrowLeft, FileDown, Mail } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface InvoiceHeaderProps {
   isEditMode: boolean;
   pdfUrl: string | null;
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
+  isSendingEmail: boolean;
   status: 'draft' | 'pending';
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
+  handleSendEmail?: () => void;
 }
 
 const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
@@ -19,10 +22,12 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   pdfUrl,
   isSubmitting,
   isGeneratingPDF,
+  isSendingEmail,
   status,
   handleDownloadPDF,
   handleSaveAsDraft,
-  handleCreateAndSend
+  handleCreateAndSend,
+  handleSendEmail
 }) => {
   const navigate = useNavigate();
 
@@ -42,14 +47,44 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
       
       <div className="flex gap-3">
         {pdfUrl && (
-          <button 
-            type="button" 
-            onClick={handleDownloadPDF} 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
-          >
-            <FileDown size={18} />
-            <span>Download PDF</span>
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  type="button" 
+                  onClick={handleDownloadPDF} 
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
+                >
+                  <FileDown size={18} />
+                  <span className="hidden sm:inline">Download PDF</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Download Invoice PDF</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        
+        {pdfUrl && handleSendEmail && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  type="button" 
+                  onClick={handleSendEmail} 
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                  disabled={isSendingEmail}
+                >
+                  <Mail size={18} />
+                  <span className="hidden sm:inline">{isSendingEmail ? 'Sending...' : 'Send Email'}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Send Invoice to Client via Email</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         
         <button 
@@ -65,7 +100,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           type="button" 
           onClick={handleCreateAndSend} 
           className="apple-button flex items-center gap-2" 
-          disabled={isSubmitting || isGeneratingPDF}
+          disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
           {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
         </button>
