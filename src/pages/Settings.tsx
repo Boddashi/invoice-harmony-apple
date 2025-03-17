@@ -469,14 +469,14 @@ const Settings = () => {
             onValueChange={setActiveTab} 
             className="w-full"
           >
-            <TabsList className="w-full grid grid-cols-2 mb-2">
+            <TabsList className="grid grid-cols-2 gap-1 w-full">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <TabsTrigger 
                     key={tab.id} 
                     value={tab.id}
-                    className="flex items-center gap-2 py-2"
+                    className="flex items-center justify-center gap-2 py-2"
                   >
                     <Icon size={16} />
                     <span className="truncate">{tab.label}</span>
