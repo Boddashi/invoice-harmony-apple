@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
-import { User, Building, CreditCard, Shield, Bell, Check, Loader2, Upload, X } from 'lucide-react';
+import { User, Building, CreditCard, Shield, Bell, Check, Loader2, Upload, X, FileText, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from '../contexts/CurrencyContext';
@@ -26,13 +26,16 @@ const Settings = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingTerms, setUploadingTerms] = useState(false);
   const [companySettings, setCompanySettings] = useState<CompanySettings>(defaultCompanySettings);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const termsFileInputRef = useRef<HTMLInputElement>(null);
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'company', label: 'Company', icon: Building },
     { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'terms', label: 'Terms & Conditions', icon: FileText },
   ];
 
   const currencies = [
@@ -69,7 +72,8 @@ const Settings = () => {
             invoice_prefix: data.invoice_prefix || '',
             invoice_number_type: (data.invoice_number_type as 'date' | 'incremental') || 'date',
             logo_url: data.logo_url || '',
-            yuki_email: data.yuki_email || ''
+            yuki_email: data.yuki_email || '',
+            terms_and_conditions_url: data.terms_and_conditions_url || ''
           });
           
           if (data.default_currency) {
@@ -135,6 +139,7 @@ const Settings = () => {
     }
     
     const file = files[0];
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
     
@@ -226,6 +231,137 @@ const Settings = () => {
       });
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleUploadTermsClick = () => {
+    if (termsFileInputRef.current) {
+      termsFileInputRef.current.click();
+    }
+  };
+  
+  const handleTermsUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !user) {
+      return;
+    }
+    
+    const file = files[0];
+    
+    if (file.type !== 'application/pdf') {
+      toast({
+        variant: "destructive",
+        title: "Invalid file type",
+        description: "Please upload a PDF document for Terms & Conditions"
+      });
+      return;
+    }
+    
+    const fileExt = file.name.split('.').pop();
+    const fileName = `terms_${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    
+    try {
+      setUploadingTerms(true);
+      
+      const { data: buckets } = await supabase
+        .storage
+        .listBuckets();
+      
+      const bucketExists = buckets?.some(bucket => bucket.name === 'company-documents');
+      
+      if (!bucketExists) {
+        await supabase
+          .storage
+          .createBucket('company-documents', {
+            public: false
+          });
+      }
+      
+      const { error: uploadError, data } = await supabase
+        .storage
+        .from('company-documents')
+        .upload(fileName, file);
+      
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      if (!data) {
+        throw new Error('Failed to upload terms & conditions');
+      }
+      
+      const { data: publicURL } = supabase
+        .storage
+        .from('company-documents')
+        .getPublicUrl(fileName);
+      
+      if (!publicURL) {
+        throw new Error('Failed to get public URL for uploaded terms & conditions');
+      }
+      
+      setCompanySettings(prev => ({
+        ...prev,
+        terms_and_conditions_url: publicURL.publicUrl
+      }));
+      
+      toast({
+        title: "Terms & Conditions uploaded",
+        description: "Your terms & conditions document has been uploaded successfully."
+      });
+      
+    } catch (error) {
+      console.error('Error uploading terms & conditions:', error);
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: "Failed to upload terms & conditions document. Please try again."
+      });
+    } finally {
+      setUploadingTerms(false);
+      if (termsFileInputRef.current) {
+        termsFileInputRef.current.value = '';
+      }
+    }
+  };
+  
+  const handleRemoveTerms = async () => {
+    if (!companySettings.terms_and_conditions_url) return;
+    
+    try {
+      setUploadingTerms(true);
+      
+      const fileName = companySettings.terms_and_conditions_url.split('/').pop();
+      
+      if (fileName) {
+        const { error: deleteError } = await supabase
+          .storage
+          .from('company-documents')
+          .remove([fileName]);
+        
+        if (deleteError) {
+          throw deleteError;
+        }
+      }
+      
+      setCompanySettings(prev => ({
+        ...prev,
+        terms_and_conditions_url: ''
+      }));
+      
+      toast({
+        title: "Terms & Conditions removed",
+        description: "Your terms & conditions document has been removed successfully."
+      });
+      
+    } catch (error) {
+      console.error('Error removing terms & conditions:', error);
+      toast({
+        variant: "destructive",
+        title: "Removal failed",
+        description: "Failed to remove terms & conditions document. Please try again."
+      });
+    } finally {
+      setUploadingTerms(false);
     }
   };
 
@@ -794,6 +930,119 @@ const Settings = () => {
                             Saving...
                           </>
                         ) : 'Save Billing Settings'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </CustomCard>
+            )}
+            
+            {activeTab === 'terms' && (
+              <CustomCard>
+                <h2 className="text-xl font-semibold mb-6">Terms & Conditions</h2>
+                <p className="text-muted-foreground mb-6">Upload a PDF document with your company's terms and conditions.</p>
+                
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveCompany}>
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-base font-medium mb-4">Terms & Conditions Document</h3>
+                        <div className="flex flex-col space-y-4">
+                          <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center text-muted-foreground overflow-hidden border border-border">
+                              <FileText size={24} />
+                            </div>
+                            
+                            <div className="flex-1">
+                              {companySettings.terms_and_conditions_url ? (
+                                <div>
+                                  <div className="text-sm font-medium">Terms & Conditions document uploaded</div>
+                                  <div className="text-xs text-muted-foreground">PDF document</div>
+                                </div>
+                              ) : (
+                                <div>
+                                  <div className="text-sm text-muted-foreground">No document uploaded</div>
+                                  <div className="text-xs text-muted-foreground">Upload a PDF document with your terms and conditions</div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="flex gap-3">
+                              <input
+                                type="file"
+                                ref={termsFileInputRef}
+                                accept="application/pdf"
+                                onChange={handleTermsUpload}
+                                className="hidden"
+                              />
+                              <button 
+                                type="button" 
+                                className="secondary-button flex items-center gap-2"
+                                onClick={handleUploadTermsClick}
+                                disabled={uploadingTerms}
+                              >
+                                {uploadingTerms ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload size={16} />
+                                    Upload PDF
+                                  </>
+                                )}
+                              </button>
+                              
+                              {companySettings.terms_and_conditions_url && (
+                                <>
+                                  <a 
+                                    href={companySettings.terms_and_conditions_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer" 
+                                    className="secondary-button flex items-center gap-2"
+                                  >
+                                    <Download size={16} />
+                                    View
+                                  </a>
+                                  <button 
+                                    type="button" 
+                                    className="ghost-button text-apple-red flex items-center gap-2"
+                                    onClick={handleRemoveTerms}
+                                    disabled={uploadingTerms}
+                                  >
+                                    <X size={16} />
+                                    Remove
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Please upload a PDF document with your company's terms and conditions.
+                            This document will be used in your invoices and other legal documents.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                      <button 
+                        type="submit" 
+                        className="apple-button"
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : 'Save Terms & Conditions'}
                       </button>
                     </div>
                   </form>

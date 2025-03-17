@@ -85,6 +85,7 @@ export type Database = {
           postal_code: string | null
           street: string | null
           swift: string | null
+          terms_and_conditions_url: string | null
           updated_at: string | null
           user_id: string
           vat_number: string | null
@@ -111,6 +112,7 @@ export type Database = {
           postal_code?: string | null
           street?: string | null
           swift?: string | null
+          terms_and_conditions_url?: string | null
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           postal_code?: string | null
           street?: string | null
           swift?: string | null
+          terms_and_conditions_url?: string | null
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null

@@ -30,6 +30,9 @@ export interface CompanySettings {
   
   // Company logo
   logo_url: string;
+  
+  // Terms & Conditions
+  terms_and_conditions_url?: string;
 }
 
 export const defaultCompanySettings: CompanySettings = {
@@ -56,5 +59,6 @@ export const defaultCompanySettings: CompanySettings = {
   
   yuki_email: '',
   
-  logo_url: ''
+  logo_url: '',
+  terms_and_conditions_url: ''
 };
