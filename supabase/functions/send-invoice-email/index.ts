@@ -52,9 +52,15 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
     
+    // Convert PDF to base64 safely
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-    console.log("PDF content fetched successfully");
+    const pdfBase64 = btoa(
+      String.fromCharCode.apply(
+        null, 
+        Array.from(new Uint8Array(pdfBuffer))
+      )
+    );
+    console.log("PDF content fetched and encoded successfully");
 
     const attachments = [
       {
@@ -71,8 +77,13 @@ const handler = async (req: Request): Promise<Response> => {
         const termsResponse = await fetch(termsAndConditionsUrl);
         if (termsResponse.ok) {
           const termsBuffer = await termsResponse.arrayBuffer();
-          const termsBase64 = btoa(new Uint8Array(termsBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
-          console.log("Terms and conditions fetched successfully");
+          const termsBase64 = btoa(
+            String.fromCharCode.apply(
+              null, 
+              Array.from(new Uint8Array(termsBuffer))
+            )
+          );
+          console.log("Terms and conditions fetched and encoded successfully");
           
           attachments.push({
             content: termsBase64,
@@ -89,6 +100,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Sending email via Resend...");
+    console.log("Email configuration:", {
+      from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
+      to: [clientEmail],
+      subject: `Invoice #${invoiceNumber}`,
+      attachmentsCount: attachments.length
+    });
+    
     const emailResponse = await resend.emails.send({
       from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
       to: [clientEmail],
