@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -13,7 +12,6 @@ interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{success: boolean, message: string}>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,7 +22,6 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => ({ success: false, message: '' }),
   signOut: async () => {},
   signInWithGoogle: async () => {},
-  signInWithFacebook: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -153,27 +150,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signInWithFacebook = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'facebook',
-        options: {
-          redirectTo: `${window.location.origin}/login`,
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Facebook sign in failed",
-        description: error.message || "An error occurred during Facebook sign in",
-      });
-    }
-  };
-
   const signOut = async () => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -206,8 +182,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         signIn, 
         signUp, 
         signOut,
-        signInWithGoogle,
-        signInWithFacebook
+        signInWithGoogle
       }}
     >
       {children}

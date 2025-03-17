@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Loader2 } from 'lucide-react';
-import { Facebook, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 const authSchema = z.object({
@@ -29,7 +28,7 @@ type AuthFormValues = z.infer<typeof authSchema>;
 const Login = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { signIn, signUp, signInWithGoogle, signInWithFacebook, user } = useAuth();
+  const { signIn, signUp, signInWithGoogle, user } = useAuth();
   const navigate = useNavigate();
   
   const form = useForm<AuthFormValues>({
@@ -66,10 +65,6 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     await signInWithGoogle();
-  };
-
-  const handleFacebookSignIn = async () => {
-    await signInWithFacebook();
   };
 
   return (
@@ -110,16 +105,6 @@ const Login = () => {
               </g>
             </svg>
             Continue with Google
-          </Button>
-          
-          <Button
-            variant="outline"
-            type="button"
-            className="w-full"
-            onClick={handleFacebookSignIn}
-          >
-            <Facebook className="h-5 w-5 mr-2 text-blue-600" />
-            Continue with Facebook
           </Button>
           
           <div className="relative my-4">
