@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrency } from '@/contexts/CurrencyContext';
@@ -102,23 +102,24 @@ export const useInvoiceForm = () => {
     fetchClients();
   }, [user, toast]);
 
-  useEffect(() => {
-    const fetchAvailableItems = async () => {
-      try {
-        const { data, error } = await supabase.from('items').select('*');
-        if (error) throw error;
-        setAvailableItems(data || []);
-      } catch (error: any) {
-        console.error('Error fetching items:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message || "Failed to fetch items."
-        });
-      }
-    };
-    fetchAvailableItems();
+  const fetchAvailableItems = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('items').select('*');
+      if (error) throw error;
+      setAvailableItems(data || []);
+    } catch (error: any) {
+      console.error('Error fetching items:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to fetch items."
+      });
+    }
   }, [toast]);
+
+  useEffect(() => {
+    fetchAvailableItems();
+  }, [fetchAvailableItems]);
 
   useEffect(() => {
     const fetchInvoiceData = async () => {
