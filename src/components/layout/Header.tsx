@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -45,7 +46,14 @@ const Header = () => {
   return (
     <header className="w-full h-16 border-b border-border/40 sticky top-0 z-30 flex items-center px-6 bg-gradient-header backdrop-blur-apple">
       <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
-        <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">{getTitle()}</h1>
+        <div className="flex items-center gap-2">
+          <img 
+            src="/favicon.ico" 
+            alt="Power Peppol Logo" 
+            className="w-6 h-6"
+          />
+          <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">{getTitle()}</h1>
+        </div>
         
         <div className="flex items-center space-x-3">
           <ThemeToggle />
