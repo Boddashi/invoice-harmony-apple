@@ -88,6 +88,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           vat_number: string | null
+          yuki_email: string | null
         }
         Insert: {
           account_number?: string | null
@@ -113,6 +114,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           vat_number?: string | null
+          yuki_email?: string | null
         }
         Update: {
           account_number?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           vat_number?: string | null
+          yuki_email?: string | null
         }
         Relationships: []
       }
