@@ -440,14 +440,14 @@ const Settings = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto px-4">
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="col-span-1">
             <div className="block md:hidden mb-6">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="w-full">
+                <TabsList className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap">
                   {tabs.map((tab) => (
                     <TabsTrigger key={tab.id} value={tab.id} className="text-center">
                       {tab.label}
@@ -1087,8 +1087,8 @@ const Settings = () => {
                           Terms & Conditions Document
                         </h3>
                         <div className="flex flex-col space-y-4">
-                          <div className="flex items-center gap-5">
-                            <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center text-muted-foreground overflow-hidden border border-border">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                            <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center text-muted-foreground overflow-hidden border border-border shrink-0">
                               <FileText size={24} />
                             </div>
 
@@ -1115,7 +1115,7 @@ const Settings = () => {
                               )}
                             </div>
 
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap gap-3 mt-2 sm:mt-0">
                               <input
                                 type="file"
                                 ref={termsFileInputRef}
@@ -1183,7 +1183,7 @@ const Settings = () => {
                     <div className="mt-8 pt-6 border-t border-border flex justify-end">
                       <button
                         type="submit"
-                        className="apple-button"
+                        className="apple-button w-full sm:w-auto"
                         disabled={saving}
                       >
                         {saving ? (
@@ -1208,4 +1208,3 @@ const Settings = () => {
 };
 
 export default Settings;
-
