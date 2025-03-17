@@ -73,7 +73,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 <button 
                   type="button" 
                   onClick={handleSendEmail} 
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSendingEmail}
                 >
                   <Mail size={18} />
