@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -529,11 +528,11 @@ export const useInvoiceForm = () => {
   };
 
   const handleSendEmail = async () => {
-    if (!selectedClient || !pdfUrl) {
+    if (!selectedClient) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Client information or PDF is missing"
+        description: "Client information is missing"
       });
       return;
     }
@@ -549,9 +548,14 @@ export const useInvoiceForm = () => {
 
     setIsSendingEmail(true);
     try {
+      // Get the PDF URL from storage
       const { data: publicUrlData } = supabase.storage
         .from('invoices')
         .getPublicUrl(`${id || 'temp'}/invoice.pdf`);
+
+      if (!publicUrlData || !publicUrlData.publicUrl) {
+        throw new Error("PDF URL is not available");
+      }
 
       // Get terms and conditions URL if available
       let termsAndConditionsUrl = null;
@@ -703,11 +707,16 @@ export const useInvoiceForm = () => {
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
             
-            // If client has an email and it's a pending status, automatically send email
+            // If client has an email and it's a pending status, wait for PDF to be uploaded before sending email
             if (selectedClient?.email) {
-              setTimeout(() => {
-                handleSendEmail();
-              }, 500);
+              // Wait a moment for the PDF to be properly stored
+              setTimeout(async () => {
+                try {
+                  await handleSendEmail();
+                } catch (emailError) {
+                  console.error("Error in delayed email sending:", emailError);
+                }
+              }, 2000);
             } else {
               // If no email, just show PDF
               const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
@@ -764,11 +773,16 @@ export const useInvoiceForm = () => {
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
             
-            // If client has an email and it's a pending status, automatically send email
+            // If client has an email and it's a pending status, wait for PDF to be uploaded before sending email
             if (selectedClient?.email) {
-              setTimeout(() => {
-                handleSendEmail();
-              }, 500);
+              // Wait a moment for the PDF to be properly stored
+              setTimeout(async () => {
+                try {
+                  await handleSendEmail();
+                } catch (emailError) {
+                  console.error("Error in delayed email sending:", emailError);
+                }
+              }, 2000);
             } else {
               // If no email, just show PDF
               const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
