@@ -572,6 +572,8 @@ export const useInvoiceForm = () => {
       try {
         const includeAttachments = true;
         
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
         console.log("Invoking send-invoice-email function with params:", {
           clientName: selectedClient.name,
           clientEmail: selectedClient.email,
@@ -746,14 +748,14 @@ export const useInvoiceForm = () => {
                     upsert: true,
                     cacheControl: '3600'
                   });
-                  
+                
                 if (uploadError) {
                   console.error("Error uploading PDF:", uploadError);
                   throw new Error("Failed to upload PDF");
                 }
                 
                 if (selectedClient?.email) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise(resolve => setTimeout(resolve, 1500));
                   await handleSendEmail(id);
                 } else {
                   const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
@@ -833,7 +835,7 @@ export const useInvoiceForm = () => {
                 }
                 
                 if (selectedClient?.email) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise(resolve => setTimeout(resolve, 1500));
                   await handleSendEmail(invoiceId);
                 } else {
                   const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');

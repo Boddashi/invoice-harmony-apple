@@ -206,7 +206,9 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
     const pdfBase64 = pdf.output('datauristring');
     
-    await saveInvoicePDF(invoiceData.id, pdfBase64);
+    console.log("PDF generated successfully, saving to storage...");
+    const pdfUrl = await saveInvoicePDF(invoiceData.id, pdfBase64);
+    console.log("PDF saved to storage with URL:", pdfUrl);
     
     return pdfBase64;
   } catch (error) {
@@ -217,33 +219,61 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
 export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Promise<string> => {
   try {
-    const byteString = atob(pdfBase64.split(',')[1]);
-    const mimeString = pdfBase64.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
+    console.log(`Saving PDF for invoice ${invoiceId}...`);
     
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
+    // Extract the base64 data part
+    const base64Data = pdfBase64.split(',')[1];
+    if (!base64Data) {
+      throw new Error("Invalid base64 data format");
     }
     
-    const blob = new Blob([ab], { type: mimeString });
+    // Convert base64 to blob
+    const byteCharacters = atob(base64Data);
+    const byteArrays = [];
+    
+    // Process in chunks to avoid memory issues
+    const sliceSize = 512;
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+      const slice = byteCharacters.slice(offset, offset + sliceSize);
+      
+      const byteNumbers = new Array(slice.length);
+      for (let i = 0; i < slice.length; i++) {
+        byteNumbers[i] = slice.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      byteArrays.push(byteArray);
+    }
+    
+    const blob = new Blob(byteArrays, { type: 'application/pdf' });
     const file = new File([blob], `invoice-${invoiceId}.pdf`, { type: 'application/pdf' });
+    
+    console.log(`Created PDF file, size: ${file.size} bytes`);
 
     const { data, error } = await supabase.storage
       .from('invoices')
       .upload(`${invoiceId}/invoice.pdf`, file, {
         contentType: 'application/pdf',
-        upsert: true
+        upsert: true,
+        cacheControl: '3600'
       });
 
     if (error) {
+      console.error('Error uploading PDF to storage:', error);
       throw error;
     }
+
+    console.log("PDF uploaded successfully:", data);
 
     const { data: urlData } = supabase.storage
       .from('invoices')
       .getPublicUrl(`${invoiceId}/invoice.pdf`);
 
+    if (!urlData || !urlData.publicUrl) {
+      throw new Error("Failed to get public URL for the uploaded PDF");
+    }
+    
+    console.log("PDF public URL:", urlData.publicUrl);
     return urlData.publicUrl;
   } catch (error) {
     console.error('Error saving PDF:', error);

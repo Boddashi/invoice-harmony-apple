@@ -52,42 +52,21 @@ const handler = async (req: Request): Promise<Response> => {
     
     const attachments = [];
     
-    // Helper function to fetch and process PDF files
-    async function fetchAndProcessPdf(url: string, filename: string): Promise<{ content: string, filename: string, type: string } | null> {
+    // Helper function to fetch and encode PDF to base64
+    async function fetchPdf(url: string): Promise<Uint8Array | null> {
       try {
-        console.log(`Fetching ${filename} from: ${url}`);
+        console.log(`Fetching PDF from: ${url}`);
         const response = await fetch(url);
         
         if (!response.ok) {
-          console.error(`Failed to fetch ${filename}: ${response.status} ${response.statusText}`);
+          console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
           return null;
         }
         
-        const buffer = await response.arrayBuffer();
-        const uint8Array = new Uint8Array(buffer);
-        
-        console.log(`Successfully fetched ${filename}, size: ${uint8Array.length} bytes`);
-        
-        // Convert to base64 in smaller chunks to avoid call stack issues
-        let binary = '';
-        const chunkSize = 1024;
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-          const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
-          for (let j = 0; j < chunk.length; j++) {
-            binary += String.fromCharCode(chunk[j]);
-          }
-        }
-        
-        const base64Content = btoa(binary);
-        console.log(`Successfully encoded ${filename} to base64`);
-        
-        return {
-          content: base64Content,
-          filename: filename,
-          type: "application/pdf",
-        };
+        const arrayBuffer = await response.arrayBuffer();
+        return new Uint8Array(arrayBuffer);
       } catch (error) {
-        console.error(`Error processing ${filename}:`, error);
+        console.error(`Error fetching PDF:`, error);
         return null;
       }
     }
@@ -96,12 +75,21 @@ const handler = async (req: Request): Promise<Response> => {
     if (includeAttachments) {
       // Process invoice PDF if URL is provided
       if (pdfUrl) {
-        const invoicePdfAttachment = await fetchAndProcessPdf(pdfUrl, `invoice-${invoiceNumber}.pdf`);
-        if (invoicePdfAttachment) {
-          attachments.push(invoicePdfAttachment);
-          console.log("Invoice PDF added to attachments");
-        } else {
-          console.log("Failed to add invoice PDF to attachments");
+        try {
+          console.log(`Processing invoice PDF from: ${pdfUrl}`);
+          const pdfData = await fetchPdf(pdfUrl);
+          
+          if (pdfData) {
+            attachments.push({
+              filename: `invoice-${invoiceNumber}.pdf`,
+              content: pdfData
+            });
+            console.log("Invoice PDF added to attachments");
+          } else {
+            console.log("Failed to fetch invoice PDF, continuing without it");
+          }
+        } catch (error) {
+          console.error("Error processing invoice PDF:", error);
         }
       } else {
         console.log("No PDF URL provided for invoice");
@@ -109,13 +97,21 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Process terms and conditions PDF if URL is provided
       if (termsAndConditionsUrl) {
-        console.log("Processing terms and conditions PDF");
-        const termsPdfAttachment = await fetchAndProcessPdf(termsAndConditionsUrl, "terms-and-conditions.pdf");
-        if (termsPdfAttachment) {
-          attachments.push(termsPdfAttachment);
-          console.log("Terms and conditions PDF added to attachments");
-        } else {
-          console.log("Failed to add terms and conditions PDF to attachments, but continuing with email");
+        try {
+          console.log(`Processing terms PDF from: ${termsAndConditionsUrl}`);
+          const termsData = await fetchPdf(termsAndConditionsUrl);
+          
+          if (termsData) {
+            attachments.push({
+              filename: "terms-and-conditions.pdf",
+              content: termsData
+            });
+            console.log("Terms and conditions PDF added to attachments");
+          } else {
+            console.log("Failed to fetch terms PDF, continuing without it");
+          }
+        } catch (error) {
+          console.error("Error processing terms PDF:", error);
         }
       } else {
         console.log("No terms and conditions URL provided");
