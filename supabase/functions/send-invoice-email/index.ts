@@ -52,17 +52,27 @@ const handler = async (req: Request): Promise<Response> => {
     
     const attachments = [];
     
-    // Helper function to fetch and encode PDF to base64
+    // Helper function to fetch PDF as binary data
     async function fetchPdf(url: string): Promise<Uint8Array | null> {
       try {
         console.log(`Fetching PDF from: ${url}`);
-        const response = await fetch(url);
+        
+        // Make sure we have a properly formatted URL
+        const fetchUrl = url.startsWith('http') ? url : `https://${url}`;
+        
+        const response = await fetch(fetchUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/pdf'
+          }
+        });
         
         if (!response.ok) {
           console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
           return null;
         }
         
+        // Get the PDF as an ArrayBuffer and convert to Uint8Array
         const arrayBuffer = await response.arrayBuffer();
         return new Uint8Array(arrayBuffer);
       } catch (error) {
@@ -90,6 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
           }
         } catch (error) {
           console.error("Error processing invoice PDF:", error);
+          // Continue without the invoice attachment
         }
       } else {
         console.log("No PDF URL provided for invoice");
@@ -112,6 +123,7 @@ const handler = async (req: Request): Promise<Response> => {
           }
         } catch (error) {
           console.error("Error processing terms PDF:", error);
+          // Continue without the terms attachment
         }
       } else {
         console.log("No terms and conditions URL provided");
@@ -145,8 +157,43 @@ const handler = async (req: Request): Promise<Response> => {
       attachmentsCount: emailConfig.attachments.length
     });
     
-    const emailResponse = await resend.emails.send(emailConfig);
-    console.log("Email sent successfully:", emailResponse);
+    let emailResponse;
+    try {
+      emailResponse = await resend.emails.send(emailConfig);
+      console.log("Email sent successfully:", emailResponse);
+    } catch (emailError: any) {
+      console.error("Resend API error:", emailError);
+      
+      // If attachments are causing problems, try again without them
+      if (attachments.length > 0) {
+        console.log("Trying to send email without attachments as fallback");
+        const fallbackConfig = {
+          ...emailConfig,
+          attachments: [],
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2>Invoice #${invoiceNumber}</h2>
+              <p>Dear ${clientName},</p>
+              <p>Your invoice #${invoiceNumber} is available in your account.</p>
+              ${pdfUrl ? `<p><a href="${pdfUrl}" target="_blank">Click here to view your invoice</a></p>` : ''}
+              ${termsAndConditionsUrl ? `<p><a href="${termsAndConditionsUrl}" target="_blank">View our terms and conditions</a></p>` : ''}
+              <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+              <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
+            </div>
+          `,
+        };
+        
+        try {
+          emailResponse = await resend.emails.send(fallbackConfig);
+          console.log("Fallback email without attachments sent successfully:", emailResponse);
+        } catch (fallbackError: any) {
+          console.error("Fallback email sending failed:", fallbackError);
+          throw fallbackError;
+        }
+      } else {
+        throw emailError;
+      }
+    }
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,

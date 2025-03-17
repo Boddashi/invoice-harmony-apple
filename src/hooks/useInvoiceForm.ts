@@ -572,7 +572,7 @@ export const useInvoiceForm = () => {
       try {
         const includeAttachments = true;
         
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise(resolve => setTimeout(resolve, 2500));
         
         console.log("Invoking send-invoice-email function with params:", {
           clientName: selectedClient.name,
@@ -595,6 +595,8 @@ export const useInvoiceForm = () => {
           }
         });
 
+        console.log("Email function response:", response);
+
         if (response.error) {
           console.error("Supabase function error:", response.error);
           throw new Error(response.error.message || "Failed to send email");
@@ -607,7 +609,7 @@ export const useInvoiceForm = () => {
 
         toast({
           title: "Email Sent",
-          description: `Invoice has been sent to ${selectedClient.email} with attachments`
+          description: `Invoice has been sent to ${selectedClient.email}`
         });
       } catch (error: any) {
         console.error('Error calling edge function:', error);
