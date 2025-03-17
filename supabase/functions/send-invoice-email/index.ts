@@ -52,13 +52,20 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
     
-    // Get the PDF as an array buffer and convert to base64 safely
+    // Get the PDF data and convert to Base64 safely
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    // Use a more efficient way to encode to base64
-    const pdfBase64 = btoa(
-      new Uint8Array(pdfBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+    const pdfBytes = new Uint8Array(pdfBuffer);
+    let pdfBase64 = '';
+    
+    // Process in smaller chunks to avoid call stack issues
+    const chunkSize = 10000;
+    for (let i = 0; i < pdfBytes.length; i += chunkSize) {
+      const chunk = pdfBytes.slice(i, i + chunkSize);
+      pdfBase64 += chunk.reduce((data, byte) => data + String.fromCharCode(byte), '');
+    }
+    
+    // Encode the full string to Base64
+    pdfBase64 = btoa(pdfBase64);
     console.log("PDF content fetched and encoded successfully");
 
     const attachments = [
@@ -76,11 +83,17 @@ const handler = async (req: Request): Promise<Response> => {
         const termsResponse = await fetch(termsAndConditionsUrl);
         if (termsResponse.ok) {
           const termsBuffer = await termsResponse.arrayBuffer();
-          // Use same efficient encoding method
-          const termsBase64 = btoa(
-            new Uint8Array(termsBuffer)
-              .reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
+          const termsBytes = new Uint8Array(termsBuffer);
+          let termsBase64 = '';
+          
+          // Process in smaller chunks
+          for (let i = 0; i < termsBytes.length; i += chunkSize) {
+            const chunk = termsBytes.slice(i, i + chunkSize);
+            termsBase64 += chunk.reduce((data, byte) => data + String.fromCharCode(byte), '');
+          }
+          
+          // Encode the full string to Base64
+          termsBase64 = btoa(termsBase64);
           console.log("Terms and conditions fetched and encoded successfully");
           
           attachments.push({

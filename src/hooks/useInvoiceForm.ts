@@ -568,33 +568,38 @@ export const useInvoiceForm = () => {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
       }
 
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const response = await supabase.functions.invoke('send-invoice-email', {
-        body: {
-          clientName: selectedClient.name,
-          clientEmail: selectedClient.email,
-          invoiceNumber: invoiceNumber,
-          pdfUrl: publicUrlData.publicUrl,
-          termsAndConditionsUrl: termsAndConditionsUrl,
-          companyName: companySettings?.company_name || 'PowerPeppol'
+      try {
+        const response = await supabase.functions.invoke('send-invoice-email', {
+          body: {
+            clientName: selectedClient.name,
+            clientEmail: selectedClient.email,
+            invoiceNumber: invoiceNumber,
+            pdfUrl: publicUrlData.publicUrl,
+            termsAndConditionsUrl: termsAndConditionsUrl,
+            companyName: companySettings?.company_name || 'PowerPeppol'
+          }
+        });
+
+        if (response.error) {
+          console.error("Supabase function error:", response.error);
+          throw new Error(response.error.message || "Failed to send email");
         }
-      });
 
-      if (response.error) {
-        console.error("Supabase function error:", response.error);
-        throw new Error(response.error.message || "Failed to send email");
+        if (response.data?.error) {
+          console.error("Email service error:", response.data.error);
+          throw new Error(response.data.error || "Email service error");
+        }
+
+        toast({
+          title: "Email Sent",
+          description: `Invoice has been sent to ${selectedClient.email}`
+        });
+      } catch (error: any) {
+        console.error('Error calling edge function:', error);
+        throw new Error(`Edge function error: ${error.message || "Unknown error"}`);
       }
-
-      if (response.data?.error) {
-        console.error("Email service error:", response.data.error);
-        throw new Error(response.data.error || "Email service error");
-      }
-
-      toast({
-        title: "Email Sent",
-        description: `Invoice has been sent to ${selectedClient.email}`
-      });
     } catch (error: any) {
       console.error('Error sending email:', error);
       toast({
