@@ -103,7 +103,7 @@ export const useInvoiceForm = () => {
   }, [user, toast]);
 
   useEffect(() => {
-    const fetchItems = async () => {
+    const fetchAvailableItems = async () => {
       try {
         const { data, error } = await supabase.from('items').select('*');
         if (error) throw error;
@@ -117,7 +117,7 @@ export const useInvoiceForm = () => {
         });
       }
     };
-    fetchItems();
+    fetchAvailableItems();
   }, [toast]);
 
   useEffect(() => {
@@ -760,6 +760,7 @@ export const useInvoiceForm = () => {
     handleSaveAsDraft,
     handleCreateAndSend,
     handleSubmit,
-    getVatGroups
+    getVatGroups,
+    fetchAvailableItems
   };
 };

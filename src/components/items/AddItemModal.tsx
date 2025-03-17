@@ -128,7 +128,10 @@ const AddItemModal = ({ onItemAdded, trigger, className }: AddItemModalProps) =>
       setTitle('');
       setPrice('');
       setVat(vatRates.length > 0 ? vatRates[0].title : '');
-      onItemAdded();
+      
+      if (onItemAdded) {
+        onItemAdded();
+      }
     } catch (error) {
       console.error('Error adding item:', error);
       toast.error('Failed to add item');

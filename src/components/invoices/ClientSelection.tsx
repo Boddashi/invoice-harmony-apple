@@ -42,11 +42,7 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
         <Select
           value={selectedClientId}
           onValueChange={(value) => {
-            if (value === "add-new") {
-              setIsAddClientModalOpen(true);
-            } else {
-              setSelectedClientId(value);
-            }
+            setSelectedClientId(value);
           }}
         >
           <SelectTrigger id="client-select" className="w-full bg-background">
@@ -64,7 +60,10 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
               <Button 
                 variant="apple" 
                 className="w-full justify-start"
-                onClick={() => setIsAddClientModalOpen(true)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsAddClientModalOpen(true);
+                }}
               >
                 <Plus className="h-4 w-4 mr-2" /> Add New Client
               </Button>

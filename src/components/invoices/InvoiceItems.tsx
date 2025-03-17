@@ -47,6 +47,7 @@ interface InvoiceItemsProps {
   handleItemVatChange: (id: string, value: string) => void;
   handleAddItem: () => void;
   handleRemoveItem: (id: string) => void;
+  onItemAdded: () => void;
 }
 
 const InvoiceItems: React.FC<InvoiceItemsProps> = ({
@@ -59,7 +60,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   handleItemUnitPriceChange,
   handleItemVatChange,
   handleAddItem,
-  handleRemoveItem
+  handleRemoveItem,
+  onItemAdded
 }) => {
   return (
     <CustomCard>
@@ -95,7 +97,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                     <Separator className="my-2" />
                     <div className="p-2">
                       <AddItemModal 
-                        onItemAdded={() => {}} 
+                        onItemAdded={onItemAdded} 
                         trigger={
                           <Button 
                             variant="apple" 

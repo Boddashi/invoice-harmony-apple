@@ -51,7 +51,8 @@ const NewInvoice = () => {
     handleSaveAsDraft,
     handleCreateAndSend,
     handleSubmit,
-    getVatGroups
+    getVatGroups,
+    fetchAvailableItems
   } = useInvoiceForm();
 
   if (isLoading && isEditMode) {
@@ -110,6 +111,7 @@ const NewInvoice = () => {
             handleItemVatChange={handleItemVatChange}
             handleAddItem={handleAddItem}
             handleRemoveItem={handleRemoveItem}
+            onItemAdded={fetchAvailableItems}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
