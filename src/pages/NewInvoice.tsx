@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
@@ -57,7 +56,6 @@ const NewInvoice = () => {
     fetchAvailableItems
   } = useInvoiceForm();
   
-  // Create a callback to fetch items that can be passed to the InvoiceItems component
   const refreshItems = useCallback(() => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
@@ -85,7 +83,7 @@ const NewInvoice = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
-          handleSendEmail={pdfUrl ? handleSendEmail : undefined}
+          handleSendEmail={pdfUrl ? () => handleSendEmail() : undefined}
         />
         
         <form id="invoice-form" onSubmit={handleSubmit} className="space-y-6">
