@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -410,6 +411,14 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
             {status === 'overdue' && (
               <>
                 <DropdownMenuItem 
+                  onClick={handleMarkAsPaid}
+                  disabled={isMarkingAsPaid}
+                  className="flex items-center text-green-700 hover:bg-green-50/80 hover:!text-green-700 rounded-md my-1 cursor-pointer"
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
                   onClick={handleSendReminder}
                   className="flex items-center text-orange-700 hover:bg-orange-50/80 hover:!text-orange-700 rounded-md my-1 cursor-pointer"
                   disabled={isSendingReminder}
@@ -465,6 +474,3 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 };
 
 export default InvoiceActions;
-
-
-
