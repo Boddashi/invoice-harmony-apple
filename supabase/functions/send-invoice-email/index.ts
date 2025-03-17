@@ -54,29 +54,41 @@ const handler = async (req: Request): Promise<Response> => {
     if (includeAttachments && pdfUrl) {
       console.log(`PDF URL: ${pdfUrl}`);
       
-      // Fetch the PDF content to attach to the email
-      console.log("Fetching PDF content...");
-      const pdfResponse = await fetch(pdfUrl);
-      if (!pdfResponse.ok) {
-        console.error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
-        throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
-      }
-      
-      // Get the PDF data as ArrayBuffer
-      const pdfBuffer = await pdfResponse.arrayBuffer();
-      
-      // More efficient base64 encoding using TextEncoder and TextDecoder
-      const pdfBase64 = btoa(
-        String.fromCharCode.apply(null, new Uint8Array(pdfBuffer))
-      );
-      
-      console.log("PDF content fetched and encoded successfully");
+      try {
+        // Fetch the PDF content to attach to the email
+        console.log("Fetching PDF content...");
+        const pdfResponse = await fetch(pdfUrl);
+        if (!pdfResponse.ok) {
+          console.error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+          throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+        }
+        
+        // Get the PDF data as ArrayBuffer
+        const pdfBuffer = await pdfResponse.arrayBuffer();
+        const uint8Array = new Uint8Array(pdfBuffer);
+        
+        // Convert to base64 in smaller chunks to avoid call stack issues
+        let binary = '';
+        const chunkSize = 1024;
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
+          for (let j = 0; j < chunk.length; j++) {
+            binary += String.fromCharCode(chunk[j]);
+          }
+        }
+        
+        const pdfBase64 = btoa(binary);
+        console.log("PDF content fetched and encoded successfully");
 
-      attachments.push({
-        content: pdfBase64,
-        filename: `invoice-${invoiceNumber}.pdf`,
-        type: "application/pdf",
-      });
+        attachments.push({
+          content: pdfBase64,
+          filename: `invoice-${invoiceNumber}.pdf`,
+          type: "application/pdf",
+        });
+      } catch (error) {
+        console.error("Error processing invoice PDF:", error);
+        // Continue without PDF if there's an error
+      }
 
       // Add Terms and Conditions if available
       if (termsAndConditionsUrl) {
@@ -85,12 +97,19 @@ const handler = async (req: Request): Promise<Response> => {
           const termsResponse = await fetch(termsAndConditionsUrl);
           if (termsResponse.ok) {
             const termsBuffer = await termsResponse.arrayBuffer();
+            const uint8Array = new Uint8Array(termsBuffer);
             
-            // More efficient base64 encoding
-            const termsBase64 = btoa(
-              String.fromCharCode.apply(null, new Uint8Array(termsBuffer))
-            );
+            // Convert to base64 in smaller chunks
+            let binary = '';
+            const chunkSize = 1024;
+            for (let i = 0; i < uint8Array.length; i += chunkSize) {
+              const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
+              for (let j = 0; j < chunk.length; j++) {
+                binary += String.fromCharCode(chunk[j]);
+              }
+            }
             
+            const termsBase64 = btoa(binary);
             console.log("Terms and conditions fetched and encoded successfully");
             
             attachments.push({
