@@ -25,7 +25,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
     if (!user) {
       toast.error('Please log in to access this page');
       navigate('/login');
@@ -40,7 +39,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     { icon: BarChart, label: 'Reports', href: '/reports' },
   ];
 
-  // Navigation items to display in the "More" fullscreen menu on mobile
   const moreNavItems = [
     { icon: FileText, label: 'Invoices', href: '/invoices' },
     { icon: Users, label: 'Clients', href: '/clients' },
@@ -53,7 +51,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     signOut();
   };
 
-  // If we're still checking authentication or user is not authenticated, don't render the layout
   if (!user) {
     return null;
   }
@@ -72,12 +69,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background w-full">
+    <div className="min-h-screen flex flex-col w-full">
       <Header />
       
       <div className="flex flex-1 w-full">
-        {/* Navigation sidebar - fixed on desktop */}
-        <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 bg-sidebar text-sidebar-foreground">
+        <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 backdrop-blur-sm bg-gradient-sidebar">
           <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col p-4 gap-2">
               {navItems.map((item) => {
@@ -102,7 +98,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                 );
               })}
               
-              {/* Settings link in the sidebar only */}
               <Link
                 to="/settings"
                 className={cn(
@@ -117,7 +112,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               </Link>
             </div>
             
-            {/* Sign out button at bottom of sidebar */}
             <div className="p-4 mt-auto border-t border-sidebar-border">
               <button 
                 onClick={handleLogout}
@@ -130,7 +124,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           </div>
         </nav>
         
-        {/* Main content area - takes remaining width */}
         <main className="flex-1 p-6 md:p-8 pb-20 md:pb-8 w-full">
           <div className="max-w-none animate-fade-in">
             {children}
@@ -138,9 +131,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Mobile bottom navbar */}
-      <div className="fixed bottom-0 left-0 right-0 h-20 bg-sidebar/90 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30">
-        {/* Left side - Settings */}
+      <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
         <Link
           to="/settings"
           className={cn(
@@ -152,7 +143,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">Settings</span>
         </Link>
         
-        {/* Center - Dashboard */}
         <Link
           to="/"
           className={cn(
@@ -164,7 +154,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">Dashboard</span>
         </Link>
 
-        {/* Right side - More button */}
         <button
           onClick={toggleMoreMenu}
           className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none"
@@ -173,13 +162,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           <span className="text-xs font-medium">More</span>
         </button>
 
-        {/* Custom Dialog for More menu that slides from bottom */}
         <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
           <DialogContent 
             className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
-            hideCloseButton={true} // Hide the default close button
+            hideCloseButton={true}
           >
-            <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
+            <div className="flex flex-col h-full bg-gradient-sidebar">
               <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
                 <h2 className="text-lg font-semibold">More Options</h2>
                 <button 
