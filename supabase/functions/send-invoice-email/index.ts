@@ -19,27 +19,6 @@ interface SendInvoiceEmailRequest {
   includeAttachments?: boolean;
 }
 
-// Helper function to fetch and convert a PDF to base64
-async function fetchPdfAsBase64(url: string): Promise<string | null> {
-  try {
-    console.log(`Fetching PDF from ${url}`);
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
-      return null;
-    }
-    
-    const buffer = await response.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-    console.log(`Successfully fetched PDF, size: ${buffer.byteLength} bytes, base64 length: ${base64.length}`);
-    return base64;
-  } catch (error) {
-    console.error(`Error fetching PDF:`, error);
-    return null;
-  }
-}
-
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -68,25 +47,61 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending invoice email to ${clientEmail}`);
     console.log(`Include attachments: ${includeAttachments}`);
+    console.log(`PDF URL: ${pdfUrl || 'Not provided'}`);
+    console.log(`Terms URL: ${termsAndConditionsUrl || 'Not provided'}`);
     
     const attachments = [];
     
-    // Only attempt to attach PDFs if includeAttachments is true and URLs are provided
+    // Helper function to fetch and process PDF files
+    async function fetchAndProcessPdf(url: string, filename: string): Promise<{ content: string, filename: string, type: string } | null> {
+      try {
+        console.log(`Fetching ${filename} from: ${url}`);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          console.error(`Failed to fetch ${filename}: ${response.status} ${response.statusText}`);
+          return null;
+        }
+        
+        const buffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+        
+        console.log(`Successfully fetched ${filename}, size: ${uint8Array.length} bytes`);
+        
+        // Convert to base64 in smaller chunks to avoid call stack issues
+        let binary = '';
+        const chunkSize = 1024;
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
+          for (let j = 0; j < chunk.length; j++) {
+            binary += String.fromCharCode(chunk[j]);
+          }
+        }
+        
+        const base64Content = btoa(binary);
+        console.log(`Successfully encoded ${filename} to base64`);
+        
+        return {
+          content: base64Content,
+          filename: filename,
+          type: "application/pdf",
+        };
+      } catch (error) {
+        console.error(`Error processing ${filename}:`, error);
+        return null;
+      }
+    }
+    
+    // Only fetch and attach PDFs if includeAttachments is true
     if (includeAttachments) {
       // Process invoice PDF if URL is provided
       if (pdfUrl) {
-        console.log(`Attempting to fetch invoice PDF from: ${pdfUrl}`);
-        const invoicePdfBase64 = await fetchPdfAsBase64(pdfUrl);
-        
-        if (invoicePdfBase64) {
-          attachments.push({
-            filename: `invoice-${invoiceNumber}.pdf`,
-            content: invoicePdfBase64,
-            type: "application/pdf",
-          });
-          console.log("Invoice PDF added to attachments array");
+        const invoicePdfAttachment = await fetchAndProcessPdf(pdfUrl, `invoice-${invoiceNumber}.pdf`);
+        if (invoicePdfAttachment) {
+          attachments.push(invoicePdfAttachment);
+          console.log("Invoice PDF added to attachments");
         } else {
-          console.error("Failed to add invoice PDF to attachments");
+          console.log("Failed to add invoice PDF to attachments");
         }
       } else {
         console.log("No PDF URL provided for invoice");
@@ -94,23 +109,13 @@ const handler = async (req: Request): Promise<Response> => {
 
       // Process terms and conditions PDF if URL is provided
       if (termsAndConditionsUrl) {
-        console.log(`Attempting to fetch terms and conditions PDF from: ${termsAndConditionsUrl}`);
-        try {
-          const termsPdfBase64 = await fetchPdfAsBase64(termsAndConditionsUrl);
-          
-          if (termsPdfBase64) {
-            attachments.push({
-              filename: "terms-and-conditions.pdf",
-              content: termsPdfBase64,
-              type: "application/pdf",
-            });
-            console.log("Terms and conditions PDF added to attachments array");
-          } else {
-            console.error("Failed to add terms and conditions PDF to attachments");
-          }
-        } catch (error) {
-          console.error("Error processing terms and conditions PDF:", error);
-          // Continue without the terms attachment
+        console.log("Processing terms and conditions PDF");
+        const termsPdfAttachment = await fetchAndProcessPdf(termsAndConditionsUrl, "terms-and-conditions.pdf");
+        if (termsPdfAttachment) {
+          attachments.push(termsPdfAttachment);
+          console.log("Terms and conditions PDF added to attachments");
+        } else {
+          console.log("Failed to add terms and conditions PDF to attachments, but continuing with email");
         }
       } else {
         console.log("No terms and conditions URL provided");
@@ -128,9 +133,9 @@ const handler = async (req: Request): Promise<Response> => {
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Invoice #${invoiceNumber}</h2>
           <p>Dear ${clientName},</p>
-          <p>Please find your invoice #${invoiceNumber}${attachments.length > 0 ? ' attached' : ' available in your account'}.</p>
-          ${attachments.length > 1 ? '<p>We have also attached our terms and conditions for your reference.</p>' : ''}
-          ${attachments.length === 0 && pdfUrl ? `<p><a href="${pdfUrl}" target="_blank">Click here to view your invoice</a></p>` : ''}
+          <p>Please find your invoice #${invoiceNumber}${includeAttachments ? ' attached' : ' available in your account'}.</p>
+          ${includeAttachments && termsAndConditionsUrl ? '<p>We have also attached our terms and conditions for your reference.</p>' : ''}
+          ${!includeAttachments && pdfUrl ? `<p><a href="${pdfUrl}" target="_blank">Click here to view your invoice</a></p>` : ''}
           <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
           <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
         </div>
@@ -141,14 +146,9 @@ const handler = async (req: Request): Promise<Response> => {
       from: emailConfig.from,
       to: emailConfig.to,
       subject: emailConfig.subject,
-      attachmentsCount: emailConfig.attachments.length,
-      attachmentDetails: emailConfig.attachments.map(a => ({ 
-        filename: a.filename, 
-        contentLength: a.content.length 
-      }))
+      attachmentsCount: emailConfig.attachments.length
     });
     
-    // Send the email even if attachments failed
     const emailResponse = await resend.emails.send(emailConfig);
     console.log("Email sent successfully:", emailResponse);
 
