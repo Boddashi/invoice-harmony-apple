@@ -5,12 +5,14 @@ import {
   User,
   Building,
   CreditCard,
-  FileText,
+  Shield,
+  Bell,
+  Check,
   Loader2,
   Upload,
   X,
+  FileText,
   Download,
-  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -21,12 +23,6 @@ import {
   CompanySettings,
   defaultCompanySettings,
 } from "@/models/CompanySettings";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -463,32 +459,8 @@ const Settings = () => {
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
 
-        <div className="block md:hidden mb-6">
-          <Tabs 
-            value={activeTab} 
-            onValueChange={setActiveTab} 
-            className="w-full"
-          >
-            <TabsList className="grid grid-cols-2 gap-1 w-full">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger 
-                    key={tab.id} 
-                    value={tab.id}
-                    className="flex items-center justify-center gap-2 py-2"
-                  >
-                    <Icon size={16} />
-                    <span className="truncate">{tab.label}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </Tabs>
-        </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="hidden md:block md:col-span-1">
+          <div className="md:col-span-1">
             <CustomCard className="overflow-hidden">
               <div className="divide-y divide-border">
                 {tabs.map((tab) => {
