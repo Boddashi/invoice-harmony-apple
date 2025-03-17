@@ -1,15 +1,12 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '../theme/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
 
 const Header = () => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   
   const getTitle = () => {
     switch (location.pathname) {
@@ -51,17 +48,6 @@ const Header = () => {
         <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">{getTitle()}</h1>
         
         <div className="flex items-center space-x-3">
-          {user && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={signOut}
-              className="flex items-center gap-2"
-            >
-              <span className="hidden sm:inline">Sign Out</span>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          )}
           <ThemeToggle />
         </div>
       </div>
