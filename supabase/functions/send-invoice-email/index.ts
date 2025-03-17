@@ -37,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
       pdfUrl, 
       termsAndConditionsUrl, 
       companyName,
-      includeAttachments = false
+      includeAttachments = true
     }: SendInvoiceEmailRequest = requestData;
 
     if (!clientEmail) {
@@ -62,20 +62,14 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
       }
       
-      // Get the PDF data and convert to Base64 safely
+      // Get the PDF data as ArrayBuffer
       const pdfBuffer = await pdfResponse.arrayBuffer();
-      const pdfBytes = new Uint8Array(pdfBuffer);
-      let pdfBase64 = '';
       
-      // Process in smaller chunks to avoid call stack issues
-      const chunkSize = 10000;
-      for (let i = 0; i < pdfBytes.length; i += chunkSize) {
-        const chunk = pdfBytes.slice(i, i + chunkSize);
-        pdfBase64 += chunk.reduce((data, byte) => data + String.fromCharCode(byte), '');
-      }
+      // More efficient base64 encoding using TextEncoder and TextDecoder
+      const pdfBase64 = btoa(
+        String.fromCharCode.apply(null, new Uint8Array(pdfBuffer))
+      );
       
-      // Encode the full string to Base64
-      pdfBase64 = btoa(pdfBase64);
       console.log("PDF content fetched and encoded successfully");
 
       attachments.push({
@@ -91,17 +85,12 @@ const handler = async (req: Request): Promise<Response> => {
           const termsResponse = await fetch(termsAndConditionsUrl);
           if (termsResponse.ok) {
             const termsBuffer = await termsResponse.arrayBuffer();
-            const termsBytes = new Uint8Array(termsBuffer);
-            let termsBase64 = '';
             
-            // Process in smaller chunks
-            for (let i = 0; i < termsBytes.length; i += chunkSize) {
-              const chunk = termsBytes.slice(i, i + chunkSize);
-              termsBase64 += chunk.reduce((data, byte) => data + String.fromCharCode(byte), '');
-            }
+            // More efficient base64 encoding
+            const termsBase64 = btoa(
+              String.fromCharCode.apply(null, new Uint8Array(termsBuffer))
+            );
             
-            // Encode the full string to Base64
-            termsBase64 = btoa(termsBase64);
             console.log("Terms and conditions fetched and encoded successfully");
             
             attachments.push({
