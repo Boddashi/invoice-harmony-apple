@@ -30,16 +30,9 @@ async function fetchPdfAsBase64(url: string): Promise<string | null> {
       return null;
     }
     
-    const arrayBuffer = await response.arrayBuffer();
-    // Convert array buffer to base64 using a simpler approach
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let binaryString = '';
-    uint8Array.forEach(byte => {
-      binaryString += String.fromCharCode(byte);
-    });
-    const base64 = btoa(binaryString);
-    
-    console.log(`Successfully fetched PDF, size: ${arrayBuffer.byteLength} bytes`);
+    const buffer = await response.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    console.log(`Successfully fetched PDF, size: ${buffer.byteLength} bytes, base64 length: ${base64.length}`);
     return base64;
   } catch (error) {
     console.error(`Error fetching PDF:`, error);
@@ -102,17 +95,22 @@ const handler = async (req: Request): Promise<Response> => {
       // Process terms and conditions PDF if URL is provided
       if (termsAndConditionsUrl) {
         console.log(`Attempting to fetch terms and conditions PDF from: ${termsAndConditionsUrl}`);
-        const termsPdfBase64 = await fetchPdfAsBase64(termsAndConditionsUrl);
-        
-        if (termsPdfBase64) {
-          attachments.push({
-            filename: "terms-and-conditions.pdf",
-            content: termsPdfBase64,
-            type: "application/pdf",
-          });
-          console.log("Terms and conditions PDF added to attachments array");
-        } else {
-          console.error("Failed to add terms and conditions PDF to attachments");
+        try {
+          const termsPdfBase64 = await fetchPdfAsBase64(termsAndConditionsUrl);
+          
+          if (termsPdfBase64) {
+            attachments.push({
+              filename: "terms-and-conditions.pdf",
+              content: termsPdfBase64,
+              type: "application/pdf",
+            });
+            console.log("Terms and conditions PDF added to attachments array");
+          } else {
+            console.error("Failed to add terms and conditions PDF to attachments");
+          }
+        } catch (error) {
+          console.error("Error processing terms and conditions PDF:", error);
+          // Continue without the terms attachment
         }
       } else {
         console.log("No terms and conditions URL provided");
@@ -144,12 +142,13 @@ const handler = async (req: Request): Promise<Response> => {
       to: emailConfig.to,
       subject: emailConfig.subject,
       attachmentsCount: emailConfig.attachments.length,
-      attachmentDetails: attachments.map(a => ({ 
+      attachmentDetails: emailConfig.attachments.map(a => ({ 
         filename: a.filename, 
         contentLength: a.content.length 
       }))
     });
     
+    // Send the email even if attachments failed
     const emailResponse = await resend.emails.send(emailConfig);
     console.log("Email sent successfully:", emailResponse);
 
