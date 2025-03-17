@@ -43,10 +43,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending invoice email to ${clientEmail}`);
     console.log(`PDF URL: ${pdfUrl}`);
-    if (termsAndConditionsUrl) {
-      console.log(`Terms and conditions URL: ${termsAndConditionsUrl}`);
-    }
-
+    
     // Fetch the PDF content to attach to the email
     console.log("Fetching PDF content...");
     const pdfResponse = await fetch(pdfUrl);
@@ -56,10 +53,10 @@ const handler = async (req: Request): Promise<Response> => {
     }
     
     const pdfBuffer = await pdfResponse.arrayBuffer();
-    const pdfBase64 = btoa(String.fromCharCode(...new Uint8Array(pdfBuffer)));
+    const pdfBase64 = btoa(new Uint8Array(pdfBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
     console.log("PDF content fetched successfully");
 
-    let attachments = [
+    const attachments = [
       {
         content: pdfBase64,
         filename: `invoice-${invoiceNumber}.pdf`,
@@ -67,17 +64,14 @@ const handler = async (req: Request): Promise<Response> => {
       },
     ];
 
-    // If terms and conditions URL is provided, fetch and attach it as well
+    // Add Terms and Conditions if available
     if (termsAndConditionsUrl) {
       try {
         console.log("Fetching terms and conditions...");
         const termsResponse = await fetch(termsAndConditionsUrl);
-        if (!termsResponse.ok) {
-          console.error(`Failed to fetch terms and conditions: ${termsResponse.status} ${termsResponse.statusText}`);
-          // Continue without terms, but log the error
-        } else {
+        if (termsResponse.ok) {
           const termsBuffer = await termsResponse.arrayBuffer();
-          const termsBase64 = btoa(String.fromCharCode(...new Uint8Array(termsBuffer)));
+          const termsBase64 = btoa(new Uint8Array(termsBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
           console.log("Terms and conditions fetched successfully");
           
           attachments.push({
@@ -85,10 +79,12 @@ const handler = async (req: Request): Promise<Response> => {
             filename: "terms-and-conditions.pdf",
             type: "application/pdf",
           });
+        } else {
+          console.error(`Failed to fetch terms: ${termsResponse.status} ${termsResponse.statusText}`);
         }
       } catch (error) {
         console.error("Error attaching terms and conditions:", error);
-        // Continue without the terms attachment if there's an error
+        // Continue without terms if there's an error
       }
     }
 
