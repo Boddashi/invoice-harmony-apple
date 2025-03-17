@@ -105,7 +105,6 @@ export const useInvoiceForm = () => {
     fetchClients();
   }, [user, toast]);
 
-  // Fetch company settings
   useEffect(() => {
     const fetchCompanySettings = async () => {
       if (!user) return;
@@ -527,7 +526,7 @@ export const useInvoiceForm = () => {
     }
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = async (invoiceId: string) => {
     if (!selectedClient) {
       toast({
         variant: "destructive",
@@ -551,7 +550,7 @@ export const useInvoiceForm = () => {
       // Get the PDF URL from storage
       const { data: publicUrlData } = supabase.storage
         .from('invoices')
-        .getPublicUrl(`${id || 'temp'}/invoice.pdf`);
+        .getPublicUrl(`${invoiceId}/invoice.pdf`);
 
       if (!publicUrlData || !publicUrlData.publicUrl) {
         throw new Error("PDF URL is not available");
@@ -707,21 +706,26 @@ export const useInvoiceForm = () => {
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
             
-            // If client has an email and it's a pending status, wait for PDF to be uploaded before sending email
-            if (selectedClient?.email) {
-              // Wait a moment for the PDF to be properly stored
-              setTimeout(async () => {
-                try {
-                  await handleSendEmail();
-                } catch (emailError) {
-                  console.error("Error in delayed email sending:", emailError);
+            // Store the PDF in Supabase Storage
+            const { data: pdfBlob } = await fetch(pdfBase64).then(res => res.blob());
+            
+            if (pdfBlob) {
+              await supabase.storage
+                .from('invoices')
+                .upload(`${id}/invoice.pdf`, pdfBlob, {
+                  upsert: true,
+                  cacheControl: '3600'
+                });
+              
+              // If client has an email and it's a pending status, send email
+              if (selectedClient?.email) {
+                await handleSendEmail(id);
+              } else {
+                // If no email, just show PDF
+                const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
+                if (shouldDownload) {
+                  handleDownloadPDF();
                 }
-              }, 2000);
-            } else {
-              // If no email, just show PDF
-              const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
-              if (shouldDownload) {
-                handleDownloadPDF();
               }
             }
             
@@ -751,11 +755,10 @@ export const useInvoiceForm = () => {
           notes: notes
         }).select().single();
         
-        if (invoiceError) {
-          throw invoiceError;
-        }
+        if (invoiceError) throw invoiceError;
         
         invoiceId = invoice.id;
+        
         const invoiceItems = items.map(item => ({
           invoice_id: invoice.id,
           item_id: item.description,
@@ -764,30 +767,35 @@ export const useInvoiceForm = () => {
         }));
         
         const { error: invoiceItemsError } = await supabase.from('invoice_items').insert(invoiceItems);
-        if (invoiceItemsError) {
-          throw invoiceItemsError;
-        }
+        if (invoiceItemsError) throw invoiceItemsError;
 
         if (status === 'pending') {
           const pdfBase64 = await generatePDF(invoiceId);
           if (pdfBase64) {
             setPdfUrl(pdfBase64);
             
-            // If client has an email and it's a pending status, wait for PDF to be uploaded before sending email
-            if (selectedClient?.email) {
-              // Wait a moment for the PDF to be properly stored
-              setTimeout(async () => {
-                try {
-                  await handleSendEmail();
-                } catch (emailError) {
-                  console.error("Error in delayed email sending:", emailError);
+            // Store the PDF in Supabase Storage
+            const { data: pdfBlob } = await fetch(pdfBase64).then(res => res.blob());
+            
+            if (pdfBlob) {
+              const { error: uploadError } = await supabase.storage
+                .from('invoices')
+                .upload(`${invoiceId}/invoice.pdf`, pdfBlob, {
+                  upsert: true,
+                  cacheControl: '3600'
+                });
+                
+              if (uploadError) throw uploadError;
+              
+              // If client has an email and it's a pending status, send email
+              if (selectedClient?.email) {
+                await handleSendEmail(invoiceId);
+              } else {
+                // If no email, just show PDF
+                const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
+                if (shouldDownload) {
+                  handleDownloadPDF();
                 }
-              }, 2000);
-            } else {
-              // If no email, just show PDF
-              const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
-              if (shouldDownload) {
-                handleDownloadPDF();
               }
             }
             
