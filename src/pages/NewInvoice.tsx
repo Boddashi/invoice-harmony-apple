@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useCallback } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import CustomCard from '../components/ui/CustomCard';
 import AddClientModal from '@/components/clients/AddClientModal';
@@ -54,6 +54,11 @@ const NewInvoice = () => {
     getVatGroups,
     fetchAvailableItems
   } = useInvoiceForm();
+  
+  // Create a callback to fetch items that can be passed to the InvoiceItems component
+  const refreshItems = useCallback(() => {
+    fetchAvailableItems();
+  }, [fetchAvailableItems]);
 
   if (isLoading && isEditMode) {
     return (
@@ -111,7 +116,7 @@ const NewInvoice = () => {
             handleItemVatChange={handleItemVatChange}
             handleAddItem={handleAddItem}
             handleRemoveItem={handleRemoveItem}
-            onItemAdded={fetchAvailableItems}
+            onItemAdded={refreshItems}
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -62,6 +62,7 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
                 className="w-full justify-start"
                 onClick={(e) => {
                   e.preventDefault();
+                  e.stopPropagation(); // Prevent event bubbling
                   setIsAddClientModalOpen(true);
                 }}
               >
