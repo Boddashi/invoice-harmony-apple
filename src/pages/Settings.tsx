@@ -32,9 +32,10 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = React.useState("profile");
+  const [activeTab, setActiveTab] = useState("profile");
   const { toast } = useToast();
   const { currency, setCurrency, currencySymbol } = useCurrency();
   const { user } = useAuth();
@@ -281,23 +282,12 @@ const Settings = () => {
     try {
       setUploadingTerms(true);
 
-      const { data: buckets } = await supabase.storage.listBuckets();
-
-      const bucketExists = buckets?.some(
-        (bucket) => bucket.name === "company-documents"
-      );
-
-      if (!bucketExists) {
-        await supabase.storage.createBucket("company-documents", {
-          public: false,
-        });
-      }
-
       const { error: uploadError, data } = await supabase.storage
         .from("company-documents")
         .upload(fileName, file);
 
       if (uploadError) {
+        console.error("Upload error:", uploadError);
         throw uploadError;
       }
 
@@ -310,9 +300,7 @@ const Settings = () => {
         .getPublicUrl(fileName);
 
       if (!publicURL) {
-        throw new Error(
-          "Failed to get public URL for uploaded terms & conditions"
-        );
+        throw new Error("Failed to get public URL for uploaded terms & conditions");
       }
 
       setCompanySettings((prev) => ({
@@ -322,16 +310,14 @@ const Settings = () => {
 
       toast({
         title: "Terms & Conditions uploaded",
-        description:
-          "Your terms & conditions document has been uploaded successfully.",
+        description: "Your terms & conditions document has been uploaded successfully.",
       });
     } catch (error) {
       console.error("Error uploading terms & conditions:", error);
       toast({
         variant: "destructive",
         title: "Upload failed",
-        description:
-          "Failed to upload terms & conditions document. Please try again.",
+        description: "Failed to upload terms & conditions document. Please try again.",
       });
     } finally {
       setUploadingTerms(false);
@@ -368,16 +354,14 @@ const Settings = () => {
 
       toast({
         title: "Terms & Conditions removed",
-        description:
-          "Your terms & conditions document has been removed successfully.",
+        description: "Your terms & conditions document has been removed successfully.",
       });
     } catch (error) {
       console.error("Error removing terms & conditions:", error);
       toast({
         variant: "destructive",
         title: "Removal failed",
-        description:
-          "Failed to remove terms & conditions document. Please try again.",
+        description: "Failed to remove terms & conditions document. Please try again.",
       });
     } finally {
       setUploadingTerms(false);
@@ -460,45 +444,53 @@ const Settings = () => {
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
-            <CustomCard className="overflow-hidden">
-              <div className="divide-y divide-border">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
+          <div className="col-span-1">
+            <div className="block md:hidden mb-6">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="w-full">
+                  {tabs.map((tab) => (
+                    <TabsTrigger key={tab.id} value={tab.id} className="text-center">
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
 
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={cn(
-                        "w-full p-4 flex items-center gap-3 transition-colors",
-                        isActive ? "bg-apple-blue/10" : "hover:bg-secondary"
-                      )}
-                    >
-                      <Icon
-                        size={20}
-                        className={
-                          isActive ? "text-apple-blue" : "text-muted-foreground"
-                        }
-                      />
-                      <span
-                        className={
-                          isActive
-                            ? "font-medium text-apple-blue text-left"
-                            : ""
-                        }
+            <div className="hidden md:block">
+              <CustomCard className="overflow-hidden">
+                <div className="divide-y divide-border">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={cn(
+                          "w-full p-4 flex items-center gap-3 transition-colors",
+                          isActive ? "bg-apple-blue/10" : "hover:bg-secondary"
+                        )}
                       >
-                        {tab.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </CustomCard>
+                        <Icon
+                          size={20}
+                          className={isActive ? "text-apple-blue" : "text-muted-foreground"}
+                        />
+                        <span
+                          className={isActive ? "font-medium text-apple-blue text-left" : "text-left"}
+                        >
+                          {tab.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </CustomCard>
+            </div>
           </div>
 
-          <div className="md:col-span-3 animate-fade-in">
+          <div className="col-span-1 md:col-span-3 animate-fade-in">
             {activeTab === "profile" && (
               <CustomCard>
                 <h2 className="text-xl font-semibold mb-6">
@@ -1216,3 +1208,4 @@ const Settings = () => {
 };
 
 export default Settings;
+
