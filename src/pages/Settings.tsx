@@ -743,7 +743,7 @@ const Settings = () => {
                               {uploadingLogo ? (
                                 <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span className="text-left">Uploading...</span>
+                                  Uploading...
                                 </>
                               ) : (
                                 <>
@@ -976,4 +976,84 @@ const Settings = () => {
                                 type="file"
                                 ref={termsFileInputRef}
                                 accept="application/pdf"
-                                onChange={handle
+                                onChange={handleTermsUpload}
+                                className="hidden"
+                              />
+                              <button 
+                                type="button" 
+                                className="secondary-button flex items-center gap-2"
+                                onClick={handleUploadTermsClick}
+                                disabled={uploadingTerms}
+                              >
+                                {uploadingTerms ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Uploading...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload size={16} />
+                                    Upload PDF
+                                  </>
+                                )}
+                              </button>
+                              
+                              {companySettings.terms_and_conditions_url && (
+                                <>
+                                  <a 
+                                    href={companySettings.terms_and_conditions_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer" 
+                                    className="secondary-button flex items-center gap-2"
+                                  >
+                                    <Download size={16} />
+                                    View
+                                  </a>
+                                  <button 
+                                    type="button" 
+                                    className="ghost-button text-apple-red flex items-center gap-2"
+                                    onClick={handleRemoveTerms}
+                                    disabled={uploadingTerms}
+                                  >
+                                    <X size={16} />
+                                    Remove
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Please upload a PDF document with your company's terms and conditions.
+                            This document will be used in your invoices and other legal documents.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                      <button 
+                        type="submit" 
+                        className="apple-button"
+                        disabled={saving}
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : 'Save Terms & Conditions'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </CustomCard>
+            )}
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default Settings;
