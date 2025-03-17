@@ -988,7 +988,7 @@ const Settings = () => {
                                 {uploadingTerms ? (
                                   <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Uploading...
+                                    <span className="text-left">Uploading...</span>
                                   </>
                                 ) : (
                                   <>
