@@ -568,6 +568,8 @@ export const useInvoiceForm = () => {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
       }
 
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       const response = await supabase.functions.invoke('send-invoice-email', {
         body: {
           clientName: selectedClient.name,

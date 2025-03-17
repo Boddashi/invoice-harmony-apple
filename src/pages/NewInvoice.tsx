@@ -1,7 +1,6 @@
 
 import React, { useCallback } from 'react';
 import MainLayout from '../components/layout/MainLayout';
-import CustomCard from '../components/ui/CustomCard';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { useInvoiceForm } from '@/hooks/useInvoiceForm';
 import InvoiceHeader from '@/components/invoices/InvoiceHeader';

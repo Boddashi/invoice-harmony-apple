@@ -52,13 +52,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
     }
     
-    // Convert PDF to base64 safely
+    // Get the PDF as an array buffer and convert to base64 safely
     const pdfBuffer = await pdfResponse.arrayBuffer();
+    // Use a more efficient way to encode to base64
     const pdfBase64 = btoa(
-      String.fromCharCode.apply(
-        null, 
-        Array.from(new Uint8Array(pdfBuffer))
-      )
+      new Uint8Array(pdfBuffer)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
     );
     console.log("PDF content fetched and encoded successfully");
 
@@ -77,11 +76,10 @@ const handler = async (req: Request): Promise<Response> => {
         const termsResponse = await fetch(termsAndConditionsUrl);
         if (termsResponse.ok) {
           const termsBuffer = await termsResponse.arrayBuffer();
+          // Use same efficient encoding method
           const termsBase64 = btoa(
-            String.fromCharCode.apply(
-              null, 
-              Array.from(new Uint8Array(termsBuffer))
-            )
+            new Uint8Array(termsBuffer)
+              .reduce((data, byte) => data + String.fromCharCode(byte), '')
           );
           console.log("Terms and conditions fetched and encoded successfully");
           
