@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileDown, Mail } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 
 interface InvoiceHeaderProps {
   isEditMode: boolean;
@@ -104,6 +105,16 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         >
           {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
         </button>
+        
+        {/* New Orange Button */}
+        <Button 
+          type="button" 
+          className="bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+          onClick={handleCreateAndSend}
+          disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
+        >
+          Create & Send & Yuki
+        </Button>
       </div>
     </div>
   );
