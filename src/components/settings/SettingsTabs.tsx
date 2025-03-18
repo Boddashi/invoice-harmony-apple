@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 import { TabItem } from "@/models/SettingsModels";
@@ -12,11 +11,11 @@ interface SettingsTabsProps {
   orientation: "horizontal" | "vertical";
 }
 
-const SettingsTabs = ({ 
-  tabs, 
-  activeTab, 
-  setActiveTab, 
-  orientation 
+const SettingsTabs = ({
+  tabs,
+  activeTab,
+  setActiveTab,
+  orientation,
 }: SettingsTabsProps) => {
   // For horizontal tabs layout (small screens)
   if (orientation === "horizontal") {
@@ -47,15 +46,25 @@ const SettingsTabs = ({
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "w-full p-4 flex items-center gap-3 transition-colors",
-                isActive ? "bg-apple-blue/10" : "hover:bg-secondary"
+                isActive
+                  ? "bg-apple-blue/10 dark:bg-apple-purple/10"
+                  : "hover:bg-secondary"
               )}
             >
               <Icon
                 size={20}
-                className={isActive ? "text-apple-blue" : "text-muted-foreground"}
+                className={
+                  isActive
+                    ? "text-apple-blue dark:text-apple-purple"
+                    : "text-muted-foreground"
+                }
               />
               <span
-                className={isActive ? "font-medium text-apple-blue text-left" : "text-left"}
+                className={
+                  isActive
+                    ? "font-medium text-apple-blue text-left dark:text-apple-purple"
+                    : "text-left"
+                }
               >
                 {tab.label}
               </span>

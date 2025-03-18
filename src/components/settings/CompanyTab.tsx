@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from "react";
 import CustomCard from "../ui/CustomCard";
 import { CompanySettings } from "@/models/CompanySettings";
@@ -17,14 +16,14 @@ interface CompanyTabProps {
   handleSaveCompany: (e: React.FormEvent) => Promise<void>;
 }
 
-const CompanyTab = ({ 
-  companySettings, 
-  setCompanySettings, 
-  currency, 
-  setCurrency, 
-  loading, 
-  saving, 
-  handleSaveCompany 
+const CompanyTab = ({
+  companySettings,
+  setCompanySettings,
+  currency,
+  setCurrency,
+  loading,
+  saving,
+  handleSaveCompany,
 }: CompanyTabProps) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -256,7 +255,7 @@ const CompanyTab = ({
                     className={cn(
                       "px-3 py-2 border rounded-md flex items-center gap-2 transition-colors",
                       currency === curr.code
-                        ? "bg-apple-blue text-white border-apple-blue"
+                        ? "bg-apple-blue dark:bg-apple-purple text-white border-apple-blue dark:border-apple-purple"
                         : "bg-background border-border hover:bg-secondary"
                     )}
                   >
@@ -270,9 +269,7 @@ const CompanyTab = ({
           </div>
 
           <div>
-            <h3 className="text-base font-medium mb-4">
-              Company Address
-            </h3>
+            <h3 className="text-base font-medium mb-4">Company Address</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-1">
@@ -355,9 +352,7 @@ const CompanyTab = ({
           </div>
 
           <div>
-            <h3 className="text-base font-medium mb-4">
-              Payment Information
-            </h3>
+            <h3 className="text-base font-medium mb-4">Payment Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-foreground mb-1">
@@ -414,9 +409,7 @@ const CompanyTab = ({
           </div>
 
           <div>
-            <h3 className="text-base font-medium mb-4">
-              Company Logo
-            </h3>
+            <h3 className="text-base font-medium mb-4">Company Logo</h3>
             <div className="flex items-center gap-5">
               <div className="w-20 h-20 rounded bg-secondary flex items-center justify-center text-muted-foreground overflow-hidden border border-border">
                 {companySettings.logo_url ? (
@@ -476,11 +469,7 @@ const CompanyTab = ({
         </div>
 
         <div className="mt-8 pt-6 border-t border-border flex justify-end">
-          <button
-            type="submit"
-            className="apple-button"
-            disabled={saving}
-          >
+          <button type="submit" className="apple-button" disabled={saving}>
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
