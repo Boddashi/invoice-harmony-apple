@@ -373,7 +373,7 @@ const Invoices = () => {
             />
           </div>
 
-          <div className="flex overflow-x-auto pb-1 -mx-2 !px-4 !py-4 md:mx-2 md:px-4 md:py-4 scrollbar-none">
+          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 md:mx-2 md:px-4 md:py-4 scrollbar-none">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setFilter("all")}
@@ -390,9 +390,9 @@ const Invoices = () => {
                 onClick={() => setFilter("draft")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "draft"
-                    ? "bg-apple-blue text-white"
-                    : "hover:bg-secondary"
+                  filter === "all"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : ""
                 )}
               >
                 Draft
@@ -401,9 +401,9 @@ const Invoices = () => {
                 onClick={() => setFilter("pending")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "pending"
-                    ? "bg-apple-blue text-white"
-                    : "hover:bg-secondary"
+                  filter === "all"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : ""
                 )}
               >
                 Pending
@@ -412,9 +412,9 @@ const Invoices = () => {
                 onClick={() => setFilter("paid")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "paid"
-                    ? "bg-apple-blue text-white"
-                    : "hover:bg-secondary"
+                  filter === "all"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : ""
                 )}
               >
                 Paid
@@ -423,9 +423,9 @@ const Invoices = () => {
                 onClick={() => setFilter("overdue")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "overdue"
-                    ? "bg-apple-blue text-white"
-                    : "hover:bg-secondary"
+                  filter === "all"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : ""
                 )}
               >
                 Overdue
