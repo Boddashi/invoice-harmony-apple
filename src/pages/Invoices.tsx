@@ -381,7 +381,7 @@ const Invoices = () => {
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "all"
                     ? "apple-button text-white hover:!shadow-none"
-                    : "hover-secondary"
+                    : "hover:bg-secondary"
                 )}
               >
                 All
