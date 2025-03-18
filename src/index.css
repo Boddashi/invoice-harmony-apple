@@ -176,7 +176,7 @@
   }
 
   .dark .draft-button {
-    @apply hover:bg-gray-200 hover:shadow-neon-lg;
+    @apply hover:bg-gray-200 hover:shadow-gray-lg;
   }
 
   .neon-border {
