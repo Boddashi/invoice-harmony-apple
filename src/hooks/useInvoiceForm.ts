@@ -570,6 +570,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleSendEmail = async (invoiceId?: string) => {
+    // Validate required client info
     if (!selectedClient) {
       toast({
         variant: "destructive",
@@ -578,7 +579,6 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-
     if (!selectedClient.email) {
       toast({
         variant: "destructive",
@@ -589,77 +589,78 @@ export const useInvoiceForm = () => {
     }
 
     setIsSendingEmail(true);
-    try {
-      const actualInvoiceId = invoiceId || id;
 
+    try {
+      // Determine invoice ID
+      const actualInvoiceId = invoiceId || id;
       if (!actualInvoiceId) {
         throw new Error("Invoice ID is missing");
       }
 
+      // Retrieve public URL for the invoice PDF from Supabase Storage
       const { data: publicUrlData } = supabase.storage
         .from("invoices")
         .getPublicUrl(`${actualInvoiceId}/invoice.pdf`);
-
       if (!publicUrlData || !publicUrlData.publicUrl) {
         throw new Error("PDF URL is not available");
       }
-
       console.log("Sending email with PDF URL:", publicUrlData.publicUrl);
 
+      // Optionally include terms and conditions URL
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
         console.log("Terms and conditions URL:", termsAndConditionsUrl);
       }
 
+      // Add a small delay if necessary
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Log the parameters for debugging purposes
+      const emailParams = {
+        clientName: selectedClient.name,
+        clientEmail: selectedClient.email,
+        invoiceNumber,
+        pdfUrl: publicUrlData.publicUrl,
+        termsAndConditionsUrl,
+        companyName: companySettings?.company_name || "PowerPeppol",
+        includeAttachments: true,
+      };
+      console.log(
+        "Invoking send-invoice-email function with params:",
+        emailParams
+      );
+
+      // Invoke the edge function to send the email
+      let response;
       try {
-        const includeAttachments = true;
-
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-
-        console.log("Invoking send-invoice-email function with params:", {
-          clientName: selectedClient.name,
-          clientEmail: selectedClient.email,
-          invoiceNumber,
-          pdfUrl: publicUrlData.publicUrl,
-          termsAndConditionsUrl,
-          includeAttachments,
+        response = await supabase.functions.invoke("send-invoice-email", {
+          body: emailParams,
         });
-
-        const response = await supabase.functions.invoke("send-invoice-email", {
-          body: {
-            clientName: selectedClient.name,
-            clientEmail: selectedClient.email,
-            invoiceNumber: invoiceNumber,
-            pdfUrl: publicUrlData.publicUrl,
-            termsAndConditionsUrl: termsAndConditionsUrl,
-            companyName: companySettings?.company_name || "PowerPeppol",
-            includeAttachments: includeAttachments,
-          },
-        });
-
         console.log("Email function response:", response);
-
-        if (response.error) {
-          console.error("Supabase function error:", response.error);
-          throw new Error(response.error.message || "Failed to send email");
-        }
-
-        if (response.data?.error) {
-          console.error("Email service error:", response.data.error);
-          throw new Error(response.data.error || "Email service error");
-        }
-
-        toast({
-          title: "Email Sent",
-          description: `Invoice has been sent to ${selectedClient.email}`,
-        });
-      } catch (error: any) {
-        console.error("Error calling edge function:", error);
+      } catch (invokeError: any) {
+        console.error("Error invoking edge function:", invokeError);
         throw new Error(
-          `Edge function error: ${error.message || "Unknown error"}`
+          `Edge function invocation error: ${
+            invokeError.message || "Unknown error"
+          }`
         );
       }
+
+      // Check the response from the edge function for errors
+      if (response.error) {
+        console.error("Supabase function error:", response.error);
+        throw new Error(response.error.message || "Failed to send email");
+      }
+      if (response.data?.error) {
+        console.error("Email service error:", response.data.error);
+        throw new Error(response.data.error || "Email service error");
+      }
+
+      toast({
+        title: "Email Sent",
+        description: `Invoice has been sent to ${selectedClient.email}`,
+      });
     } catch (error: any) {
       console.error("Error sending email:", error);
       toast({
