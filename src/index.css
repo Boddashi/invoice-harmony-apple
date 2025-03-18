@@ -176,7 +176,11 @@
   }
 
   .dark .draft-button {
-    @apply hover:bg-gray-200 hover:shadow-gray-lg;
+    @apply hover:bg-gray-200 hover:!shadow-gray-lg;
+  }
+
+  .dark .select-button {
+    @apply bg-neon-purple hover:!bg-apple-indigo;
   }
 
   .neon-border {

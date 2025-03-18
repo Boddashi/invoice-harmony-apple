@@ -1,19 +1,18 @@
-
-import React from 'react';
-import { Trash, Plus } from 'lucide-react';
-import CustomCard from '../ui/CustomCard';
-import { 
-  Select, 
-  SelectContent, 
+import React from "react";
+import { Trash, Plus } from "lucide-react";
+import CustomCard from "../ui/CustomCard";
+import {
+  Select,
+  SelectContent,
   SelectGroup,
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Label } from '@/components/ui/label';
-import AddItemModal from '../items/AddItemModal';
-import { Button } from '../ui/button';
-import { Separator } from '../ui/separator';
+import { Label } from "@/components/ui/label";
+import AddItemModal from "../items/AddItemModal";
+import { Button } from "../ui/button";
+import { Separator } from "../ui/separator";
 
 interface Item {
   id: string;
@@ -61,12 +60,12 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   handleItemVatChange,
   handleAddItem,
   handleRemoveItem,
-  onItemAdded
+  onItemAdded,
 }) => {
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Items</h3>
-      
+
       <div className="space-y-4">
         <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
           <div className="col-span-4">Item</div>
@@ -76,32 +75,38 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
           <div className="col-span-1">Amount</div>
           <div className="col-span-1"></div>
         </div>
-        
+
         {items.map((item) => (
           <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-4">
               <Select
                 value={item.description}
-                onValueChange={(value) => handleItemDescriptionChange(item.id, value)}
+                onValueChange={(value) =>
+                  handleItemDescriptionChange(item.id, value)
+                }
               >
                 <SelectTrigger className="w-full bg-background">
                   <SelectValue placeholder="Select an item" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {availableItems.map(availableItem => (
-                      <SelectItem key={availableItem.id} value={availableItem.id}>
-                        {availableItem.title} - {currencySymbol}{availableItem.price}
+                    {availableItems.map((availableItem) => (
+                      <SelectItem
+                        key={availableItem.id}
+                        value={availableItem.id}
+                      >
+                        {availableItem.title} - {currencySymbol}
+                        {availableItem.price}
                       </SelectItem>
                     ))}
                     <Separator className="my-2" />
                     <div className="p-2">
-                      <AddItemModal 
-                        onItemAdded={onItemAdded} 
+                      <AddItemModal
+                        onItemAdded={onItemAdded}
                         trigger={
-                          <Button 
-                            variant="apple" 
-                            className="w-full justify-start"
+                          <Button
+                            variant="apple"
+                            className="w-full justify-start select-button"
                           >
                             <Plus className="mr-2 h-4 w-4" />
                             Add New Item
@@ -113,46 +118,50 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="col-span-2">
-              <input 
-                type="number" 
-                min="1" 
-                step="1" 
-                value={item.quantity} 
-                onChange={e => handleItemQuantityChange(item.id, Number(e.target.value))} 
-                className="input-field w-full" 
-                required 
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={item.quantity}
+                onChange={(e) =>
+                  handleItemQuantityChange(item.id, Number(e.target.value))
+                }
+                className="input-field w-full"
+                required
               />
             </div>
-            
+
             <div className="col-span-2">
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                   {currencySymbol}
                 </span>
-                <input 
-                  type="number" 
-                  min="0" 
-                  step="0.01" 
-                  value={item.unit_price} 
-                  onChange={e => handleItemUnitPriceChange(item.id, Number(e.target.value))} 
-                  className="input-field w-full pl-8" 
-                  required 
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={item.unit_price}
+                  onChange={(e) =>
+                    handleItemUnitPriceChange(item.id, Number(e.target.value))
+                  }
+                  className="input-field w-full pl-8"
+                  required
                 />
               </div>
             </div>
 
             <div className="col-span-2">
-              <Select 
-                value={item.vat_rate} 
-                onValueChange={value => handleItemVatChange(item.id, value)}
+              <Select
+                value={item.vat_rate}
+                onValueChange={(value) => handleItemVatChange(item.id, value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="VAT" />
                 </SelectTrigger>
                 <SelectContent>
-                  {vats.map(vat => (
+                  {vats.map((vat) => (
                     <SelectItem key={vat.title} value={vat.title}>
                       {vat.title}
                     </SelectItem>
@@ -160,16 +169,17 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="col-span-1 font-medium">
-              {currencySymbol}{item.amount.toFixed(2)}
+              {currencySymbol}
+              {item.amount.toFixed(2)}
             </div>
-            
+
             <div className="col-span-1 text-right">
-              <button 
-                type="button" 
-                onClick={() => handleRemoveItem(item.id)} 
-                className="text-muted-foreground hover:text-destructive transition-colors" 
+              <button
+                type="button"
+                onClick={() => handleRemoveItem(item.id)}
+                className="text-muted-foreground hover:text-destructive transition-colors"
                 disabled={items.length === 1}
               >
                 <Trash size={18} />
@@ -177,11 +187,11 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
             </div>
           </div>
         ))}
-        
-        <button 
-          type="button" 
-          onClick={handleAddItem} 
-          className="flex items-center gap-2 text-apple-blue hover:text-apple-blue/80 font-medium transition-colors"
+
+        <button
+          type="button"
+          onClick={handleAddItem}
+          className="flex items-center gap-2 text-apple-purple hover:text-apple-purple/80 font-medium transition-colors"
         >
           <Plus size={18} />
           <span>Add Item</span>
