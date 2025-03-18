@@ -379,9 +379,7 @@ const Invoices = () => {
                 onClick={() => setFilter("all")}
                 className={cn(
                   "apple-button rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "all"
-                    ? "apple-button text-white"
-                    : "hover:bg-secondary"
+                  filter === "all" ? "apple-button text-white !shadow-none" : ""
                 )}
               >
                 All
