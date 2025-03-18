@@ -566,10 +566,22 @@ export const useInvoiceForm = () => {
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
+        console.log("Terms and conditions URL:", termsAndConditionsUrl);
       }
 
       try {
-        const includeAttachments = isEditMode;
+        const includeAttachments = true;
+        
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        
+        console.log("Invoking send-invoice-email function with params:", {
+          clientName: selectedClient.name,
+          clientEmail: selectedClient.email,
+          invoiceNumber,
+          pdfUrl: publicUrlData.publicUrl,
+          termsAndConditionsUrl,
+          includeAttachments
+        });
         
         const response = await supabase.functions.invoke('send-invoice-email', {
           body: {
@@ -583,6 +595,8 @@ export const useInvoiceForm = () => {
           }
         });
 
+        console.log("Email function response:", response);
+
         if (response.error) {
           console.error("Supabase function error:", response.error);
           throw new Error(response.error.message || "Failed to send email");
@@ -595,7 +609,7 @@ export const useInvoiceForm = () => {
 
         toast({
           title: "Email Sent",
-          description: `Invoice has been sent to ${selectedClient.email}${includeAttachments ? ' with attachments' : ' without attachments'}`
+          description: `Invoice has been sent to ${selectedClient.email}`
         });
       } catch (error: any) {
         console.error('Error calling edge function:', error);
@@ -736,14 +750,14 @@ export const useInvoiceForm = () => {
                     upsert: true,
                     cacheControl: '3600'
                   });
-                  
+                
                 if (uploadError) {
                   console.error("Error uploading PDF:", uploadError);
                   throw new Error("Failed to upload PDF");
                 }
                 
                 if (selectedClient?.email) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise(resolve => setTimeout(resolve, 1500));
                   await handleSendEmail(id);
                 } else {
                   const shouldDownload = window.confirm('Invoice updated and PDF generated. Do you want to download the PDF?');
@@ -823,7 +837,7 @@ export const useInvoiceForm = () => {
                 }
                 
                 if (selectedClient?.email) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise(resolve => setTimeout(resolve, 1500));
                   await handleSendEmail(invoiceId);
                 } else {
                   const shouldDownload = window.confirm('Invoice created and PDF generated. Do you want to download the PDF?');
@@ -939,4 +953,3 @@ export const useInvoiceForm = () => {
     fetchAvailableItems
   };
 };
-
