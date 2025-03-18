@@ -99,7 +99,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         <button
           type="button"
           onClick={handleSaveAsDraft}
-          className={`px-4 py-2 rounded-full hover:shadow-md font-medium transition-colors ${
+          className={`draft-button ${
             status === "draft"
               ? "bg-gray-300 text-gray-700"
               : "text-gray-500 hover:bg-gray-50"
@@ -124,7 +124,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <button
           type="button"
-          className="apple-button flex items-center gap-2 !bg-orange-500 text-white hover:!bg-orange-600 hover:!shadow-neon-orange focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+          className="yuki-button"
           onClick={handleCreateAndSendYuki}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
