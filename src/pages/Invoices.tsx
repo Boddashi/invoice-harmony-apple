@@ -390,7 +390,7 @@ const Invoices = () => {
                 onClick={() => setFilter("draft")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "all"
+                  filter === "draft"
                     ? "apple-button text-white hover:!shadow-none"
                     : ""
                 )}
@@ -401,7 +401,7 @@ const Invoices = () => {
                 onClick={() => setFilter("pending")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "all"
+                  filter === "pending"
                     ? "apple-button text-white hover:!shadow-none"
                     : ""
                 )}
@@ -412,7 +412,7 @@ const Invoices = () => {
                 onClick={() => setFilter("paid")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "all"
+                  filter === "paid"
                     ? "apple-button text-white hover:!shadow-none"
                     : ""
                 )}
@@ -423,7 +423,7 @@ const Invoices = () => {
                 onClick={() => setFilter("overdue")}
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
-                  filter === "all"
+                  filter === "overdue"
                     ? "apple-button text-white hover:!shadow-none"
                     : ""
                 )}
