@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileDown, Mail } from "lucide-react";
@@ -100,9 +99,9 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         <button
           type="button"
           onClick={handleSaveAsDraft}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`px-4 py-2 rounded-full hover:shadow-md font-medium transition-colors ${
             status === "draft"
-              ? "bg-gray-100 text-gray-700"
+              ? "bg-gray-300 text-gray-700"
               : "text-gray-500 hover:bg-gray-50"
           }`}
           disabled={isSubmitting || isGeneratingPDF}
@@ -125,7 +124,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <button
           type="button"
-          className="apple-button flex items-center gap-2 !bg-orange-500 text-white !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+          className="apple-button flex items-center gap-2 !bg-orange-500 text-white hover:!bg-orange-600 hover:!shadow-neon-orange focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
           onClick={handleCreateAndSendYuki}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
