@@ -309,7 +309,7 @@ const Index = () => {
                           <ChartTooltipContent
                             formatter={(value: number) => [
                               `${currencySymbol}${value.toFixed(2)}`,
-                              "Revenue",
+                              " Revenue",
                             ]}
                           />
                         }
