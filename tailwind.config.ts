@@ -166,7 +166,7 @@ export default {
         "neon-sm": "0 0 5px rgba(139, 92, 246, 0.5)",
         "neon-md": "0 0 15px rgba(139, 92, 246, 0.7)",
         "neon-lg": "0 0 25px rgba(139, 92, 246, 0.9)",
-        "gray-lg": "0 0 25px rgba(107 114 128, 0.9)",
+        "gray-lg": "0 0 25px rgba(229 231 235, 0.9)",
       },
       backdropBlur: {
         apple: "20px",
