@@ -392,7 +392,7 @@ const Invoices = () => {
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "draft"
                     ? "apple-button text-white hover:!shadow-none"
-                    : ""
+                    : "hover:bg-secondary"
                 )}
               >
                 Draft
@@ -403,7 +403,7 @@ const Invoices = () => {
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "pending"
                     ? "apple-button text-white hover:!shadow-none"
-                    : ""
+                    : "hover:bg-secondary"
                 )}
               >
                 Pending
@@ -414,7 +414,7 @@ const Invoices = () => {
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "paid"
                     ? "apple-button text-white hover:!shadow-none"
-                    : ""
+                    : "hover:bg-secondary"
                 )}
               >
                 Paid
@@ -425,7 +425,7 @@ const Invoices = () => {
                   "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "overdue"
                     ? "apple-button text-white hover:!shadow-none"
-                    : ""
+                    : "hover:bg-secondary"
                 )}
               >
                 Overdue
