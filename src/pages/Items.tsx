@@ -240,14 +240,6 @@ const Items = () => {
             </div>
           ) : (
             <div>
-              <div className="p-4 border-b">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Your Items</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {getSortedItems().length} of {items.length} items
-                  </p>
-                </div>
-              </div>
               <Table>
                 <TableHeader>
                   <TableRow>
