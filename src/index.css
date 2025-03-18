@@ -108,6 +108,7 @@
     min-height: 100vh;
   }
 
+  /* Light mode styling */
   .glass-card {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-apple-sm rounded-xl;
   }
@@ -141,6 +142,7 @@
            active:scale-[0.98];
   }
 
+  /* Dark mode styling */
   .dark .glass-card {
     @apply bg-card/40 backdrop-blur-md border border-white/5 shadow-neon-sm;
   }
@@ -197,26 +199,8 @@
     @apply animate-glow;
   }
 
-  .table-container {
-    @apply w-full overflow-x-auto rounded-lg border border-border bg-background/60 dark:bg-card/20;
-  }
-
-  .table-header-cell {
-    @apply cursor-pointer hover:bg-secondary/50 transition-colors;
-  }
-
-  .table-sort-icon {
-    @apply ml-1 inline-block transition-transform text-muted-foreground;
-  }
-
-  .table-sort-icon-active {
-    @apply text-foreground;
-  }
-
-  .table-mobile-card {
-    @apply p-4 bg-background/60 dark:bg-card/20 rounded-lg border border-border mb-2;
-  }
-
+  /* Custom scrollbar styles */
+  /* For Webkit browsers (Chrome, Safari) */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -234,16 +218,19 @@
     @apply bg-muted-foreground/30;
   }
 
+  /* For Firefox */
   * {
     scrollbar-color: hsl(var(--muted)) transparent;
     scrollbar-width: thin;
   }
 
+  /* Dark mode mobile bottom navbar fix */
   .dark .fixed.bottom-0.left-0.right-0.h-16 {
     @apply bg-sidebar/90 backdrop-blur-apple border-sidebar-border;
   }
 }
 
+/* Transition Group Animations */
 .page-enter {
   opacity: 0;
   transform: scale(0.98);

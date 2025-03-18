@@ -169,7 +169,6 @@ export default {
         "gray-sm": "0 0 5px rgba(229 231 235, 0.9)",
         "gray-md": "0 0 15px rgba(229 231 235, 0.9)",
         "gray-lg": "0 0 25px rgba(229 231 235, 0.9)",
-        "neon-orange": "0 0 15px rgba(249, 115, 22, 0.7)",
       },
       backdropBlur: {
         apple: "20px",

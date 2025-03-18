@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import {
@@ -215,7 +214,7 @@ const Items = () => {
           </div>
         </div>
 
-        <div className="table-container">
+        <CustomCard className="p-0">
           {loading ? (
             <div className="flex justify-center p-12">
               <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
@@ -253,30 +252,30 @@ const Items = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead
-                      className="table-header-cell w-[250px]"
+                      className="w-[250px] cursor-pointer"
                       onClick={() => handleSort("title")}
                     >
                       <div className="flex items-center">
                         Item Name
-                        <ArrowUpDown className={`table-sort-icon ${sortField === "title" ? "table-sort-icon-active" : ""}`} />
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
                     </TableHead>
                     <TableHead
-                      className="table-header-cell text-right"
+                      className="text-right cursor-pointer"
                       onClick={() => handleSort("price")}
                     >
                       <div className="flex items-center justify-end">
                         Price
-                        <ArrowUpDown className={`table-sort-icon ${sortField === "price" ? "table-sort-icon-active" : ""}`} />
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
                     </TableHead>
                     <TableHead
-                      className="table-header-cell"
+                      className="cursor-pointer"
                       onClick={() => handleSort("vat")}
                     >
                       <div className="flex items-center">
                         VAT Rate
-                        <ArrowUpDown className={`table-sort-icon ${sortField === "vat" ? "table-sort-icon-active" : ""}`} />
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
                     </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -351,7 +350,7 @@ const Items = () => {
               </Table>
             </div>
           )}
-        </div>
+        </CustomCard>
       </div>
     </MainLayout>
   );
