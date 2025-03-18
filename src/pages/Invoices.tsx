@@ -373,7 +373,7 @@ const Invoices = () => {
             />
           </div>
 
-          <div className="flex overflow-x-auto pb-1 -mx-2 !px-4 !py-4 md:mx-2 md:px-2 scrollbar-none">
+          <div className="flex overflow-x-auto pb-1 -mx-2 !px-4 !py-4 md:mx-2 md:px-4 md:py-4 scrollbar-none">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setFilter("all")}
