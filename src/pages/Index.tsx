@@ -17,7 +17,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { ChartContainer } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -300,11 +304,15 @@ const Index = () => {
                         }}
                         tickFormatter={(value) => `${currencySymbol}${value}`}
                       />
-                      <Tooltip
-                        formatter={(value: number) => [
-                          `${currencySymbol}${value.toFixed(2)}`,
-                          "Revenue",
-                        ]}
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value: number) => [
+                              `${currencySymbol}${value.toFixed(2)}`,
+                              "Revenue",
+                            ]}
+                          />
+                        }
                       />
                       <Area
                         type="monotone"
