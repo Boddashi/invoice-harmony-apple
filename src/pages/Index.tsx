@@ -17,6 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { ChartContainer } from "@/components/ui/chart";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -215,6 +216,15 @@ const Index = () => {
   const handleDataRefresh = () => {
     setRefreshTrigger((prev) => prev + 1);
   };
+  const chartConfig = {
+    revenue: {
+      label: "Revenue",
+      theme: {
+        light: "#8B5CF6",
+        dark: "#8B5CF6",
+      },
+    },
+  };
 
   return (
     <MainLayout>
@@ -267,42 +277,44 @@ const Index = () => {
             <div className="h-[240px]">
               {revenueData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={revenueData}
-                    margin={{
-                      top: 10,
-                      right: 10,
-                      left: 0,
-                      bottom: 0,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{
-                        fontSize: 12,
+                  <ChartContainer config={chartConfig}>
+                    <AreaChart
+                      data={revenueData}
+                      margin={{
+                        top: 10,
+                        right: 10,
+                        left: 0,
+                        bottom: 0,
                       }}
-                    />
-                    <YAxis
-                      tick={{
-                        fontSize: 12,
-                      }}
-                      tickFormatter={(value) => `${currencySymbol}${value}`}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => [
-                        `${currencySymbol}${value.toFixed(2)}`,
-                        "Revenue",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="amount"
-                      stroke="#3b82f6"
-                      fill="#3b82f6"
-                      fillOpacity={0.1}
-                    />
-                  </AreaChart>
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{
+                          fontSize: 12,
+                        }}
+                      />
+                      <YAxis
+                        tick={{
+                          fontSize: 12,
+                        }}
+                        tickFormatter={(value) => `${currencySymbol}${value}`}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => [
+                          `${currencySymbol}${value.toFixed(2)}`,
+                          "Revenue",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#3b82f6"
+                        fill="#3b82f6"
+                        fillOpacity={0.1}
+                      />
+                    </AreaChart>
+                  </ChartContainer>
                 </ResponsiveContainer>
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
