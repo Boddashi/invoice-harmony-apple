@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileDown, Mail } from 'lucide-react';
@@ -106,15 +105,14 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
         </button>
         
-        {/* New Orange Button */}
-        <Button 
+        <button 
           type="button" 
-          className="bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white shadow-md transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50" 
           onClick={handleCreateAndSend}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
           Create & Send & Yuki
-        </Button>
+        </button>
       </div>
     </div>
   );
