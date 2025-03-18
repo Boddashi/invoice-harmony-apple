@@ -603,7 +603,6 @@ export const useInvoiceForm = () => {
       if (!publicUrlData || !publicUrlData.publicUrl) {
         throw new Error("PDF URL is not available");
       }
-
       console.log("PDF public URL:", publicUrlData.publicUrl);
 
       // Get terms and conditions URL if available.
@@ -642,6 +641,12 @@ export const useInvoiceForm = () => {
       // Check response for errors.
       if (response.error) {
         console.error("Supabase function error:", response.error);
+        // Check specifically for worker limit error.
+        if (response.error.message.includes("WORKER_LIMIT")) {
+          throw new Error(
+            "Our servers are currently experiencing high load. Please try again in a few minutes."
+          );
+        }
         throw new Error(response.error.message || "Failed to send email");
       }
       if (response.data?.error) {
