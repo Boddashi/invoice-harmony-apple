@@ -24,6 +24,7 @@ import {
   CartesianGrid,
   ResponsiveContainer
 } from 'recharts';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 export type TimePeriod = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -43,6 +44,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   selectedPeriod
 }) => {
   const isMobile = useIsMobile();
+  const { theme } = useTheme();
+  const isDarkMode = theme === 'dark';
   const hasValidData = data && data.length > 0;
   
   const chartData = React.useMemo(() => {
@@ -111,6 +114,14 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                   <stop offset="5%" stopColor="#A78BFA" stopOpacity={1}/>
                   <stop offset="95%" stopColor="#A78BFA" stopOpacity={0.3}/>
                 </linearGradient>
+                <linearGradient id="colorRevenueDark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#A78BFA" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#A78BFA" stopOpacity={0.2}/>
+                </linearGradient>
+                <linearGradient id="colorRevenueHoverDark" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#C4B5FD" stopOpacity={1}/>
+                  <stop offset="95%" stopColor="#C4B5FD" stopOpacity={0.4}/>
+                </linearGradient>
               </defs>
               <CartesianGrid 
                 strokeDasharray="3 3" 
@@ -148,14 +159,22 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
                 content={
                   <ChartTooltipContent 
                     formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
+                    className={isDarkMode ? "bg-card/90 border-border" : ""}
                   />
                 }
               />
               <Bar 
                 dataKey="amount" 
-                fill="url(#colorRevenue)"
+                fill={isDarkMode ? "url(#colorRevenueDark)" : "url(#colorRevenue)"}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={isMobile ? 30 : 50}
+                className="cursor-pointer"
+                onMouseOver={(data, index) => {
+                  document.querySelector(`.recharts-bar-rectangle:nth-child(${index + 1}) path`)?.setAttribute('fill', isDarkMode ? 'url(#colorRevenueHoverDark)' : 'url(#colorRevenueHover)');
+                }}
+                onMouseOut={(data, index) => {
+                  document.querySelector(`.recharts-bar-rectangle:nth-child(${index + 1}) path`)?.setAttribute('fill', isDarkMode ? 'url(#colorRevenueDark)' : 'url(#colorRevenue)');
+                }}
               />
             </BarChart>
           </ChartContainer>
