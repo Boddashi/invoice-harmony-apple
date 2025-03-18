@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Process invoice PDF if URL is provided
       if (pdfUrl) {
         try {
-          console.log(`Starting to fetch invoice PDF from: ${pdfUrl}`);
+          console.log(`Fetching invoice PDF from: ${pdfUrl}`);
           
           // Make sure we have a properly formatted URL
           const fetchUrl = pdfUrl.startsWith('http') ? pdfUrl : `https://${pdfUrl}`;
@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (!response.ok) {
             console.error(`Failed to fetch invoice PDF: ${response.status} ${response.statusText}`);
           } else {
-            console.log("Invoice PDF fetched successfully, processing...");
+            console.log("Invoice PDF fetched successfully");
             const arrayBuffer = await response.arrayBuffer();
             const pdfData = new Uint8Array(arrayBuffer);
             
@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       // Process terms and conditions PDF if URL is provided
       if (termsAndConditionsUrl) {
         try {
-          console.log(`Starting to fetch terms PDF from: ${termsAndConditionsUrl}`);
+          console.log(`Fetching terms PDF from: ${termsAndConditionsUrl}`);
           
           // Make sure we have a properly formatted URL
           const fetchUrl = termsAndConditionsUrl.startsWith('http') ? termsAndConditionsUrl : `https://${termsAndConditionsUrl}`;
@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
           if (!response.ok) {
             console.error(`Failed to fetch terms PDF: ${response.status} ${response.statusText}`);
           } else {
-            console.log("Terms PDF fetched successfully, processing...");
+            console.log("Terms PDF fetched successfully");
             const arrayBuffer = await response.arrayBuffer();
             const termsData = new Uint8Array(arrayBuffer);
             
@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    console.log(`Preparing to send email with ${attachments.length} attachments`);
+    console.log(`Ready to send email with ${attachments.length} attachments`);
     
     // Prepare the email HTML content
     const emailHtml = `

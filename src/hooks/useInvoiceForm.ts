@@ -572,7 +572,7 @@ export const useInvoiceForm = () => {
       try {
         const includeAttachments = true;
         
-        await new Promise(resolve => setTimeout(resolve, 3500));
+        await new Promise(resolve => setTimeout(resolve, 5000));
         
         console.log("Invoking send-invoice-email function with params:", {
           clientName: selectedClient.name,
