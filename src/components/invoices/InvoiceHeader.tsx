@@ -122,7 +122,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <button
           type="button"
-          className="apple-button flex items-center gap-2 rounded-full !bg-orange-500 text-white transition-colors !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
+          className="apple-button flex items-center gap-2 rounded-full !bg-orange-500 text-white !transition-colors !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
           onClick={handleCreateAndSend}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
