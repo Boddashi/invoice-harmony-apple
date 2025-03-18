@@ -570,7 +570,6 @@ export const useInvoiceForm = () => {
   };
 
   const handleSendEmail = async (invoiceId?: string) => {
-    // Validate required client info
     if (!selectedClient) {
       toast({
         variant: "destructive",
@@ -591,32 +590,30 @@ export const useInvoiceForm = () => {
     setIsSendingEmail(true);
 
     try {
-      // Determine invoice ID
       const actualInvoiceId = invoiceId || id;
       if (!actualInvoiceId) {
         throw new Error("Invoice ID is missing");
       }
 
-      // Retrieve public URL for the invoice PDF from Supabase Storage
+      // Retrieve the public URL for the invoice PDF from Supabase Storage.
       const { data: publicUrlData } = supabase.storage
         .from("invoices")
         .getPublicUrl(`${actualInvoiceId}/invoice.pdf`);
+
       if (!publicUrlData || !publicUrlData.publicUrl) {
         throw new Error("PDF URL is not available");
       }
-      console.log("Sending email with PDF URL:", publicUrlData.publicUrl);
 
-      // Optionally include terms and conditions URL
+      console.log("PDF public URL:", publicUrlData.publicUrl);
+
+      // Get terms and conditions URL if available.
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
-        console.log("Terms and conditions URL:", termsAndConditionsUrl);
+        console.log("Terms and Conditions URL:", termsAndConditionsUrl);
       }
 
-      // Add a small delay if necessary
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Log the parameters for debugging purposes
+      // Prepare email parameters.
       const emailParams = {
         clientName: selectedClient.name,
         clientEmail: selectedClient.email,
@@ -626,28 +623,23 @@ export const useInvoiceForm = () => {
         companyName: companySettings?.company_name || "PowerPeppol",
         includeAttachments: true,
       };
-      console.log(
-        "Invoking send-invoice-email function with params:",
-        emailParams
-      );
+      console.log("Email parameters:", emailParams);
 
-      // Invoke the edge function to send the email
+      // Invoke the Supabase edge function to send the email.
       let response;
       try {
         response = await supabase.functions.invoke("send-invoice-email", {
           body: emailParams,
         });
-        console.log("Email function response:", response);
+        console.log("Edge function response:", response);
       } catch (invokeError: any) {
         console.error("Error invoking edge function:", invokeError);
         throw new Error(
-          `Edge function invocation error: ${
-            invokeError.message || "Unknown error"
-          }`
+          "Edge function invocation error: " + invokeError.message
         );
       }
 
-      // Check the response from the edge function for errors
+      // Check response for errors.
       if (response.error) {
         console.error("Supabase function error:", response.error);
         throw new Error(response.error.message || "Failed to send email");
@@ -720,7 +712,6 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-
     if (!selectedClientId) {
       toast({
         variant: "destructive",
@@ -729,7 +720,6 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-
     if (items.some((item) => !item.description || item.amount === 0)) {
       toast({
         variant: "destructive",
@@ -738,7 +728,6 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-
     if (!dueDate) {
       toast({
         variant: "destructive",
@@ -748,11 +737,12 @@ export const useInvoiceForm = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       let invoiceId = id;
 
       if (isEditMode) {
+        // Update existing invoice.
         const { error: invoiceError } = await supabase
           .from("invoices")
           .update({
@@ -768,7 +758,6 @@ export const useInvoiceForm = () => {
             notes: notes,
           })
           .eq("id", id);
-
         if (invoiceError) {
           throw invoiceError;
         }
@@ -787,70 +776,14 @@ export const useInvoiceForm = () => {
           quantity: item.quantity,
           total_amount: item.amount,
         }));
-
         const { error: invoiceItemsError } = await supabase
           .from("invoice_items")
           .insert(invoiceItems);
         if (invoiceItemsError) {
           throw invoiceItemsError;
         }
-
-        if (status === "pending") {
-          const pdfBase64 = await generatePDF(id);
-          if (pdfBase64) {
-            setPdfUrl(pdfBase64);
-
-            try {
-              const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
-
-              if (pdfBlob) {
-                const { error: uploadError } = await supabase.storage
-                  .from("invoices")
-                  .upload(`${id}/invoice.pdf`, pdfBlob, {
-                    upsert: true,
-                    cacheControl: "3600",
-                  });
-
-                if (uploadError) {
-                  console.error("Error uploading PDF:", uploadError);
-                  throw new Error("Failed to upload PDF");
-                }
-
-                if (selectedClient?.email) {
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                  await handleSendEmail(id);
-                } else {
-                  const shouldDownload = window.confirm(
-                    "Invoice updated and PDF generated. Do you want to download the PDF?"
-                  );
-                  if (shouldDownload) {
-                    handleDownloadPDF();
-                  }
-                }
-              }
-            } catch (error) {
-              console.error("Error processing PDF:", error);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to process PDF for email",
-              });
-            }
-
-            navigate("/invoices");
-            return;
-          }
-        }
-
-        toast({
-          title: "Success",
-          description: `Invoice ${
-            status === "draft" ? "saved as draft" : "updated"
-          } successfully.`,
-        });
-
-        navigate("/invoices");
       } else {
+        // Insert a new invoice.
         const { data: invoice, error: invoiceError } = await supabase
           .from("invoices")
           .insert({
@@ -868,9 +801,7 @@ export const useInvoiceForm = () => {
           })
           .select()
           .single();
-
         if (invoiceError) throw invoiceError;
-
         invoiceId = invoice.id;
 
         const invoiceItems = items.map((item) => ({
@@ -879,68 +810,57 @@ export const useInvoiceForm = () => {
           quantity: item.quantity,
           total_amount: item.amount,
         }));
-
         const { error: invoiceItemsError } = await supabase
           .from("invoice_items")
           .insert(invoiceItems);
         if (invoiceItemsError) throw invoiceItemsError;
+      }
 
-        if (status === "pending") {
-          const pdfBase64 = await generatePDF(invoiceId);
-          if (pdfBase64) {
-            setPdfUrl(pdfBase64);
+      // If invoice is pending, generate and upload the PDF, then send email.
+      if (status === "pending") {
+        const pdfBase64 = await generatePDF(invoiceId!);
+        if (pdfBase64) {
+          setPdfUrl(pdfBase64);
+          try {
+            const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
+            if (!pdfBlob) throw new Error("PDF blob is empty");
 
-            try {
-              const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
-
-              if (pdfBlob) {
-                const { error: uploadError } = await supabase.storage
-                  .from("invoices")
-                  .upload(`${invoiceId}/invoice.pdf`, pdfBlob, {
-                    upsert: true,
-                    cacheControl: "3600",
-                  });
-
-                if (uploadError) {
-                  console.error("Error uploading PDF:", uploadError);
-                  throw new Error("Failed to upload PDF");
-                }
-
-                if (selectedClient?.email) {
-                  await new Promise((resolve) => setTimeout(resolve, 1500));
-                  await handleSendEmail(invoiceId);
-                } else {
-                  const shouldDownload = window.confirm(
-                    "Invoice created and PDF generated. Do you want to download the PDF?"
-                  );
-                  if (shouldDownload) {
-                    handleDownloadPDF();
-                  }
-                }
-              }
-            } catch (error) {
-              console.error("Error processing PDF:", error);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to process PDF for email",
+            const { error: uploadError } = await supabase.storage
+              .from("invoices")
+              .upload(`${invoiceId}/invoice.pdf`, pdfBlob, {
+                upsert: true,
+                cacheControl: "3600",
               });
+            if (uploadError) {
+              console.error("Error uploading PDF:", uploadError);
+              throw new Error("Failed to upload PDF");
             }
 
-            navigate("/invoices");
-            return;
+            // Delay briefly to ensure file is available.
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            // Send the email.
+            await handleSendEmail(invoiceId);
+          } catch (pdfError: any) {
+            console.error("Error processing PDF:", pdfError);
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Failed to process PDF for email",
+            });
           }
+          navigate("/invoices");
+          return;
         }
-
-        toast({
-          title: "Success",
-          description: `Invoice ${
-            status === "draft" ? "saved as draft" : "created"
-          } successfully.`,
-        });
-
-        navigate("/invoices");
       }
+
+      toast({
+        title: "Success",
+        description: `Invoice ${
+          status === "draft" ? "saved as draft" : "created"
+        } successfully.`,
+      });
+      navigate("/invoices");
     } catch (error: any) {
       console.error("Error saving invoice:", error);
       toast({
