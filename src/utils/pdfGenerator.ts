@@ -184,7 +184,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
   try {
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 1.5, // Reduced from 2 to 1.5 for smaller file size
       useCORS: true,
       logging: false
     });
@@ -194,15 +194,16 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: 'a4'
+      format: 'a4',
+      compress: true // Enable PDF compression
     });
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG with 70% quality for smaller size
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
 
     const pdfBase64 = pdf.output('datauristring');
     

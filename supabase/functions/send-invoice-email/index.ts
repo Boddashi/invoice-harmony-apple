@@ -20,7 +20,6 @@ interface SendInvoiceEmailRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -58,7 +57,6 @@ const handler = async (req: Request): Promise<Response> => {
         try {
           console.log(`Fetching invoice PDF from: ${pdfUrl}`);
           
-          // Make sure we have a properly formatted URL
           const fetchUrl = pdfUrl.startsWith('http') ? pdfUrl : `https://${pdfUrl}`;
           
           const response = await fetch(fetchUrl, {
@@ -76,9 +74,23 @@ const handler = async (req: Request): Promise<Response> => {
             const arrayBuffer = await response.arrayBuffer();
             const pdfData = new Uint8Array(arrayBuffer);
             
+            // Process in smaller chunks to avoid memory issues
+            const chunkSize = 512 * 1024; // 512KB chunks
+            const chunks = [];
+            for (let i = 0; i < pdfData.length; i += chunkSize) {
+              chunks.push(pdfData.slice(i, i + chunkSize));
+            }
+            
+            const processedPdf = new Uint8Array(pdfData.length);
+            let offset = 0;
+            for (const chunk of chunks) {
+              processedPdf.set(chunk, offset);
+              offset += chunk.length;
+            }
+            
             attachments.push({
               filename: `invoice-${invoiceNumber}.pdf`,
-              content: pdfData
+              content: processedPdf
             });
             console.log("Invoice PDF successfully added to attachments");
           }
@@ -88,12 +100,11 @@ const handler = async (req: Request): Promise<Response> => {
         }
       }
 
-      // Process terms and conditions PDF if URL is provided
+      // Process terms and conditions PDF with similar chunking if URL is provided
       if (termsAndConditionsUrl) {
         try {
           console.log(`Fetching terms PDF from: ${termsAndConditionsUrl}`);
           
-          // Make sure we have a properly formatted URL
           const fetchUrl = termsAndConditionsUrl.startsWith('http') ? termsAndConditionsUrl : `https://${termsAndConditionsUrl}`;
           
           const response = await fetch(fetchUrl, {
@@ -111,15 +122,28 @@ const handler = async (req: Request): Promise<Response> => {
             const arrayBuffer = await response.arrayBuffer();
             const termsData = new Uint8Array(arrayBuffer);
             
+            // Process in smaller chunks
+            const chunkSize = 512 * 1024; // 512KB chunks
+            const chunks = [];
+            for (let i = 0; i < termsData.length; i += chunkSize) {
+              chunks.push(termsData.slice(i, i + chunkSize));
+            }
+            
+            const processedTerms = new Uint8Array(termsData.length);
+            let offset = 0;
+            for (const chunk of chunks) {
+              processedTerms.set(chunk, offset);
+              offset += chunk.length;
+            }
+            
             attachments.push({
               filename: "terms-and-conditions.pdf",
-              content: termsData
+              content: processedTerms
             });
             console.log("Terms and conditions PDF successfully added to attachments");
           }
         } catch (error) {
           console.error("Error processing terms PDF:", error);
-          // Continue without the terms attachment
         }
       }
     }
@@ -214,8 +238,6 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error sending invoice email:", error);
-    
-    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: error.message,
