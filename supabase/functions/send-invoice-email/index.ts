@@ -18,6 +18,7 @@ interface SendInvoiceEmailRequest {
   companyName: string;
   includeAttachments: boolean;
   pdfBase64?: string;
+  yukiEmail?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -38,7 +39,8 @@ const handler = async (req: Request): Promise<Response> => {
       termsAndConditionsUrl, 
       companyName,
       includeAttachments = true,
-      pdfBase64
+      pdfBase64,
+      yukiEmail
     }: SendInvoiceEmailRequest = requestData;
 
     if (!clientEmail) {
@@ -47,6 +49,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log(`Sending invoice email to ${clientEmail}`);
+    if (yukiEmail) {
+      console.log(`Also sending copy to Yuki email: ${yukiEmail}`);
+    }
     console.log(`Include attachments: ${includeAttachments}`);
     
     const attachments = [];
@@ -136,10 +141,16 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
     
+    // Configure email recipients
+    const recipients = [clientEmail];
+    if (yukiEmail) {
+      recipients.push(yukiEmail);
+    }
+    
     // Configure email with attachments
     const emailConfig = {
       from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
-      to: [clientEmail],
+      to: recipients,
       subject: `Invoice #${invoiceNumber}`,
       html: emailHtml,
       attachments: attachments.length > 0 ? attachments : undefined

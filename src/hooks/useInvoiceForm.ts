@@ -80,6 +80,7 @@ export const useInvoiceForm = () => {
   const [vats, setVats] = useState<Vat[]>([]);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [companySettings, setCompanySettings] = useState<any>(null);
+  const [sendToYuki, setSendToYuki] = useState(false);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -569,7 +570,7 @@ export const useInvoiceForm = () => {
     }
   };
 
-  const handleSendEmail = async (invoiceId?: string) => {
+  const handleSendEmail = async (invoiceId?: string, includeYuki: boolean = false) => {
     if (!selectedClient) {
       toast({
         variant: "destructive",
@@ -612,6 +613,8 @@ export const useInvoiceForm = () => {
         console.log("Terms and Conditions URL:", termsAndConditionsUrl);
       }
 
+      const yukiEmail = includeYuki ? companySettings?.yuki_email : undefined;
+      
       // Prepare email parameters.
       const emailParams = {
         clientName: selectedClient.name,
@@ -621,6 +624,7 @@ export const useInvoiceForm = () => {
         termsAndConditionsUrl,
         companyName: companySettings?.company_name || "PowerPeppol",
         includeAttachments: true,
+        yukiEmail,
       };
       console.log("Email parameters:", emailParams);
 
@@ -654,9 +658,13 @@ export const useInvoiceForm = () => {
         throw new Error(response.data.error || "Email service error");
       }
 
+      const emailSentMessage = includeYuki 
+        ? `Invoice has been sent to ${selectedClient.email} and ${yukiEmail}`
+        : `Invoice has been sent to ${selectedClient.email}`;
+
       toast({
         title: "Email Sent",
-        description: `Invoice has been sent to ${selectedClient.email}`,
+        description: emailSentMessage,
       });
     } catch (error: any) {
       console.error("Error sending email:", error);
@@ -693,9 +701,23 @@ export const useInvoiceForm = () => {
     }, 0);
   };
 
+  const handleCreateAndSendYuki = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setStatus("pending");
+    setSendToYuki(true);
+    setTimeout(() => {
+      const form = document.getElementById("invoice-form") as HTMLFormElement;
+      if (form)
+        form.dispatchEvent(
+          new Event("submit", { cancelable: true, bubbles: true })
+        );
+    }, 0);
+  };
+
   const handleCreateAndSend = (e: React.MouseEvent) => {
     e.preventDefault();
     setStatus("pending");
+    setSendToYuki(false);
     setTimeout(() => {
       const form = document.getElementById("invoice-form") as HTMLFormElement;
       if (form)
@@ -708,6 +730,7 @@ export const useInvoiceForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with status:", status);
+    console.log("Send to Yuki:", sendToYuki);
 
     if (!user) {
       toast({
@@ -844,8 +867,8 @@ export const useInvoiceForm = () => {
             // Delay briefly to ensure file is available.
             await new Promise((resolve) => setTimeout(resolve, 1500));
 
-            // Send the email.
-            await handleSendEmail(invoiceId);
+            // Send the email with Yuki CC if requested
+            await handleSendEmail(invoiceId, sendToYuki);
           } catch (pdfError: any) {
             console.error("Error processing PDF:", pdfError);
             toast({
@@ -950,8 +973,10 @@ export const useInvoiceForm = () => {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
+    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems,
   };
 };
+

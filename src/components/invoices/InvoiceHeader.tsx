@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileDown, Mail } from "lucide-react";
@@ -19,6 +20,7 @@ interface InvoiceHeaderProps {
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
+  handleCreateAndSendYuki?: (e: React.MouseEvent) => void;
   handleSendEmail?: () => void;
 }
 
@@ -32,6 +34,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   handleDownloadPDF,
   handleSaveAsDraft,
   handleCreateAndSend,
+  handleCreateAndSendYuki,
   handleSendEmail,
 }) => {
   const navigate = useNavigate();
@@ -122,11 +125,13 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
 
         <button
           type="button"
-          className="apple-button flex items-center gap-2 rounded-full !bg-orange-500 text-white !transition-colors !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
-          onClick={handleCreateAndSend}
+          className="apple-button flex items-center gap-2 !bg-orange-500 text-white !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none"
+          onClick={handleCreateAndSendYuki}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
-          Create & Send & Yuki
+          {isSubmitting && status === "pending"
+            ? "Saving..."
+            : "Create & Send & Yuki"}
         </button>
       </div>
     </div>

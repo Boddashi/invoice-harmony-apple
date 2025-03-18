@@ -51,6 +51,7 @@ const NewInvoice = () => {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
+    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems
@@ -83,6 +84,7 @@ const NewInvoice = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
+          handleCreateAndSendYuki={handleCreateAndSendYuki}
           handleSendEmail={pdfUrl ? () => handleSendEmail() : undefined}
         />
         
