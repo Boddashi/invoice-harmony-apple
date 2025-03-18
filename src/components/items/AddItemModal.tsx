@@ -243,7 +243,7 @@ const AddItemModal = ({
               Cancel
             </Button>
             <Button
-              className="apple-button"
+              className="apple-button dark:hover:bg-neon-purple"
               type="submit"
               variant="apple"
               disabled={loading || fetchingVatRates || vatRates.length === 0}
