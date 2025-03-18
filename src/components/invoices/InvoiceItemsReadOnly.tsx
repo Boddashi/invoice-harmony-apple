@@ -1,6 +1,5 @@
 
 import React from 'react';
-import CustomCard from '../ui/CustomCard';
 
 interface Item {
   id: string;
@@ -35,43 +34,47 @@ const InvoiceItemsReadOnly: React.FC<InvoiceItemsReadOnlyProps> = ({
   };
 
   return (
-    <CustomCard>
-      <h3 className="text-lg font-medium mb-4">Items</h3>
-      
-      <div className="space-y-4">
-        <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
-          <div className="col-span-5">Item</div>
-          <div className="col-span-2">Quantity</div>
-          <div className="col-span-2">Unit Price</div>
-          <div className="col-span-2">VAT</div>
-          <div className="col-span-1 text-right">Amount</div>
-        </div>
-        
-        {items.map((item) => (
-          <div key={item.id} className="grid grid-cols-12 gap-4 items-center py-2 border-b border-gray-100 last:border-0">
-            <div className="col-span-5 font-medium">
-              {getItemTitle(item.description)}
-            </div>
-            
-            <div className="col-span-2">
-              {item.quantity}
-            </div>
-            
-            <div className="col-span-2">
-              {currencySymbol}{item.unit_price.toFixed(2)}
-            </div>
-
-            <div className="col-span-2">
-              {item.vat_rate}
-            </div>
-            
-            <div className="col-span-1 font-medium text-right">
-              {currencySymbol}{item.amount.toFixed(2)}
-            </div>
-          </div>
-        ))}
+    <div className="table-container">
+      <div className="p-4 border-b">
+        <h3 className="text-lg font-medium">Items</h3>
       </div>
-    </CustomCard>
+      
+      <div className="p-4">
+        <div className="space-y-4">
+          <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
+            <div className="col-span-5">Item</div>
+            <div className="col-span-2">Quantity</div>
+            <div className="col-span-2">Unit Price</div>
+            <div className="col-span-2">VAT</div>
+            <div className="col-span-1 text-right">Amount</div>
+          </div>
+          
+          {items.map((item) => (
+            <div key={item.id} className="grid grid-cols-12 gap-4 items-center py-2 border-b border-border last:border-0">
+              <div className="col-span-5 font-medium">
+                {getItemTitle(item.description)}
+              </div>
+              
+              <div className="col-span-2">
+                {item.quantity}
+              </div>
+              
+              <div className="col-span-2">
+                {currencySymbol}{item.unit_price.toFixed(2)}
+              </div>
+
+              <div className="col-span-2">
+                {item.vat_rate}
+              </div>
+              
+              <div className="col-span-1 font-medium text-right">
+                {currencySymbol}{item.amount.toFixed(2)}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
