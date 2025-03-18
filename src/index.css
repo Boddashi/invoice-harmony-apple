@@ -180,7 +180,7 @@
   }
 
   .dark .select-button {
-    @apply bg-neon-purple hover:!bg-apple-indigo;
+    @apply bg-neon-purple hover:!bg-neon-purple/70;
   }
 
   .neon-border {

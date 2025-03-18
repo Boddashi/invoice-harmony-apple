@@ -1,17 +1,16 @@
-
-import React from 'react';
-import CustomCard from '../ui/CustomCard';
-import { 
+import React from "react";
+import CustomCard from "../ui/CustomCard";
+import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue, 
+  SelectValue,
 } from "@/components/ui/select";
-import { Plus } from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import { Plus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 interface Client {
   id: string;
@@ -29,14 +28,17 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
   clients,
   selectedClientId,
   setSelectedClientId,
-  setIsAddClientModalOpen
+  setIsAddClientModalOpen,
 }) => {
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Client</h3>
-      
+
       <div className="space-y-2">
-        <Label htmlFor="client-select" className="text-sm font-medium text-muted-foreground">
+        <Label
+          htmlFor="client-select"
+          className="text-sm font-medium text-muted-foreground"
+        >
           Select Client
         </Label>
         <Select
@@ -50,16 +52,16 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
-              {clients.map(client => (
+              {clients.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
                   {client.name}
                 </SelectItem>
               ))}
             </SelectGroup>
             <div className="px-2 py-1.5">
-              <Button 
-                variant="apple" 
-                className="w-full justify-start"
+              <Button
+                variant="apple"
+                className="w-full justify-start select-button"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation(); // Prevent event bubbling
