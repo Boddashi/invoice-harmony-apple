@@ -191,7 +191,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         <button
           type="button"
           onClick={handleAddItem}
-          className="flex items-center gap-2 text-apple-purple hover:text-apple-purple/80 font-medium transition-colors"
+          className="flex items-center gap-2 text-apple-blue hover:text-apple-blue/80 dark:text-apple-purple dark:hover:text-apple-purple/80 font-medium transition-colors"
         >
           <Plus size={18} />
           <span>Add Item</span>
