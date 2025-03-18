@@ -244,7 +244,7 @@ const Items = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead
-                      className="w-[250px] cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => handleSort("title")}
                     >
                       <div className="flex items-center">
@@ -253,7 +253,7 @@ const Items = () => {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="text-right cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => handleSort("price")}
                     >
                       <div className="flex items-center justify-end">
