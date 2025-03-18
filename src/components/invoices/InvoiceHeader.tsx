@@ -1,8 +1,13 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileDown, Mail } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, FileDown, Mail } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface InvoiceHeaderProps {
   isEditMode: boolean;
@@ -10,7 +15,7 @@ interface InvoiceHeaderProps {
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
-  status: 'draft' | 'pending';
+  status: "draft" | "pending";
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
@@ -27,32 +32,32 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   handleDownloadPDF,
   handleSaveAsDraft,
   handleCreateAndSend,
-  handleSendEmail
+  handleSendEmail,
 }) => {
   const navigate = useNavigate();
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <button 
-          onClick={() => navigate('/invoices')} 
+        <button
+          onClick={() => navigate("/invoices")}
           className="p-2 rounded-full hover:bg-secondary transition-colors"
         >
           <ArrowLeft size={20} />
         </button>
         <h1 className="text-xl font-semibold">
-          {isEditMode ? 'Edit Invoice' : 'Create New Invoice'}
+          {isEditMode ? "Edit Invoice" : "Create New Invoice"}
         </h1>
       </div>
-      
+
       <div className="flex gap-3">
         {pdfUrl && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
-                  type="button" 
-                  onClick={handleDownloadPDF} 
+                <button
+                  type="button"
+                  onClick={handleDownloadPDF}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors"
                 >
                   <FileDown size={18} />
@@ -65,19 +70,21 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             </Tooltip>
           </TooltipProvider>
         )}
-        
+
         {pdfUrl && handleSendEmail && (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
-                  type="button" 
-                  onClick={handleSendEmail} 
+                <button
+                  type="button"
+                  onClick={handleSendEmail}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={isSendingEmail}
                 >
                   <Mail size={18} />
-                  <span className="hidden sm:inline">{isSendingEmail ? 'Sending...' : 'Send Email'}</span>
+                  <span className="hidden sm:inline">
+                    {isSendingEmail ? "Sending..." : "Send Email"}
+                  </span>
                 </button>
               </TooltipTrigger>
               <TooltipContent>
@@ -86,28 +93,36 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
             </Tooltip>
           </TooltipProvider>
         )}
-        
-        <button 
-          type="button" 
-          onClick={handleSaveAsDraft} 
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${status === 'draft' ? 'bg-gray-100 text-gray-700' : 'text-gray-500 hover:bg-gray-50'}`} 
+
+        <button
+          type="button"
+          onClick={handleSaveAsDraft}
+          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+            status === "draft"
+              ? "bg-gray-100 text-gray-700"
+              : "text-gray-500 hover:bg-gray-50"
+          }`}
           disabled={isSubmitting || isGeneratingPDF}
         >
-          {isSubmitting && status === 'draft' ? 'Saving...' : 'Save as Draft'}
+          {isSubmitting && status === "draft" ? "Saving..." : "Save as Draft"}
         </button>
-        
-        <button 
-          type="button" 
-          onClick={handleCreateAndSend} 
-          className="apple-button flex items-center gap-2" 
+
+        <button
+          type="button"
+          onClick={handleCreateAndSend}
+          className="apple-button flex items-center gap-2"
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
-          {isSubmitting && status === 'pending' ? 'Saving...' : isEditMode ? 'Update & Send' : 'Create & Send'}
+          {isSubmitting && status === "pending"
+            ? "Saving..."
+            : isEditMode
+            ? "Update & Send"
+            : "Create & Send"}
         </button>
-        
-        <button 
-          type="button" 
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white shadow-md transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50" 
+
+        <button
+          type="button"
+          className="apple-button flex items-center gap-2 !bg-orange-500 text-white transition-colors !hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50"
           onClick={handleCreateAndSend}
           disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
         >
