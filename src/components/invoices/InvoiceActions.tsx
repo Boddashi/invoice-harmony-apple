@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -141,7 +140,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
       const { data: settings } = await supabase
         .from('company_settings')
-        .select('default_currency')
+        .select('default_currency, company_name')
         .eq('user_id', user.id)
         .single();
       
@@ -164,20 +163,17 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         currencySymbol
       });
       
-      // Get the PDF URL
       const { data: urlData } = supabase.storage
         .from('invoices')
         .getPublicUrl(`${invoiceId}/invoice.pdf`);
 
-      // Get terms and conditions URL if available
       const { data: termsData } = await supabase
         .from('company_settings')
-        .select('terms_url')
+        .select('terms_and_conditions_url')
         .single();
       
-      const termsUrl = termsData?.terms_url || null;
+      const termsUrl = termsData?.terms_and_conditions_url || null;
       
-      // Send email with link to PDF instead of attachment to save resources
       await supabase.functions.invoke('send-invoice-email', {
         body: {
           clientName: invoice.client?.name || 'Client',
@@ -186,7 +182,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
           pdfUrl: urlData?.publicUrl || null,
           termsAndConditionsUrl: termsUrl,
           companyName: settings?.company_name || 'PowerPeppol',
-          includeAttachments: false // Don't include attachments to avoid WORKER_LIMIT error
+          includeAttachments: false
         }
       });
       
