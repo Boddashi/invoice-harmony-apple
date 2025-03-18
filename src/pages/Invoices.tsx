@@ -380,7 +380,7 @@ const Invoices = () => {
                 className={cn(
                   "apple-button rounded-full text-sm font-medium transition-colors whitespace-nowrap",
                   filter === "all"
-                    ? "bg-apple-blue text-white"
+                    ? "apple-button text-white"
                     : "hover:bg-secondary"
                 )}
               >
