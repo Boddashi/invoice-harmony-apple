@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -148,6 +149,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
                             settings?.default_currency === 'EUR' ? '€' : 
                             settings?.default_currency === 'GBP' ? '£' : '$';
       
+      // Generate the PDF and get its base64 string
       const pdfBase64 = await generateInvoicePDF({
         id: invoiceId,
         invoice_number: invoice.invoice_number,
@@ -174,6 +176,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
       const termsUrl = termsData?.terms_and_conditions_url || null;
       
+      // Pass the PDF base64 data to the edge function
       await supabase.functions.invoke('send-invoice-email', {
         body: {
           clientName: invoice.client?.name || 'Client',
@@ -182,13 +185,14 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
           pdfUrl: urlData?.publicUrl || null,
           termsAndConditionsUrl: termsUrl,
           companyName: settings?.company_name || 'PowerPeppol',
-          includeAttachments: false
+          includeAttachments: true,
+          pdfBase64: pdfBase64 // Pass the PDF data directly
         }
       });
       
       toast({
         title: "Success",
-        description: "Invoice sent successfully and PDF generated"
+        description: "Invoice sent successfully with PDF attachment"
       });
 
       if (onStatusChange) {

@@ -13,10 +13,11 @@ interface SendInvoiceEmailRequest {
   clientName: string;
   clientEmail: string;
   invoiceNumber: string;
-  pdfUrl?: string;
+  pdfUrl: string;
   termsAndConditionsUrl?: string;
   companyName: string;
-  includeAttachments?: boolean;
+  includeAttachments: boolean;
+  pdfBase64?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -36,7 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
       pdfUrl, 
       termsAndConditionsUrl, 
       companyName,
-      includeAttachments = false // Default to false to reduce memory usage
+      includeAttachments = true,
+      pdfBase64
     }: SendInvoiceEmailRequest = requestData;
 
     if (!clientEmail) {
@@ -46,46 +48,108 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Sending invoice email to ${clientEmail}`);
     console.log(`Include attachments: ${includeAttachments}`);
-    console.log(`PDF URL: ${pdfUrl || 'Not provided'}`);
-    console.log(`Terms URL: ${termsAndConditionsUrl || 'Not provided'}`);
     
     const attachments = [];
     
     if (includeAttachments && pdfUrl) {
       try {
-        console.log(`Will include PDF as a link instead of attachment to reduce memory usage`);
+        console.log("Attempting to attach PDF document");
+        
+        if (pdfBase64) {
+          console.log("Using provided PDF base64 data");
+          
+          // Extract the base64 data (remove data:application/pdf;base64, prefix if present)
+          const base64Data = pdfBase64.includes("base64,") 
+            ? pdfBase64.split("base64,")[1]
+            : pdfBase64;
+          
+          // Add the PDF as an attachment
+          attachments.push({
+            filename: `invoice-${invoiceNumber}.pdf`,
+            content: base64Data,
+          });
+          
+          console.log("PDF attachment added successfully");
+        } else if (pdfUrl) {
+          console.log(`Fetching PDF from URL: ${pdfUrl}`);
+          const pdfResponse = await fetch(pdfUrl);
+          
+          if (!pdfResponse.ok) {
+            throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+          }
+          
+          const pdfBuffer = await pdfResponse.arrayBuffer();
+          const pdfBase64 = btoa(
+            String.fromCharCode(...new Uint8Array(pdfBuffer))
+          );
+          
+          attachments.push({
+            filename: `invoice-${invoiceNumber}.pdf`,
+            content: pdfBase64,
+          });
+          
+          console.log("PDF fetched and attached successfully");
+        }
+        
+        // Add terms and conditions if available
+        if (termsAndConditionsUrl) {
+          console.log(`Fetching Terms and Conditions from URL: ${termsAndConditionsUrl}`);
+          try {
+            const termsResponse = await fetch(termsAndConditionsUrl);
+            
+            if (termsResponse.ok) {
+              const termsBuffer = await termsResponse.arrayBuffer();
+              const termsBase64 = btoa(
+                String.fromCharCode(...new Uint8Array(termsBuffer))
+              );
+              
+              attachments.push({
+                filename: "terms-and-conditions.pdf",
+                content: termsBase64,
+              });
+              
+              console.log("Terms and Conditions attached successfully");
+            } else {
+              console.warn(`Could not fetch Terms and Conditions: ${termsResponse.status}`);
+            }
+          } catch (termsError) {
+            console.warn("Error attaching Terms and Conditions:", termsError);
+          }
+        }
       } catch (error) {
-        console.error("Error processing invoice PDF:", error);
+        console.error("Error processing attachments:", error);
+        // Continue sending the email without attachments if there's an error
       }
     }
 
     console.log(`Ready to send email with ${attachments.length} attachments`);
     
-    // Prepare the email HTML content with links instead of attachments
+    // Prepare the email HTML content
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Invoice #${invoiceNumber}</h2>
         <p>Dear ${clientName},</p>
         <p>Your invoice #${invoiceNumber} is now available.</p>
-        ${pdfUrl ? `<p><a href="${pdfUrl}" target="_blank" style="display: inline-block; background-color: #4F46E5; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-top: 10px;">View Invoice</a></p>` : ''}
-        ${termsAndConditionsUrl ? `<p><a href="${termsAndConditionsUrl}" target="_blank">Terms and Conditions</a></p>` : ''}
+        <p>Please find the attached invoice PDF for your records.</p>
         <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
         <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
       </div>
     `;
     
-    // Configure email - without attachments to reduce memory usage
+    // Configure email with attachments
     const emailConfig = {
       from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
       to: [clientEmail],
       subject: `Invoice #${invoiceNumber}`,
-      html: emailHtml
+      html: emailHtml,
+      attachments: attachments.length > 0 ? attachments : undefined
     };
     
     console.log("Sending email via Resend with config:", {
       from: emailConfig.from,
       to: emailConfig.to,
       subject: emailConfig.subject,
+      attachmentsCount: attachments.length
     });
     
     let emailResponse;
