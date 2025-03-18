@@ -164,6 +164,32 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         currencySymbol
       });
       
+      // Get the PDF URL
+      const { data: urlData } = supabase.storage
+        .from('invoices')
+        .getPublicUrl(`${invoiceId}/invoice.pdf`);
+
+      // Get terms and conditions URL if available
+      const { data: termsData } = await supabase
+        .from('company_settings')
+        .select('terms_url')
+        .single();
+      
+      const termsUrl = termsData?.terms_url || null;
+      
+      // Send email with link to PDF instead of attachment to save resources
+      await supabase.functions.invoke('send-invoice-email', {
+        body: {
+          clientName: invoice.client?.name || 'Client',
+          clientEmail: invoice.client?.email,
+          invoiceNumber: invoice.invoice_number,
+          pdfUrl: urlData?.publicUrl || null,
+          termsAndConditionsUrl: termsUrl,
+          companyName: settings?.company_name || 'PowerPeppol',
+          includeAttachments: false // Don't include attachments to avoid WORKER_LIMIT error
+        }
+      });
+      
       toast({
         title: "Success",
         description: "Invoice sent successfully and PDF generated"

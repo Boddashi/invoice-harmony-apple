@@ -184,7 +184,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
   try {
     const canvas = await html2canvas(element, {
-      scale: 1.5, // Reduced from 2 to 1.5 for smaller file size
+      scale: 1.25,
       useCORS: true,
       logging: false
     });
@@ -195,10 +195,10 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
-      compress: true // Enable PDF compression
+      compress: true
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG with 70% quality for smaller size
+    const imgData = canvas.toDataURL('image/jpeg', 0.5);
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = canvas.height * imgWidth / canvas.width;
@@ -222,18 +222,15 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Prom
   try {
     console.log(`Saving PDF for invoice ${invoiceId}...`);
     
-    // Extract the base64 data part
     const base64Data = pdfBase64.split(',')[1];
     if (!base64Data) {
       throw new Error("Invalid base64 data format");
     }
     
-    // Convert base64 to blob
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     
-    // Process in chunks to avoid memory issues
-    const sliceSize = 512;
+    const sliceSize = 256;
     for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
       const slice = byteCharacters.slice(offset, offset + sliceSize);
       

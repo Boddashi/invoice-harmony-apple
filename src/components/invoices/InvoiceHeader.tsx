@@ -81,7 +81,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Send Invoice to Client via Email</p>
+                <p>Send Invoice Link to Client via Email</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
