@@ -9,6 +9,7 @@ import {
   ArrowUpDown,
   Euro,
   Search,
+  ArrowUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -160,12 +161,17 @@ const Items = () => {
 
   const renderSortIcon = (field: "title" | "price" | "vat") => {
     if (sortField === field) {
-      return <ArrowUpDown size={16} className={cn(
-        "ml-1 inline-block transition-transform", 
-        sortDirection === 'desc' ? "transform rotate-180" : ""
-      )} />;
+      return (
+        <ArrowUp
+          size={16}
+          className={cn(
+            "ml-1 inline-block transition-transform",
+            sortDirection === "desc" ? "transform rotate-180" : ""
+          )}
+        />
+      );
     }
-    return <ArrowUpDown size={16} className="ml-1 inline-block text-gray-400" />;
+    return <ArrowUp size={16} className="ml-1 inline-block text-gray-400" />;
   };
 
   if (!user) {
