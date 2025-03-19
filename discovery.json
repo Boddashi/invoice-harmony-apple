@@ -1,0 +1,7 @@
+{
+  "documentTypes": ["invoice"],
+  "network": "peppol",
+  "metaScheme": "iso6523-actorid-upis",
+  "scheme": "de:lwid",
+  "identifier": "10101010-STO-10"
+}
