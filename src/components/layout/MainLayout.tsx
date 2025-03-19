@@ -206,8 +206,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up"
           hideCloseButton={true}
         >
-          <div className="flex flex-col h-full bg-gradient-sidebar justify-end">
-            <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex flex-col h-full bg-gradient-sidebar ">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
               {moreNavItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive =
