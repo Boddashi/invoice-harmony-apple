@@ -545,7 +545,7 @@ const ClientList = () => {
               </Table>
             </div>
 
-            <div className="md:hidden divide-y divide-border">
+            <div className="lg:hidden divide-y divide-border">
               {paginatedClients.map((client) => (
                 <div key={client.id} className="p-4">
                   <div className="flex justify-between items-start mb-2">
