@@ -15,10 +15,12 @@ export default {
       padding: "2rem",
       screens: {
         "2xl": "1400px",
-        xmd: "880px",
       },
     },
     extend: {
+      screens: {
+        xmd: "880px",
+      },
       fontFamily: {
         sans: [
           "system-ui",
