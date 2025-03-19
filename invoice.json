@@ -1,5 +1,5 @@
 {
-    "legalEntityId": LEGAL_ENTITY_ID,
+    "legalEntityId": ,
     "routing": {
       "emails": [
         "test@example.com"
