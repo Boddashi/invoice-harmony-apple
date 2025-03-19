@@ -11,6 +11,8 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUp,
+  ArrowUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -35,6 +37,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type InvoiceStatus = "all" | "draft" | "pending" | "paid" | "overdue";
 type InvoiceDBStatus = "draft" | "pending" | "paid" | "overdue";
@@ -246,15 +256,19 @@ const Invoices = () => {
     });
   };
 
-  const getSortIcon = (field: SortField) => {
-    if (sortBy !== field) {
-      return <ChevronDown size={18} className="text-muted-foreground/50" />;
+  const renderSortIcon = (field: SortField) => {
+    if (sortBy === field) {
+      return (
+        <ArrowUp
+          size={16}
+          className={cn(
+            "ml-1 inline-block transition-transform",
+            sortOrder === "desc" ? "transform rotate-180" : ""
+          )}
+        />
+      );
     }
-    return sortOrder === "asc" ? (
-      <ChevronDown size={18} />
-    ) : (
-      <ChevronDown size={18} className="rotate-180 transform" />
-    );
+    return <ArrowUp size={16} className="ml-1 inline-block text-gray-400" />;
   };
 
   const sortedAndFilteredInvoices = getSortedInvoices(
@@ -350,7 +364,7 @@ const Invoices = () => {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
           <h2 className="text-xl font-semibold">Your Invoices</h2>
           <button
-            className="apple-button flex items-center gap-2 w-full sm:w-auto"
+            className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full"
             onClick={() => navigate("/invoices/new")}
           >
             <Plus size={18} />
@@ -367,7 +381,7 @@ const Invoices = () => {
             <input
               type="text"
               placeholder="Search invoices..."
-              className="input-field w-full pl-10"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -452,93 +466,67 @@ const Invoices = () => {
             </div>
           ) : (
             <>
-              <div className="hidden md:block overflow-x-auto w-full">
-                <table className="w-full min-w-full table-fixed">
-                  <thead>
-                    <tr className="border-b border-border bg-secondary/50">
-                      <th
-                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+              <div className="hidden md:block overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead
+                        className="cursor-pointer"
                         onClick={() => handleSort("invoice_number")}
                       >
-                        <div className="flex items-center gap-1">
-                          Invoice #{getSortIcon("invoice_number")}
-                        </div>
-                      </th>
-                      <th
-                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        Invoice # {renderSortIcon("invoice_number")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
                         onClick={() => handleSort("client.name")}
                       >
-                        <div className="flex items-center gap-1">
-                          Client
-                          {getSortIcon("client.name")}
-                        </div>
-                      </th>
-                      <th
-                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        Client {renderSortIcon("client.name")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
                         onClick={() => handleSort("issue_date")}
                       >
-                        <div className="flex items-center gap-1">
-                          Issue Date
-                          {getSortIcon("issue_date")}
-                        </div>
-                      </th>
-                      <th
-                        className="py-3 px-4 text-left font-medium cursor-pointer hover:bg-secondary/80"
+                        Issue Date {renderSortIcon("issue_date")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
                         onClick={() => handleSort("due_date")}
                       >
-                        <div className="flex items-center gap-1">
-                          Due Date
-                          {getSortIcon("due_date")}
-                        </div>
-                      </th>
-                      <th
-                        className="py-3 px-4 text-right font-medium cursor-pointer hover:bg-secondary/80"
+                        Due Date {renderSortIcon("due_date")}
+                      </TableHead>
+                      <TableHead
+                        className="text-right cursor-pointer"
                         onClick={() => handleSort("total_amount")}
                       >
-                        <div className="flex items-center justify-end gap-1">
-                          Amount
-                          {getSortIcon("total_amount")}
-                        </div>
-                      </th>
-                      <th className="py-3 px-4 text-center font-medium">
-                        <div className="flex items-center justify-center">
-                          Status
-                        </div>
-                      </th>
-                      <th className="py-3 px-4 text-center font-medium">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                        Amount {renderSortIcon("total_amount")}
+                      </TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="w-16"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {paginatedInvoices.map((invoice) => (
-                      <tr
+                      <TableRow
                         key={invoice.id}
-                        className="border-b border-border hover:bg-secondary/30 transition-colors cursor-pointer"
                         onClick={() => navigate(`/invoices/${invoice.id}`)}
+                        className="cursor-pointer"
                       >
-                        <td className="py-3 px-4 font-medium">
+                        <TableCell className="font-medium">
                           {invoice.invoice_number}
-                        </td>
-                        <td className="py-3 px-4">
-                          {invoice.client ? (
-                            <div>
-                              <span>{invoice.client.name}</span>
-                            </div>
-                          ) : (
-                            "Unknown Client"
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
+                        </TableCell>
+                        <TableCell>
+                          {invoice.client ? invoice.client.name : "Unknown Client"}
+                        </TableCell>
+                        <TableCell>
                           {formatDate(invoice.issue_date)}
-                        </td>
-                        <td className="py-3 px-4">
+                        </TableCell>
+                        <TableCell>
                           {formatDate(invoice.due_date)}
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium">
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
                           {formatAmount(invoice.total_amount)}
-                        </td>
-                        <td className="py-3 px-4">
+                        </TableCell>
+                        <TableCell>
                           <div className="flex justify-center">
                             <span
                               className={cn(
@@ -549,8 +537,8 @@ const Invoices = () => {
                               {getStatusLabel(invoice.status)}
                             </span>
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
+                        </TableCell>
+                        <TableCell>
                           <div
                             className="flex justify-center"
                             onClick={(e) => e.stopPropagation()}
@@ -561,11 +549,11 @@ const Invoices = () => {
                               onStatusChange={handleInvoiceStatusChange}
                             />
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
 
               <div className="md:hidden divide-y divide-border">
