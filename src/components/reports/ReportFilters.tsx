@@ -1,6 +1,6 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { FilterIcon, Users, X, RefreshCw } from 'lucide-react';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { FilterIcon, Users, X, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -53,24 +53,25 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
   clearFilters,
   formatCurrency,
 }) => {
-  const filteredItems = items.filter(item => 
+  const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchItemQuery.toLowerCase())
   );
 
-  const filteredClients = clients.filter(client => 
+  const filteredClients = clients.filter((client) =>
     client.name.toLowerCase().includes(searchClientQuery.toLowerCase())
   );
 
-  const hasActiveFilters = selectedItems.length > 0 || selectedClients.length > 0;
+  const hasActiveFilters =
+    selectedItems.length > 0 || selectedClients.length > 0;
 
   const clearItemFilters = () => {
-    setSearchItemQuery('');
-    selectedItems.forEach(itemId => toggleItemSelection(itemId));
+    setSearchItemQuery("");
+    selectedItems.forEach((itemId) => toggleItemSelection(itemId));
   };
 
   const clearClientFilters = () => {
-    setSearchClientQuery('');
-    selectedClients.forEach(clientId => toggleClientSelection(clientId));
+    setSearchClientQuery("");
+    selectedClients.forEach((clientId) => toggleClientSelection(clientId));
   };
 
   return (
@@ -78,25 +79,30 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold mb-1">Reports & Analytics</h1>
-          <p className="text-muted-foreground">View and analyze your business data</p>
+          <p className="text-muted-foreground">
+            View and analyze your business data
+          </p>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex flex-wrap items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <FilterIcon size={16} />
                 Filter by Items
                 {selectedItems.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
+                  <Badge
+                    variant="secondary"
+                    className="ml-1 px-1.5 text-xs font-medium"
+                  >
                     {selectedItems.length}
                   </Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              className="w-72" 
-              align="end" 
+            <DropdownMenuContent
+              className="w-72"
+              align="end"
               side="bottom"
               sideOffset={5}
               alignOffset={0}
@@ -117,7 +123,9 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 <ScrollArea className="h-full">
                   <div className="py-1 px-1">
                     {filteredItems.length === 0 ? (
-                      <div className="px-2 py-2 text-sm text-muted-foreground">No items found</div>
+                      <div className="px-2 py-2 text-sm text-muted-foreground">
+                        No items found
+                      </div>
                     ) : (
                       filteredItems.map((item) => (
                         <DropdownMenuCheckboxItem
@@ -140,9 +148,9 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               </div>
               <DropdownMenuSeparator />
               <div className="p-2 sticky bottom-0 bg-popover">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full flex items-center justify-center gap-1"
                   onClick={clearItemFilters}
                 >
@@ -152,22 +160,25 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <Users size={16} />
                 Filter by Clients
                 {selectedClients.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 px-1.5 text-xs font-medium">
+                  <Badge
+                    variant="secondary"
+                    className="ml-1 px-1.5 text-xs font-medium"
+                  >
                     {selectedClients.length}
                   </Badge>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              className="w-72" 
-              align="end" 
+            <DropdownMenuContent
+              className="w-72"
+              align="end"
               side="bottom"
               sideOffset={5}
               alignOffset={0}
@@ -188,13 +199,17 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
                 <ScrollArea className="h-full">
                   <div className="py-1 px-1">
                     {filteredClients.length === 0 ? (
-                      <div className="px-2 py-2 text-sm text-muted-foreground">No clients found</div>
+                      <div className="px-2 py-2 text-sm text-muted-foreground">
+                        No clients found
+                      </div>
                     ) : (
                       filteredClients.map((client) => (
                         <DropdownMenuCheckboxItem
                           key={client.id}
                           checked={selectedClients.includes(client.id)}
-                          onCheckedChange={() => toggleClientSelection(client.id)}
+                          onCheckedChange={() =>
+                            toggleClientSelection(client.id)
+                          }
                           className="py-2"
                         >
                           <span>{client.name}</span>
@@ -206,9 +221,9 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
               </div>
               <DropdownMenuSeparator />
               <div className="p-2 sticky bottom-0 bg-popover">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="w-full flex items-center justify-center gap-1"
                   onClick={clearClientFilters}
                 >
@@ -220,58 +235,74 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
           </DropdownMenu>
         </div>
       </div>
-      
+
       {hasActiveFilters && (
         <div className="mt-4 flex items-center justify-between bg-secondary/30 rounded-lg p-3 animate-fade-in">
           <div className="flex flex-wrap items-center gap-2">
             {selectedItems.length > 0 && (
               <div className="flex items-center">
-                <span className="text-sm text-muted-foreground mr-2">Items:</span>
+                <span className="text-sm text-muted-foreground mr-2">
+                  Items:
+                </span>
                 <div className="flex flex-wrap gap-1">
-                  {selectedItems.map(itemId => {
-                    const item = items.find(i => i.id === itemId);
-                    return item && (
-                      <Badge key={itemId} variant="outline" className="flex items-center gap-1">
-                        {item.title}
-                        <button 
-                          onClick={() => toggleItemSelection(itemId)}
-                          className="ml-1 hover:text-destructive"
+                  {selectedItems.map((itemId) => {
+                    const item = items.find((i) => i.id === itemId);
+                    return (
+                      item && (
+                        <Badge
+                          key={itemId}
+                          variant="outline"
+                          className="flex items-center gap-1"
                         >
-                          <X size={12} />
-                        </button>
-                      </Badge>
+                          {item.title}
+                          <button
+                            onClick={() => toggleItemSelection(itemId)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X size={12} />
+                          </button>
+                        </Badge>
+                      )
                     );
                   })}
                 </div>
               </div>
             )}
-            
+
             {selectedClients.length > 0 && (
               <div className="flex items-center">
-                <span className="text-sm text-muted-foreground mr-2">Clients:</span>
+                <span className="text-sm text-muted-foreground mr-2">
+                  Clients:
+                </span>
                 <div className="flex flex-wrap gap-1">
-                  {selectedClients.map(clientId => {
-                    const client = clients.find(c => c.id === clientId);
-                    return client && (
-                      <Badge key={clientId} variant="outline" className="flex items-center gap-1">
-                        {client.name}
-                        <button 
-                          onClick={() => toggleClientSelection(clientId)}
-                          className="ml-1 hover:text-destructive"
+                  {selectedClients.map((clientId) => {
+                    const client = clients.find((c) => c.id === clientId);
+                    return (
+                      client && (
+                        <Badge
+                          key={clientId}
+                          variant="outline"
+                          className="flex items-center gap-1"
                         >
-                          <X size={12} />
-                        </button>
-                      </Badge>
+                          {client.name}
+                          <button
+                            onClick={() => toggleClientSelection(clientId)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X size={12} />
+                          </button>
+                        </Badge>
+                      )
                     );
                   })}
                 </div>
               </div>
             )}
           </div>
-          
-          <Button 
-            variant="secondary" 
-            size="sm" 
+
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={clearFilters}
             className="whitespace-nowrap flex items-center gap-1"
           >
