@@ -554,7 +554,7 @@ const Invoices = () => {
                 </Table>
               </div>
 
-              <div className="divide-y divide-border">
+              <div className="xmd:hidden divide-y divide-border">
                 {paginatedInvoices.map((invoice) => (
                   <div
                     key={invoice.id}
