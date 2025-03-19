@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -22,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -204,22 +203,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
       <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
         <DialogContent
-          className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 fixed animate-slide-in-up data-[state=closed]:animate-slide-out-down"
+          className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-in-up"
           hideCloseButton={true}
         >
-          <DialogTitle className="sr-only">More Options</DialogTitle>
-          <div className="flex flex-col h-full bg-gradient-sidebar">
-            <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-              <h2 className="text-lg font-semibold">More Options</h2>
-              <button
-                onClick={() => setMoreMenuOpen(false)}
-                className="p-2 rounded-full hover:bg-sidebar-accent/20"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col">
+          <div className="flex flex-col h-full bg-gradient-sidebar ">
+            <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
               {moreNavItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive =
@@ -247,6 +235,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   </button>
                 );
               })}
+            </div>
+            <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+              <h2 className="text-lg font-semibold">More Options</h2>
+              <button
+                onClick={() => setMoreMenuOpen(false)}
+                className="p-2 rounded-full hover:bg-sidebar-accent/20"
+              >
+                <X size={24} />
+              </button>
             </div>
           </div>
         </DialogContent>
