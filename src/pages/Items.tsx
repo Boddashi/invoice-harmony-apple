@@ -256,7 +256,7 @@ const Items = () => {
                       className="cursor-pointer"
                       onClick={() => handleSort("price")}
                     >
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center">
                         Price
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </div>
