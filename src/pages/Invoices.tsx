@@ -387,7 +387,7 @@ const Invoices = () => {
             />
           </div>
 
-          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 md:mx-2 md:px-4 md:py-4 scrollbar-none">
+          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 xmd:mx-2 xmd:px-4 xmd:py-4 scrollbar-none">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setFilter("all")}
@@ -466,7 +466,7 @@ const Invoices = () => {
             </div>
           ) : (
             <>
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden xmd:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -515,14 +515,12 @@ const Invoices = () => {
                           {invoice.invoice_number}
                         </TableCell>
                         <TableCell>
-                          {invoice.client ? invoice.client.name : "Unknown Client"}
+                          {invoice.client
+                            ? invoice.client.name
+                            : "Unknown Client"}
                         </TableCell>
-                        <TableCell>
-                          {formatDate(invoice.issue_date)}
-                        </TableCell>
-                        <TableCell>
-                          {formatDate(invoice.due_date)}
-                        </TableCell>
+                        <TableCell>{formatDate(invoice.issue_date)}</TableCell>
+                        <TableCell>{formatDate(invoice.due_date)}</TableCell>
                         <TableCell className="text-right font-medium">
                           {formatAmount(invoice.total_amount)}
                         </TableCell>
@@ -556,7 +554,7 @@ const Invoices = () => {
                 </Table>
               </div>
 
-              <div className="md:hidden divide-y divide-border">
+              <div className="divide-y divide-border">
                 {paginatedInvoices.map((invoice) => (
                   <div
                     key={invoice.id}
