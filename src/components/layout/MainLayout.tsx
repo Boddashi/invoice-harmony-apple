@@ -203,7 +203,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
       <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
         <DialogContent
-          className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-auto top-0 translate-y-0 data-[state=closed]:animate-slide-out-down data-[state=open]:animate-slide-up"
+          className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-auto top-0 translate-y-0 data-[state=closed]:animate-slide-in-up data-[state=open]:animate-slide-out-down"
           hideCloseButton={true}
         >
           <div className="flex flex-col h-full bg-gradient-sidebar ">
