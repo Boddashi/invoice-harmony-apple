@@ -287,7 +287,7 @@ const Items = () => {
                           {item.title}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end space-x-2">
+                          <div className="flex items-center space-x-2">
                             <Euro className="h-4 w-4 text-muted-foreground" />
                             <span>{formatCurrency(item.price)}</span>
                           </div>
