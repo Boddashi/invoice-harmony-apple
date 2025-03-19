@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -360,7 +361,7 @@ const Invoices = () => {
 
   return (
     <MainLayout>
-      <div className="w-full max-w-6xl mx-auto px-2 md:px-0 space-y-4 md:space-y-6">
+      <div className="w-full max-w-6xl mx-auto px-2 xmd:px-0 space-y-4 xmd:space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
           <h2 className="text-xl font-semibold">Your Invoices</h2>
           <button
@@ -387,7 +388,7 @@ const Invoices = () => {
             />
           </div>
 
-          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 md:mx-2 md:px-4 md:py-4 scrollbar-none">
+          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 xmd:mx-2 xmd:px-4 xmd:py-4 scrollbar-none">
             <div className="flex gap-2 min-w-max">
               <button
                 onClick={() => setFilter("all")}
@@ -466,7 +467,7 @@ const Invoices = () => {
             </div>
           ) : (
             <>
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden xmd:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -556,7 +557,7 @@ const Invoices = () => {
                 </Table>
               </div>
 
-              <div className="md:hidden divide-y divide-border">
+              <div className="xmd:hidden divide-y divide-border">
                 {paginatedInvoices.map((invoice) => (
                   <div
                     key={invoice.id}
