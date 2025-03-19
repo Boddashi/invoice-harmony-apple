@@ -1,63 +1,59 @@
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "../theme/ThemeToggle";
+import { useAuth } from "@/contexts/AuthContext";
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { MoonIcon, SunIcon } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { useTheme } from '../theme/ThemeProvider';
-import { cn } from '@/lib/utils';
-
-interface HeaderProps {
-  className?: string;
-}
-
-const Header: React.FC<HeaderProps> = ({ className }) => {
+const Header = () => {
+  const location = useLocation();
   const { user } = useAuth();
-  const { theme, setTheme } = useTheme();
-  
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase();
+
+  const getTitle = () => {
+    switch (location.pathname) {
+      case "/":
+        return "Dashboard";
+      case "/invoices":
+        return "Invoices";
+      case "/clients":
+        return "Clients";
+      case "/settings":
+        return "Settings";
+      case "/reports":
+        return "Reports";
+      case "/items":
+        return "Items";
+      case "/login":
+        return "Sign In";
+      default:
+        if (location.pathname.startsWith("/invoices/")) {
+          return "Invoice Details";
+        }
+        if (location.pathname.startsWith("/clients/")) {
+          return "Client Details";
+        }
+        return "Invoice App";
+    }
   };
 
+  const isCreatePage = location.pathname === "/invoices/new";
+  const isLoginPage = location.pathname === "/login";
+
+  if (isLoginPage) {
+    return null; // Don't show header on login page
+  }
+
   return (
-    <header className={cn("w-full h-16 border-b border-border/40 px-4 fixed top-0 left-0 right-0 z-30 backdrop-blur-apple bg-gradient-sidebar", className)}>
-      <div className="h-full flex items-center justify-between">
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <h1 className="text-xl font-semibold ml-2">Invoice Harmony</h1>
-          </Link>
+    <header className="w-full h-16 border-b border-border/40 sticky top-0 z-30 flex items-center px-6 bg-gradient-header backdrop-blur-apple">
+      <div className="flex justify-between items-center w-full px-3">
+        <div className="flex items-center gap-2">
+          <img src="/favicon.ico" alt="Power Peppol Logo" className="w-6 h-6" />
+          <h1 className="text-2xl font-semibold tracking-tight animate-fade-in">
+            {getTitle()}
+          </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Toggle theme"
-            className="rounded-full"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? (
-              <SunIcon className="h-[1.2rem] w-[1.2rem]" />
-            ) : (
-              <MoonIcon className="h-[1.2rem] w-[1.2rem]" />
-            )}
-          </Button>
-
-          {user && (
-            <Avatar className="h-8 w-8 border">
-              <AvatarImage src={user.user_metadata?.avatar_url} />
-              <AvatarFallback>
-                {user.user_metadata?.full_name
-                  ? getInitials(user.user_metadata.full_name)
-                  : user.email?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-          )}
+        <div className="flex items-center space-x-3">
+          <ThemeToggle />
         </div>
       </div>
     </header>
