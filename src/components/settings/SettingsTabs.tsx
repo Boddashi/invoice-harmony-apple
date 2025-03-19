@@ -1,3 +1,4 @@
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { TabItem } from "@/models/SettingsModels";
@@ -51,14 +52,16 @@ const SettingsTabs = ({
                   : "hover:bg-secondary"
               )}
             >
-              <Icon
-                size={20}
-                className={
-                  isActive
-                    ? "text-apple-blue dark:text-apple-purple"
-                    : "text-muted-foreground"
-                }
-              />
+              <div className="flex-shrink-0">
+                <Icon
+                  size={20}
+                  className={
+                    isActive
+                      ? "text-apple-blue dark:text-apple-purple"
+                      : "text-muted-foreground"
+                  }
+                />
+              </div>
               <span
                 className={
                   isActive
