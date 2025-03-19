@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { User, Building, CreditCard, FileText } from "lucide-react";
@@ -159,34 +158,34 @@ const Settings = () => {
       <div className="max-w-6xl mx-auto px-4">
         <h1 className="text-2xl font-semibold mb-6">Settings</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="col-span-1">
             {/* Mobile tabs */}
-            <div className="block md:hidden mb-6">
-              <SettingsTabs 
-                tabs={tabs} 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                orientation="horizontal" 
+            <div className="block lg:hidden mb-6">
+              <SettingsTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                orientation="horizontal"
               />
             </div>
 
             {/* Desktop sidebar */}
-            <div className="hidden md:block">
-              <SettingsTabs 
-                tabs={tabs} 
-                activeTab={activeTab} 
-                setActiveTab={setActiveTab} 
-                orientation="vertical" 
+            <div className="hidden lg:block">
+              <SettingsTabs
+                tabs={tabs}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                orientation="vertical"
               />
             </div>
           </div>
 
-          <div className="col-span-1 md:col-span-3 animate-fade-in">
+          <div className="col-span-1 lg:col-span-3 animate-fade-in">
             {activeTab === "profile" && <ProfileTab />}
-            
+
             {activeTab === "company" && (
-              <CompanyTab 
+              <CompanyTab
                 companySettings={companySettings}
                 setCompanySettings={setCompanySettings}
                 currency={currency}
@@ -196,9 +195,9 @@ const Settings = () => {
                 handleSaveCompany={handleSaveCompany}
               />
             )}
-            
+
             {activeTab === "billing" && (
-              <BillingTab 
+              <BillingTab
                 companySettings={companySettings}
                 setCompanySettings={setCompanySettings}
                 loading={loading}
@@ -206,9 +205,9 @@ const Settings = () => {
                 handleSaveCompany={handleSaveCompany}
               />
             )}
-            
+
             {activeTab === "terms" && (
-              <TermsTab 
+              <TermsTab
                 companySettings={companySettings}
                 setCompanySettings={setCompanySettings}
                 loading={loading}
