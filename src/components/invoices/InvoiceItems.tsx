@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Trash, Plus } from "lucide-react";
 import CustomCard from "../ui/CustomCard";
@@ -66,8 +67,9 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Items</h3>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
+      <div className="space-y-6">
+        {/* Table headers - visible only on tablet and larger screens */}
+        <div className="hidden md:grid md:grid-cols-12 gap-4 font-medium text-muted-foreground text-sm">
           <div className="col-span-4">Item</div>
           <div className="col-span-2">Quantity</div>
           <div className="col-span-2">Unit Price</div>
@@ -76,9 +78,12 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
           <div className="col-span-1"></div>
         </div>
 
+        {/* Item rows */}
         {items.map((item) => (
-          <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
-            <div className="col-span-4">
+          <div key={item.id} className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-4 md:items-center border-b pb-4 md:pb-2 md:border-0">
+            {/* Mobile view: label + field pairs */}
+            <div className="md:hidden text-sm font-medium text-muted-foreground">Item</div>
+            <div className="md:col-span-4">
               <Select
                 value={item.description}
                 onValueChange={(value) =>
@@ -119,7 +124,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
               </Select>
             </div>
 
-            <div className="col-span-2">
+            <div className="md:hidden text-sm font-medium text-muted-foreground mt-2">Quantity</div>
+            <div className="md:col-span-2">
               <input
                 type="number"
                 min="1"
@@ -133,7 +139,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
               />
             </div>
 
-            <div className="col-span-2">
+            <div className="md:hidden text-sm font-medium text-muted-foreground mt-2">Unit Price</div>
+            <div className="md:col-span-2">
               <div className="relative">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                   {currencySymbol}
@@ -152,7 +159,8 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
               </div>
             </div>
 
-            <div className="col-span-2">
+            <div className="md:hidden text-sm font-medium text-muted-foreground mt-2">VAT</div>
+            <div className="md:col-span-2">
               <Select
                 value={item.vat_rate}
                 onValueChange={(value) => handleItemVatChange(item.id, value)}
@@ -170,12 +178,15 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
               </Select>
             </div>
 
-            <div className="col-span-1 font-medium">
-              {currencySymbol}
-              {item.amount.toFixed(2)}
+            <div className="flex justify-between items-center md:col-span-1 md:justify-start mt-2 md:mt-0">
+              <div className="md:hidden text-sm font-medium text-muted-foreground">Amount</div>
+              <div className="font-medium">
+                {currencySymbol}
+                {item.amount.toFixed(2)}
+              </div>
             </div>
 
-            <div className="col-span-1 text-right">
+            <div className="md:col-span-1 flex justify-end mt-2 md:mt-0">
               <button
                 type="button"
                 onClick={() => handleRemoveItem(item.id)}
@@ -191,7 +202,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
         <button
           type="button"
           onClick={handleAddItem}
-          className="flex items-center gap-2 text-apple-blue hover:text-apple-blue/80 dark:text-apple-purple dark:hover:text-apple-purple/80 font-medium transition-colors"
+          className="flex items-center gap-2 text-apple-blue hover:text-apple-blue/80 dark:text-apple-purple dark:hover:text-apple-purple/80 font-medium transition-colors mt-4"
         >
           <Plus size={18} />
           <span>Add Item</span>

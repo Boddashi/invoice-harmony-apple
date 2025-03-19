@@ -64,7 +64,7 @@ const NewInvoice = () => {
   if (isLoading && isEditMode) {
     return (
       <MainLayout>
-        <div className="max-w-5xl mx-auto p-8 text-center">
+        <div className="max-w-5xl mx-auto p-4 md:p-8 text-center">
           <p className="text-muted-foreground">Loading invoice data...</p>
         </div>
       </MainLayout>
@@ -73,7 +73,7 @@ const NewInvoice = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto p-2 md:p-0 space-y-6">
         <InvoiceHeader 
           isEditMode={isEditMode}
           pdfUrl={pdfUrl}

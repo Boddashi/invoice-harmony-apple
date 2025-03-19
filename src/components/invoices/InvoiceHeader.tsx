@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, FileDown, Mail } from "lucide-react";
@@ -39,7 +40,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate("/invoices")}
@@ -52,7 +53,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
         </h1>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-2">
         {pdfUrl && (
           <TooltipProvider>
             <Tooltip>
@@ -96,42 +97,44 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           </TooltipProvider>
         )}
 
-        <button
-          type="button"
-          onClick={handleSaveAsDraft}
-          className={`draft-button ${
-            status === "draft"
-              ? "bg-gray-300 text-gray-700"
-              : "text-gray-500 hover:bg-gray-50"
-          }`}
-          disabled={isSubmitting || isGeneratingPDF}
-        >
-          {isSubmitting && status === "draft" ? "Saving..." : "Save as Draft"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleSaveAsDraft}
+            className={`draft-button ${
+              status === "draft"
+                ? "bg-gray-300 text-gray-700"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+            disabled={isSubmitting || isGeneratingPDF}
+          >
+            {isSubmitting && status === "draft" ? "Saving..." : "Save as Draft"}
+          </button>
 
-        <button
-          type="button"
-          onClick={handleCreateAndSend}
-          className="apple-button flex items-center gap-2"
-          disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
-        >
-          {isSubmitting && status === "pending"
-            ? "Saving..."
-            : isEditMode
-            ? "Update & Send"
-            : "Create & Send"}
-        </button>
+          <button
+            type="button"
+            onClick={handleCreateAndSend}
+            className="apple-button flex items-center gap-2"
+            disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
+          >
+            {isSubmitting && status === "pending"
+              ? "Saving..."
+              : isEditMode
+              ? "Update & Send"
+              : "Create & Send"}
+          </button>
 
-        <button
-          type="button"
-          className="yuki-button"
-          onClick={handleCreateAndSendYuki}
-          disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
-        >
-          {isSubmitting && status === "pending"
-            ? "Saving..."
-            : "Create & Send & Yuki"}
-        </button>
+          <button
+            type="button"
+            className="yuki-button"
+            onClick={handleCreateAndSendYuki}
+            disabled={isSubmitting || isGeneratingPDF || isSendingEmail}
+          >
+            {isSubmitting && status === "pending"
+              ? "Saving..."
+              : "Create & Send & Yuki"}
+          </button>
+        </div>
       </div>
     </div>
   );

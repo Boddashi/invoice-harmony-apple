@@ -39,6 +39,7 @@ import {
 import CustomCard from "@/components/ui/CustomCard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface Item {
   id: string;
@@ -157,6 +158,16 @@ const Items = () => {
     });
   };
 
+  const renderSortIcon = (field: "title" | "price" | "vat") => {
+    if (sortField === field) {
+      return <ArrowUpDown size={16} className={cn(
+        "ml-1 inline-block transition-transform", 
+        sortDirection === 'desc' ? "transform rotate-180" : ""
+      )} />;
+    }
+    return <ArrowUpDown size={16} className="ml-1 inline-block text-gray-400" />;
+  };
+
   if (!user) {
     return (
       <MainLayout>
@@ -249,7 +260,7 @@ const Items = () => {
                     >
                       <div className="flex items-center">
                         Item Name
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        {renderSortIcon("title")}
                       </div>
                     </TableHead>
                     <TableHead
@@ -258,7 +269,7 @@ const Items = () => {
                     >
                       <div className="flex items-center">
                         Price
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        {renderSortIcon("price")}
                       </div>
                     </TableHead>
                     <TableHead
@@ -267,7 +278,7 @@ const Items = () => {
                     >
                       <div className="flex items-center">
                         VAT Rate
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        {renderSortIcon("vat")}
                       </div>
                     </TableHead>
                     <TableHead className="text-right">Actions</TableHead>
