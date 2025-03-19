@@ -70,7 +70,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col w-full">
-      <Header />
+      <Header className={cn(moreMenuOpen ? "z-40" : "")} />
       
       <div className="flex flex-1 w-full">
         <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 backdrop-blur-sm bg-gradient-sidebar">
