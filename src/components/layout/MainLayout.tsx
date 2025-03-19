@@ -131,80 +131,83 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
-        <Link
-          to="/settings"
-          className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
-            location.pathname === "/settings" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
-          )}
-        >
-          <Settings size={22} />
-          <span className="text-xs font-medium">Settings</span>
-        </Link>
-        
-        <Link
-          to="/"
-          className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
-            location.pathname === "/" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
-          )}
-        >
-          <LayoutGrid size={22} />
-          <span className="text-xs font-medium">Dashboard</span>
-        </Link>
-
-        <button
-          onClick={toggleMoreMenu}
-          className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none"
-        >
-          <MoreHorizontal size={22} />
-          <span className="text-xs font-medium">More</span>
-        </button>
-
-        <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
-          <DialogContent 
-            className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-20 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
-            hideCloseButton={true}
+      {/* Bottom navigation - hidden when more menu is open */}
+      {!moreMenuOpen && (
+        <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
+          <Link
+            to="/settings"
+            className={cn(
+              "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
+              location.pathname === "/settings" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+            )}
           >
-            <div className="flex flex-col h-full bg-gradient-sidebar">
-              <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-                <h2 className="text-lg font-semibold">More Options</h2>
-                <button 
-                  onClick={() => setMoreMenuOpen(false)}
-                  className="p-2 rounded-full hover:bg-sidebar-accent/20"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4">
-                {moreNavItems.map((item, index) => {
-                  const Icon = item.icon;
-                  const isActive = item.href && (location.pathname === item.href || 
-                    (item.href !== '/' && location.pathname.startsWith(item.href)));
-                  
-                  return (
-                    <button
-                      key={item.label + index}
-                      onClick={() => handleMoreItemClick(item.href, item.onClick)}
-                      className={cn(
-                        "flex items-center gap-3 w-full px-4 py-5 mb-2 rounded-lg transition-colors",
-                        isActive 
-                          ? "bg-sidebar-primary/10 text-sidebar-primary font-medium" 
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-foreground"
-                      )}
-                    >
-                      <Icon size={24} className={isActive ? "text-sidebar-primary" : ""} />
-                      <span className="text-base">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            <Settings size={22} />
+            <span className="text-xs font-medium">Settings</span>
+          </Link>
+          
+          <Link
+            to="/"
+            className={cn(
+              "flex flex-1 flex-col items-center justify-center gap-1.5 transition-all px-3",
+              location.pathname === "/" ? "text-sidebar-primary" : "text-sidebar-foreground/70"
+            )}
+          >
+            <LayoutGrid size={22} />
+            <span className="text-xs font-medium">Dashboard</span>
+          </Link>
+
+          <button
+            onClick={toggleMoreMenu}
+            className="flex flex-1 flex-col items-center justify-center gap-1.5 text-sidebar-foreground/70 px-3 focus:outline-none"
+          >
+            <MoreHorizontal size={22} />
+            <span className="text-xs font-medium">More</span>
+          </button>
+        </div>
+      )}
+
+      <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
+        <DialogContent 
+          className="md:hidden p-0 border-none max-w-full h-[calc(100vh-5rem)] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+          hideCloseButton={true}
+        >
+          <div className="flex flex-col h-full bg-gradient-sidebar">
+            <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+              <h2 className="text-lg font-semibold">More Options</h2>
+              <button 
+                onClick={() => setMoreMenuOpen(false)}
+                className="p-2 rounded-full hover:bg-sidebar-accent/20"
+              >
+                <X size={24} />
+              </button>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {moreNavItems.map((item, index) => {
+                const Icon = item.icon;
+                const isActive = item.href && (location.pathname === item.href || 
+                  (item.href !== '/' && location.pathname.startsWith(item.href)));
+                
+                return (
+                  <button
+                    key={item.label + index}
+                    onClick={() => handleMoreItemClick(item.href, item.onClick)}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-4 py-5 mb-2 rounded-lg transition-colors",
+                      isActive 
+                        ? "bg-sidebar-primary/10 text-sidebar-primary font-medium" 
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-foreground"
+                    )}
+                  >
+                    <Icon size={24} className={isActive ? "text-sidebar-primary" : ""} />
+                    <span className="text-base">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
