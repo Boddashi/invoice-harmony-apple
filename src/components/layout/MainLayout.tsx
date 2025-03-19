@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -15,9 +16,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import ThemeToggle from "@/components/theme/ThemeToggle";
-import { useMobile } from "@/hooks/use-mobile";
-import Sidebar from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Sidebar } from "@/components/ui/sidebar";
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -42,7 +43,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, to }) => {
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
 
