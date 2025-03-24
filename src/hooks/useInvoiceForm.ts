@@ -5,12 +5,13 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateInvoicePDF, InvoiceData } from "@/utils/pdfGenerator";
+import { Json } from "@/integrations/supabase/types";
 
 interface Client {
   id: string;
   name: string;
   email?: string;
-  legal_entity_id?: string;
+  legal_entity_id?: number | null; // Changed from string to number | null to match the database
   street?: string;
   number?: string;
   postcode?: string;
@@ -1037,60 +1038,3 @@ export const useInvoiceForm = () => {
 
     return Object.entries(vatGroups).map(([rate, values]) => ({
       rate,
-      subtotal: values.subtotal,
-      vat: values.vat,
-    }));
-  };
-
-  return {
-    isEditMode,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isAddClientModalOpen,
-    invoiceNumber,
-    selectedClientId,
-    selectedClient,
-    issueDate,
-    dueDate,
-    status,
-    notes,
-    items,
-    subTotal,
-    taxRate,
-    taxAmount,
-    total,
-    clients,
-    availableItems,
-    vats,
-    pdfUrl,
-    currencySymbol,
-    user,
-
-    setIsAddClientModalOpen,
-    setInvoiceNumber,
-    setSelectedClientId,
-    setIssueDate,
-    setDueDate,
-    setNotes,
-    handleAddClient,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleDownloadPDF,
-    handleSendEmail,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleCreateAndSendYuki,
-    handleSubmit,
-    getVatGroups,
-    fetchAvailableItems,
-    isSubmittingToStorecove,
-    selectedClientData,
-    submitToStorecove,
-  };
-};
