@@ -121,7 +121,12 @@ serve(async (req) => {
     let peppolData = null;
 
     // If we have a legal entity ID and VAT number, create PEPPOL identifier
-    if (legalEntityId && client.vat_number && client.country) {
+    if (
+      legalEntityId &&
+      client.vatNumber &&
+      client.country &&
+      client.type === "business"
+    ) {
       try {
         console.log(
           "Creating PEPPOL identifier for legal entity ID:",
@@ -134,7 +139,7 @@ serve(async (req) => {
 
         // Prepare PEPPOL identifier payload
         const peppolPayload = {
-          identifier: client.vat_number,
+          identifier: client.vatNumber,
           scheme: scheme,
           superscheme: "iso6523-actorid-upis",
         };

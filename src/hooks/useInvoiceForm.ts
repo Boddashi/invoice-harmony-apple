@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,11 +6,19 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { generateInvoicePDF, InvoiceData } from "@/utils/pdfGenerator";
+import { Json } from "@/integrations/supabase/types";
 
 interface Client {
   id: string;
   name: string;
   email?: string;
+  legal_entity_id?: number | null; // Changed from string to number | null to match the database
+  street?: string;
+  number?: string;
+  postcode?: string;
+  city?: string;
+  country?: string;
+  peppol_identifier?: any;
 }
 
 interface InvoiceItem {
@@ -81,6 +90,8 @@ export const useInvoiceForm = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [companySettings, setCompanySettings] = useState<any>(null);
   const [sendToYuki, setSendToYuki] = useState(false);
+  const [isSubmittingToStorecove, setIsSubmittingToStorecove] = useState(false);
+  const [selectedClientData, setSelectedClientData] = useState<Client | null>(null);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -361,13 +372,25 @@ export const useInvoiceForm = () => {
   }, [isEditMode, invoiceNumber, user]);
 
   useEffect(() => {
-    if (selectedClientId) {
-      const client = clients.find((c) => c.id === selectedClientId);
-      setSelectedClient(client || null);
-    } else {
-      setSelectedClient(null);
-    }
-  }, [selectedClientId, clients]);
+    const fetchClientData = async () => {
+      if (!selectedClientId || !user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("clients")
+          .select("*")
+          .eq("id", selectedClientId)
+          .single();
+          
+        if (error) throw error;
+        setSelectedClientData(data);
+      } catch (error: any) {
+        console.error("Error fetching client data:", error);
+      }
+    };
+    
+    fetchClientData();
+  }, [selectedClientId, user]);
 
   useEffect(() => {
     const calculatedSubTotal = items.reduce(
@@ -727,6 +750,69 @@ export const useInvoiceForm = () => {
     }, 0);
   };
 
+  const submitToStorecove = async (invoiceId: string, invoice: any) => {
+    if (!selectedClientData) {
+      console.log("No client data available for Storecove submission");
+      return null;
+    }
+    
+    setIsSubmittingToStorecove(true);
+    
+    try {
+      console.log("Submitting invoice to Storecove", { 
+        invoiceId, 
+        clientData: selectedClientData,
+        companySettings 
+      });
+      
+      const itemsWithDetails = items.map((item) => {
+        const foundItem = availableItems.find((i) => i.id === item.description);
+        return {
+          ...item,
+          description: foundItem?.title || item.description,
+        };
+      });
+      
+      const response = await supabase.functions.invoke("submit-invoice-document", {
+        body: {
+          invoice: {
+            id: invoiceId,
+            invoice_number: invoiceNumber,
+            issue_date: issueDate,
+            due_date: dueDate,
+            total_amount: total
+          },
+          client: selectedClientData,
+          items: itemsWithDetails,
+          companySettings
+        }
+      });
+      
+      if (response.error) {
+        console.error("Error submitting to Storecove:", response.error);
+        throw new Error(response.error.message || "Failed to submit to Storecove");
+      }
+      
+      if (response.data?.error) {
+        console.error("Storecove submission error:", response.data.error);
+        throw new Error(response.data.error);
+      }
+      
+      console.log("Storecove submission successful:", response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error("Error in submitToStorecove:", error);
+      toast({
+        variant: "destructive",
+        title: "Storecove Submission Failed",
+        description: error.message || "Failed to submit invoice to Storecove"
+      });
+      return null;
+    } finally {
+      setIsSubmittingToStorecove(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with status:", status);
@@ -768,6 +854,7 @@ export const useInvoiceForm = () => {
     setIsSubmitting(true);
     try {
       let invoiceId = id;
+      let invoiceData = null;
 
       if (isEditMode) {
         // Update existing invoice.
@@ -831,6 +918,7 @@ export const useInvoiceForm = () => {
           .single();
         if (invoiceError) throw invoiceError;
         invoiceId = invoice.id;
+        invoiceData = invoice;
 
         const invoiceItems = items.map((item) => ({
           invoice_id: invoice.id,
@@ -842,6 +930,32 @@ export const useInvoiceForm = () => {
           .from("invoice_items")
           .insert(invoiceItems);
         if (invoiceItemsError) throw invoiceItemsError;
+      }
+
+      // If client has legal_entity_id, submit to Storecove
+      if (selectedClientData?.legal_entity_id && status === "pending") {
+        try {
+          await submitToStorecove(invoiceId!, invoiceData || { 
+            id: invoiceId,
+            invoice_number: invoiceNumber,
+            issue_date: issueDate,
+            due_date: dueDate,
+            status,
+            total_amount: total
+          });
+          
+          toast({
+            title: "Storecove Submission",
+            description: "Invoice was successfully submitted to Storecove"
+          });
+        } catch (storecoveError: any) {
+          console.error("Storecove submission error:", storecoveError);
+          toast({
+            variant: "destructive",
+            title: "Storecove Error",
+            description: storecoveError.message || "Failed to submit to Storecove, but invoice was saved"
+          });
+        }
       }
 
       // If invoice is pending, generate and upload the PDF, then send email.
@@ -874,7 +988,7 @@ export const useInvoiceForm = () => {
             toast({
               variant: "destructive",
               title: "Error",
-              description: "Failed to process PDF for email",
+              description: "Failed to process PDF for email"
             });
           }
           navigate("/invoices");
@@ -977,6 +1091,8 @@ export const useInvoiceForm = () => {
     handleSubmit,
     getVatGroups,
     fetchAvailableItems,
+    isSubmittingToStorecove,
+    selectedClientData,
+    submitToStorecove,
   };
 };
-

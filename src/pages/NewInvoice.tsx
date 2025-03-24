@@ -18,6 +18,7 @@ const NewInvoice = () => {
     isSubmitting,
     isGeneratingPDF,
     isSendingEmail,
+    isSubmittingToStorecove,
     isAddClientModalOpen,
     invoiceNumber,
     selectedClientId,
@@ -80,6 +81,7 @@ const NewInvoice = () => {
           isSubmitting={isSubmitting}
           isGeneratingPDF={isGeneratingPDF}
           isSendingEmail={isSendingEmail}
+          isSubmittingToStorecove={isSubmittingToStorecove}
           status={status}
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}

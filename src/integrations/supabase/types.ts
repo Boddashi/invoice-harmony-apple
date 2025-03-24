@@ -20,6 +20,7 @@ export type Database = {
           legal_entity_id: number | null
           name: string
           number: string | null
+          peppol_identifier: Json | null
           phone: string | null
           postcode: string | null
           street: string | null
@@ -38,6 +39,7 @@ export type Database = {
           legal_entity_id?: number | null
           name: string
           number?: string | null
+          peppol_identifier?: Json | null
           phone?: string | null
           postcode?: string | null
           street?: string | null
@@ -56,6 +58,7 @@ export type Database = {
           legal_entity_id?: number | null
           name?: string
           number?: string | null
+          peppol_identifier?: Json | null
           phone?: string | null
           postcode?: string | null
           street?: string | null
