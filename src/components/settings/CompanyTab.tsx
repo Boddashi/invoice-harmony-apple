@@ -380,7 +380,7 @@ const CompanyTab = ({
     <CustomCard>
       <h2 className="text-xl font-semibold mb-6">Company Details</h2>
       <p className="text-muted-foreground mb-6">
-        Configure your company information for invoices.
+        Configure your company information for invoices and legal entity registration.
       </p>
 
       <form onSubmit={handleSaveCompany}>
@@ -693,7 +693,7 @@ const CompanyTab = ({
                 Saving...
               </>
             ) : (
-              "Save Company Information"
+              "Save & Register Legal Entity"
             )}
           </button>
         </div>
