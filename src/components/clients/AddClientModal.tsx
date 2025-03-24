@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 
 interface Client {
   id?: string;
@@ -24,6 +35,7 @@ interface Client {
   country?: string;
   vatNumber?: string | null;
   vat_number?: string | null;
+  legal_entity_id?: number | null;
 }
 
 interface AddClientModalProps {
@@ -43,6 +55,7 @@ const AddClientModal = ({
 }: AddClientModalProps) => {
   const { toast } = useToast();
   const isEditMode = !!clientToEdit;
+  const [isCreatingLegalEntity, setIsCreatingLegalEntity] = useState(false);
 
   const [formData, setFormData] = useState({
     type: "business",
@@ -291,7 +304,40 @@ const AddClientModal = ({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const createLegalEntity = async (clientData: any) => {
+    try {
+      setIsCreatingLegalEntity(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-client-legal-entity', {
+        body: { client: clientData }
+      });
+      
+      if (error) {
+        console.error("Error creating legal entity:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create legal entity. Please try again.",
+        });
+        return null;
+      }
+      
+      console.log("Legal entity created:", data);
+      return data?.data?.id || null;
+    } catch (error) {
+      console.error("Exception creating legal entity:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+      });
+      return null;
+    } finally {
+      setIsCreatingLegalEntity(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.name || !formData.email) {
@@ -302,38 +348,67 @@ const AddClientModal = ({
       });
       return;
     }
-
-    if (isEditMode && onUpdateClient && clientToEdit) {
-      onUpdateClient({
-        id: clientToEdit.id,
-        ...formData,
+    
+    // Required fields for legal entity creation
+    if (!formData.street || !formData.city || !formData.postcode || !formData.country) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Street, city, postal code, and country are required for electronic invoicing capabilities.",
       });
-    } else {
-      onAddClient(formData);
+      return;
     }
 
-    setFormData({
-      type: "business",
-      name: "",
-      email: "",
-      phone: "",
-      street: "",
-      number: "",
-      bus: "",
-      postcode: "",
-      city: "",
-      country: "BE",
-      vatNumber: "",
-    });
+    try {
+      // Only create legal entity if we're adding a new client or updating one without a legal entity
+      let legalEntityId = null;
+      if (!isEditMode || !clientToEdit?.legal_entity_id) {
+        legalEntityId = await createLegalEntity(formData);
+      }
 
-    toast({
-      title: "Success",
-      description: isEditMode
-        ? "Client updated successfully."
-        : "Client added successfully.",
-    });
+      if (isEditMode && onUpdateClient && clientToEdit) {
+        onUpdateClient({
+          id: clientToEdit.id,
+          ...formData,
+          legal_entity_id: legalEntityId || clientToEdit.legal_entity_id,
+        });
+      } else {
+        onAddClient({
+          ...formData,
+          legal_entity_id: legalEntityId,
+        });
+      }
 
-    onClose();
+      setFormData({
+        type: "business",
+        name: "",
+        email: "",
+        phone: "",
+        street: "",
+        number: "",
+        bus: "",
+        postcode: "",
+        city: "",
+        country: "BE",
+        vatNumber: "",
+      });
+
+      toast({
+        title: "Success",
+        description: isEditMode
+          ? "Client updated successfully."
+          : "Client added successfully.",
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error in client submission:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save client. Please try again.",
+      });
+    }
   };
 
   if (!isOpen) return null;
@@ -426,12 +501,12 @@ const AddClientModal = ({
             </div>
 
             <div className="border-t border-border/40 pt-4">
-              <h3 className="font-medium mb-3">Address Details</h3>
+              <h3 className="font-medium mb-3">Address Details (Required for Electronic Invoicing)</h3>
 
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Street
+                    Street *
                   </label>
                   <input
                     type="text"
@@ -440,6 +515,7 @@ const AddClientModal = ({
                     onChange={handleChange}
                     className="input-field w-full"
                     placeholder="Street name"
+                    required
                   />
                 </div>
 
@@ -475,7 +551,7 @@ const AddClientModal = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Postcode
+                      Postcode *
                     </label>
                     <input
                       type="text"
@@ -484,11 +560,12 @@ const AddClientModal = ({
                       onChange={handleChange}
                       className="input-field w-full"
                       placeholder="1000"
+                      required
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      City
+                      City *
                     </label>
                     <input
                       type="text"
@@ -497,17 +574,19 @@ const AddClientModal = ({
                       onChange={handleChange}
                       className="input-field w-full"
                       placeholder="Brussels"
+                      required
                     />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Country
+                    Country *
                   </label>
                   <Select 
                     value={formData.country} 
                     onValueChange={handleCountryChange}
+                    required
                   >
                     <SelectTrigger className="w-full border-apple-blue dark:border-apple-purple">
                       <SelectValue placeholder="Select a country" />
@@ -558,8 +637,13 @@ const AddClientModal = ({
               type="submit"
               onClick={handleSubmit}
               className="apple-button "
+              disabled={isCreatingLegalEntity}
             >
-              {isEditMode ? "Update Client" : "Add Client"}
+              {isCreatingLegalEntity 
+                ? "Processing..." 
+                : isEditMode 
+                  ? "Update Client" 
+                  : "Add Client"}
             </button>
           </div>
         </div>

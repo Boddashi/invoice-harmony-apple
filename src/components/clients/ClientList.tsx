@@ -60,6 +60,7 @@ interface Client {
   country?: string | null;
   vat_number?: string | null;
   vatNumber?: string | null;
+  legal_entity_id?: number | null;
   invoices?: number;
   totalSpent?: number;
 }
@@ -257,6 +258,7 @@ const ClientList = () => {
         city: newClient.city || null,
         country: newClient.country || null,
         vat_number: newClient.vatNumber || null,
+        legal_entity_id: newClient.legal_entity_id || null,
       };
       const { data, error } = await supabase
         .from("clients")
@@ -312,6 +314,7 @@ const ClientList = () => {
         city: updatedClient.city || null,
         country: updatedClient.country || null,
         vat_number: updatedClient.vatNumber || null,
+        legal_entity_id: updatedClient.legal_entity_id || null,
       };
       const { data, error } = await supabase
         .from("clients")
