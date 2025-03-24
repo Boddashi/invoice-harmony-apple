@@ -37,9 +37,20 @@ serve(async (req) => {
 
     console.log("Received invoice data:", JSON.stringify(requestData));
 
-    if (!invoice || !client || !items || items.length === 0) {
+    if (!invoice || !client || !items || items.length === 0 || !companySettings) {
       return new Response(
         JSON.stringify({ error: "Missing required data" }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    // Check if the company has a legal entity ID
+    if (!companySettings.legal_entity_id) {
+      return new Response(
+        JSON.stringify({ error: "Company does not have a Storecove legal entity", missingCompanyLegalEntity: true }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -50,7 +61,7 @@ serve(async (req) => {
     // Check if the client has a legal entity ID
     if (!client.legal_entity_id) {
       return new Response(
-        JSON.stringify({ error: "Client does not have a Storecove legal entity", missingLegalEntity: true }),
+        JSON.stringify({ error: "Client does not have a Storecove legal entity", missingClientLegalEntity: true }),
         { 
           status: 400, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -101,17 +112,19 @@ serve(async (req) => {
 
     // Prepare payment means array
     const paymentMeansArray = [];
-    if (companySettings?.bank_account) {
+    if (companySettings?.iban) {
       paymentMeansArray.push({
-        account: companySettings.bank_account,
+        account: companySettings.iban,
         holder: companySettings.company_name || "Your Company",
         code: "credit_transfer"
       });
     }
 
-    // Format data for Storecove API
+    // Format data for Storecove API - using the company's legal entity ID as the sender
+    // and the client's legal entity ID as the receiver
     const documentSubmission = {
-      legalEntityId: client.legal_entity_id,
+      legalEntityId: companySettings.legal_entity_id, // Changed to use company's legal entity ID as the sender
+      receiverLegalEntityId: client.legal_entity_id, // Added to specify client as the receiver
       routing: {
         emails: client.email ? [client.email] : []
       },

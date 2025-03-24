@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -62,7 +63,7 @@ serve(async (req) => {
     // Format data for Storecove API
     const legalEntityData = {
       acts_as_receiver: true,
-      acts_as_sender: true,
+      acts_as_sender: false, // Setting this to false as clients are only receivers
       advertisements: ["invoice"],
       city: client.city || "",
       country: client.country || "",
@@ -123,7 +124,7 @@ serve(async (req) => {
     // If we have a legal entity ID and VAT number, create PEPPOL identifier
     if (
       legalEntityId &&
-      client.vatNumber &&
+      client.vat_number &&
       client.country &&
       client.type === "business"
     ) {
@@ -139,7 +140,7 @@ serve(async (req) => {
 
         // Prepare PEPPOL identifier payload
         const peppolPayload = {
-          identifier: client.vatNumber,
+          identifier: client.vat_number,
           scheme: scheme,
           superscheme: "iso6523-actorid-upis",
         };

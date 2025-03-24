@@ -751,9 +751,87 @@ export const useInvoiceForm = () => {
   };
 
   const submitToStorecove = async (invoiceId: string, invoice: any) => {
-    if (!selectedClientData) {
-      console.log("No client data available for Storecove submission");
+    if (!selectedClientData || !companySettings || !companySettings.legal_entity_id) {
+      console.log("Missing data for Storecove submission:", { 
+        hasClientData: !!selectedClientData, 
+        hasCompanySettings: !!companySettings,
+        hasCompanyLegalEntity: companySettings?.legal_entity_id
+      });
+      
+      // Show more specific toast message based on what's missing
+      if (!companySettings?.legal_entity_id) {
+        toast({
+          variant: "destructive",
+          title: "Missing Company Configuration",
+          description: "Your company needs to be registered with Storecove first. Go to Settings to complete your company profile."
+        });
+      } else if (!selectedClientData) {
+        toast({
+          variant: "destructive",
+          title: "Missing Client Data",
+          description: "Client information is incomplete. Please update the client details."
+        });
+      }
+      
       return null;
+    }
+    
+    // Check if the client has a legal entity ID
+    if (!selectedClientData.legal_entity_id) {
+      console.log("Client has no legal entity ID, creating one...");
+      
+      try {
+        const response = await supabase.functions.invoke("create-client-legal-entity", {
+          body: { client: selectedClientData }
+        });
+        
+        if (response.error) {
+          console.error("Error creating client legal entity:", response.error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to create client legal entity. " + response.error
+          });
+          return null;
+        }
+        
+        if (response.data.success) {
+          console.log("Created client legal entity:", response.data);
+          // Update client data with new legal entity ID
+          const updatedClientData = {
+            ...selectedClientData,
+            legal_entity_id: response.data.data.id
+          };
+          setSelectedClientData(updatedClientData);
+          
+          // Also update in database
+          await supabase
+            .from("clients")
+            .update({ legal_entity_id: response.data.data.id })
+            .eq("id", selectedClientData.id);
+            
+          toast({
+            title: "Success",
+            description: "Client registered with Storecove for e-invoicing"
+          });
+        } else {
+          console.error("Failed to create client legal entity:", response.data);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to register client with Storecove: " + (response.data.error || "Unknown error")
+          });
+          return null;
+        }
+      } catch (error: any) {
+        console.error("Exception creating client legal entity:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Exception registering client with Storecove: " + error.message
+        });
+        return null;
+      }
     }
     
     setIsSubmittingToStorecove(true);
