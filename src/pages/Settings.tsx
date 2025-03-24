@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { User, Building, CreditCard, FileText } from "lucide-react";
@@ -139,7 +138,6 @@ const Settings = () => {
         throw saveError;
       }
 
-      // After saving to Supabase, create legal entity via API
       try {
         const { data, error } = await supabase.functions.invoke("create-legal-entity", {
           body: { companySettings: settingsData },
@@ -155,12 +153,10 @@ const Settings = () => {
         } else {
           console.log("Legal entity created:", data);
           
-          // Save the legal entity ID from the response
           if (data.data && data.data.id) {
             const legalEntityId = data.data.id;
             console.log("Saving legal entity ID:", legalEntityId);
             
-            // Update the company settings with the legal entity ID
             const updateResult = await supabase
               .from("company_settings")
               .update({ legal_entity_id: legalEntityId })
@@ -169,7 +165,6 @@ const Settings = () => {
             if (updateResult.error) {
               console.error("Error saving legal entity ID:", updateResult.error);
             } else {
-              // Update local state
               setCompanySettings(prev => ({
                 ...prev,
                 legal_entity_id: legalEntityId
@@ -177,7 +172,6 @@ const Settings = () => {
             }
           }
           
-          // Check if PEPPOL identifier was created
           if (data.peppol) {
             if (data.peppol.success) {
               console.log("PEPPOL identifier created:", data.peppol.data);
@@ -227,7 +221,6 @@ const Settings = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="col-span-1">
-            {/* Mobile tabs */}
             <div className="block lg:hidden mb-6">
               <SettingsTabs
                 tabs={tabs}
@@ -237,7 +230,6 @@ const Settings = () => {
               />
             </div>
 
-            {/* Desktop sidebar */}
             <div className="hidden lg:block">
               <SettingsTabs
                 tabs={tabs}
