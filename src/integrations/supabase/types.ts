@@ -80,6 +80,7 @@ export type Database = {
           id: string
           invoice_number_type: string | null
           invoice_prefix: string | null
+          legal_entity_id: number | null
           logo_url: string | null
           number: string | null
           postal_code: string | null
@@ -107,6 +108,7 @@ export type Database = {
           id?: string
           invoice_number_type?: string | null
           invoice_prefix?: string | null
+          legal_entity_id?: number | null
           logo_url?: string | null
           number?: string | null
           postal_code?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           id?: string
           invoice_number_type?: string | null
           invoice_prefix?: string | null
+          legal_entity_id?: number | null
           logo_url?: string | null
           number?: string | null
           postal_code?: string | null

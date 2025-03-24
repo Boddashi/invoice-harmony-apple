@@ -63,6 +63,7 @@ const Settings = () => {
             logo_url: data.logo_url || "",
             yuki_email: data.yuki_email || "",
             terms_and_conditions_url: data.terms_and_conditions_url || "",
+            legal_entity_id: data.legal_entity_id || null,
           });
 
           if (data.default_currency) {
@@ -153,6 +154,29 @@ const Settings = () => {
           });
         } else {
           console.log("Legal entity created:", data);
+          
+          // Save the legal entity ID from the response
+          if (data.data && data.data.id) {
+            const legalEntityId = data.data.id;
+            console.log("Saving legal entity ID:", legalEntityId);
+            
+            // Update the company settings with the legal entity ID
+            const updateResult = await supabase
+              .from("company_settings")
+              .update({ legal_entity_id: legalEntityId })
+              .eq("user_id", user.id);
+              
+            if (updateResult.error) {
+              console.error("Error saving legal entity ID:", updateResult.error);
+            } else {
+              // Update local state
+              setCompanySettings(prev => ({
+                ...prev,
+                legal_entity_id: legalEntityId
+              }));
+            }
+          }
+          
           toast({
             title: "Success",
             description: "Company information saved and legal entity created.",

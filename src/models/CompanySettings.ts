@@ -33,6 +33,9 @@ export interface CompanySettings {
   
   // Terms & Conditions
   terms_and_conditions_url?: string;
+  
+  // Legal entity (Storecove)
+  legal_entity_id?: number | null;
 }
 
 export const defaultCompanySettings: CompanySettings = {
@@ -60,5 +63,7 @@ export const defaultCompanySettings: CompanySettings = {
   yuki_email: '',
   
   logo_url: '',
-  terms_and_conditions_url: ''
+  terms_and_conditions_url: '',
+  
+  legal_entity_id: null
 };
