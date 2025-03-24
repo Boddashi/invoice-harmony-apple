@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import CustomCard from "../ui/CustomCard";
 import { CompanySettings } from "@/models/CompanySettings";
-import { Check, Loader2, Upload, X, Building } from "lucide-react";
+import { Check, Loader2, Upload, X, Building, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CompanyTabProps {
   companySettings: CompanySettings;
@@ -438,17 +439,33 @@ const CompanyTab = ({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                VAT Number
-              </label>
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  VAT Number
+                </label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info size={14} className="text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px] text-xs">Your VAT number is required for PEPPOL e-invoicing network integration.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <input
                 type="text"
                 name="vat_number"
-                className="input-field w-full"
+                className="input-field w-full border-apple-blue dark:border-apple-purple"
                 value={companySettings.vat_number}
                 onChange={handleInputChange}
+                placeholder="e.g. BE0628719851"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Required for e-invoicing. Format as country code + VAT number without spaces (e.g. BE0628719851).
+              </p>
             </div>
 
             <div>
@@ -549,21 +566,36 @@ const CompanyTab = ({
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Country
                 </label>
-                <Select 
-                  value={companySettings.country} 
-                  onValueChange={handleCountryChange}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country.code} value={country.code}>
-                        {country.code} - {country.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-1">
+                  <Select 
+                    value={companySettings.country} 
+                    onValueChange={handleCountryChange}
+                  >
+                    <SelectTrigger className="w-full border-apple-blue dark:border-apple-purple">
+                      <SelectValue placeholder="Select a country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {countries.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.code} - {country.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info size={14} className="text-muted-foreground cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="w-[200px] text-xs">Your country code is required for PEPPOL e-invoicing network integration.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Required for e-invoicing registration.
+                </p>
               </div>
             </div>
           </div>
@@ -703,3 +735,4 @@ const CompanyTab = ({
 };
 
 export default CompanyTab;
+

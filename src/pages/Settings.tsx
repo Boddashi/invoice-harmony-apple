@@ -177,10 +177,28 @@ const Settings = () => {
             }
           }
           
-          toast({
-            title: "Success",
-            description: "Company information saved and legal entity created.",
-          });
+          // Check if PEPPOL identifier was created
+          if (data.peppol) {
+            if (data.peppol.success) {
+              console.log("PEPPOL identifier created:", data.peppol.data);
+              toast({
+                title: "Success",
+                description: "Company information saved with legal entity and PEPPOL identifier.",
+              });
+            } else {
+              console.error("Error creating PEPPOL identifier:", data.peppol.error);
+              toast({
+                variant: "warning",
+                title: "Partial success",
+                description: "Company information and legal entity saved, but PEPPOL identifier creation failed.",
+              });
+            }
+          } else {
+            toast({
+              title: "Success",
+              description: "Company information saved and legal entity created.",
+            });
+          }
         }
       } catch (apiError) {
         console.error("Exception creating legal entity:", apiError);

@@ -60,7 +60,7 @@ serve(async (req) => {
 
     console.log("Preparing legal entity payload:", JSON.stringify(legalEntityData));
 
-    // Make request to Storecove API
+    // Make request to Storecove API to create legal entity
     const response = await fetch("https://api.storecove.com/api/v2/legal_entities", {
       method: "POST",
       headers: {
@@ -89,8 +89,100 @@ serve(async (req) => {
     }
 
     console.log("Successfully created legal entity:", JSON.stringify(responseData));
+    
+    // Extract the legal entity ID from the response
+    const legalEntityId = responseData.id;
+    
+    // If we have a legal entity ID and VAT number, create PEPPOL identifier
+    if (legalEntityId && companySettings.vat_number && companySettings.country) {
+      try {
+        console.log("Creating PEPPOL identifier for legal entity ID:", legalEntityId);
+        
+        // Format the scheme based on country and VAT
+        const countryCode = companySettings.country;
+        const scheme = `${countryCode}:VAT`;
+        
+        // Prepare PEPPOL identifier payload
+        const peppolPayload = {
+          identifier: companySettings.vat_number,
+          scheme: scheme,
+          superscheme: "iso6523-actorid-upis"
+        };
+        
+        console.log("PEPPOL identifier payload:", JSON.stringify(peppolPayload));
+        
+        // Make request to create PEPPOL identifier
+        const peppolResponse = await fetch(`https://api.storecove.com/api/v2/legal_entities/${legalEntityId}/peppol_identifiers`, {
+          method: "POST",
+          headers: {
+            "Accept": "application/json",
+            "Authorization": `Bearer ${STORECOVE_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(peppolPayload)
+        });
+        
+        const peppolData = await peppolResponse.json();
+        
+        if (!peppolResponse.ok) {
+          console.error("Error creating PEPPOL identifier:", JSON.stringify(peppolData));
+          
+          // We don't fail the entire operation if PEPPOL creation fails
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              data: responseData,
+              peppol: {
+                success: false,
+                error: peppolData
+              }
+            }),
+            { 
+              status: 200, 
+              headers: { ...corsHeaders, "Content-Type": "application/json" } 
+            }
+          );
+        }
+        
+        console.log("Successfully created PEPPOL identifier:", JSON.stringify(peppolData));
+        
+        // Return success with both legal entity and PEPPOL data
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            data: responseData,
+            peppol: {
+              success: true,
+              data: peppolData
+            }
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      } catch (peppolError) {
+        console.error("Exception creating PEPPOL identifier:", peppolError);
+        
+        // Return success for legal entity but error for PEPPOL
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            data: responseData,
+            peppol: {
+              success: false,
+              error: peppolError.message
+            }
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, "Content-Type": "application/json" } 
+          }
+        );
+      }
+    }
 
-    // Return the response from Storecove
+    // Return the legal entity data if we didn't create a PEPPOL identifier
     return new Response(
       JSON.stringify({ 
         success: true, 
