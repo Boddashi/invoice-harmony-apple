@@ -69,7 +69,7 @@ serve(async (req) => {
       line2: client.bus || "",
       party_name: client.name || "",
       public: true,
-      tax_registered: client.type === "business" && !!client.vat_number,
+      tax_registered: client.type === "business" && !!client.vatNumber,
       zip: client.postcode || ""
     };
 
@@ -110,7 +110,7 @@ serve(async (req) => {
     let peppolData = null;
     
     // If we have a legal entity ID and VAT number, create PEPPOL identifier
-    if (legalEntityId && client.vat_number && client.country) {
+    if (legalEntityId && client.vatNumber && client.country && client.type === "business") {
       try {
         console.log("Creating PEPPOL identifier for legal entity ID:", legalEntityId);
         
@@ -120,7 +120,7 @@ serve(async (req) => {
         
         // Prepare PEPPOL identifier payload
         const peppolPayload = {
-          identifier: client.vat_number,
+          identifier: client.vatNumber,
           scheme: scheme,
           superscheme: "iso6523-actorid-upis"
         };

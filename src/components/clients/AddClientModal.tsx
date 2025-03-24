@@ -36,6 +36,7 @@ interface Client {
   vatNumber?: string | null;
   vat_number?: string | null;
   legal_entity_id?: number | null;
+  peppol_identifier?: any | null;
 }
 
 interface AddClientModalProps {
@@ -319,11 +320,16 @@ const AddClientModal = ({
           title: "Error",
           description: "Failed to create legal entity. Please try again.",
         });
-        return null;
+        return { legalEntityId: null, peppolIdentifier: null };
       }
       
       console.log("Legal entity created:", data);
-      return data?.data?.id || null;
+      
+      // Return both the legal entity ID and PEPPOL identifier (if available)
+      return { 
+        legalEntityId: data?.data?.id || null,
+        peppolIdentifier: (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null
+      };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
       toast({
@@ -331,7 +337,7 @@ const AddClientModal = ({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
-      return null;
+      return { legalEntityId: null, peppolIdentifier: null };
     } finally {
       setIsCreatingLegalEntity(false);
     }
@@ -362,8 +368,12 @@ const AddClientModal = ({
     try {
       // Only create legal entity if we're adding a new client or updating one without a legal entity
       let legalEntityId = null;
+      let peppolIdentifier = null;
+      
       if (!isEditMode || !clientToEdit?.legal_entity_id) {
-        legalEntityId = await createLegalEntity(formData);
+        const result = await createLegalEntity(formData);
+        legalEntityId = result.legalEntityId;
+        peppolIdentifier = result.peppolIdentifier;
       }
 
       if (isEditMode && onUpdateClient && clientToEdit) {
@@ -371,11 +381,13 @@ const AddClientModal = ({
           id: clientToEdit.id,
           ...formData,
           legal_entity_id: legalEntityId || clientToEdit.legal_entity_id,
+          peppol_identifier: peppolIdentifier || clientToEdit.peppol_identifier,
         });
       } else {
         onAddClient({
           ...formData,
           legal_entity_id: legalEntityId,
+          peppol_identifier: peppolIdentifier,
         });
       }
 
@@ -608,7 +620,7 @@ const AddClientModal = ({
                 <h3 className="font-medium mb-3">Business Details</h3>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    VAT Number
+                    VAT Number{formData.country && " (Required for PEPPOL)"}
                   </label>
                   <input
                     type="text"
@@ -617,7 +629,13 @@ const AddClientModal = ({
                     onChange={handleChange}
                     className="input-field w-full"
                     placeholder="BE0123456789"
+                    required={formData.type === "business"}
                   />
+                  {formData.type === "business" && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      VAT number is required for electronic invoicing via PEPPOL network.
+                    </p>
+                  )}
                 </div>
               </div>
             )}
