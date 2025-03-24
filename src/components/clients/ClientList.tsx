@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Mail,
@@ -62,7 +61,6 @@ interface Client {
   vat_number?: string | null;
   vatNumber?: string | null;
   legal_entity_id?: number | null;
-  peppol_identifier?: string | null; // Changed from any to string
   invoices?: number;
   totalSpent?: number;
 }

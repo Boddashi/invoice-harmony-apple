@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +36,7 @@ interface Client {
   vatNumber?: string | null;
   vat_number?: string | null;
   legal_entity_id?: number | null;
-  peppol_identifier?: string | null;
+  peppol_identifier?: any | null;
 }
 
 interface AddClientModalProps {
