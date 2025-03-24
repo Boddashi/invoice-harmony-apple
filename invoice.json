@@ -1,76 +1,66 @@
 {
-    "legalEntityId": ,
-    "routing": {
-      "emails": [
-        "test@example.com"
-      ],
-      "eIdentifiers": [
-        {
-          "scheme": "NL:KVK",
-          "id": "012345677"
-        },
-        {
-          "scheme": "NL:VAT",
-          "id": "NL000000000B45"
-        }
-      ]
-    },
-    "document": {
-      "documentType": "invoice",
-      "invoice": {
-        "invoiceNumber": "202112007",
-        "issueDate": "2021-12-07",
-        "documentCurrencyCode": "EUR",
-        "taxSystem": "tax_line_percentages",
-        "accountingCustomerParty": {
-          "party": {
-            "companyName": "ManyMarkets Inc.",
-            "address": {
-              "street1": "Street 123",
-              "zip": "1111AA",
-              "city": "Here",
-              "country": "NL"
-            }
-          },
-          "publicIdentifiers": [
-            {
-              "scheme": "NL:KVK",
-              "id": "012345677"
-            },
-            {
-              "scheme": "NL:VAT",
-              "id": "NL000000000B45"
-            }
-          ]
-        },
-        "invoiceLines": [
-          {
-            "description": "The things you purchased",
-            "amountExcludingVat": 10,
-            "tax": {
-              "percentage": 0,
-              "category": "reverse_charge",
-              "country": "DE"
-            }
-          }
-        ],
-        "taxSubtotals": [
-          {
-            "percentage": 0,
-            "category": "reverse_charge",
-            "country": "DE",
-            "taxableAmount": 10,
-            "taxAmount": 0
-          }
-        ],
-        "paymentMeansArray": [
-          {
-            "account": "NL50ABNA0552321249",
-            "holder": "Storecove",
-            "code": "credit_transfer"
-          }
-        ],
-        "amountIncludingVat": 10
+  "legalEntityId": 342479,
+  "routing": {
+    "emails": ["dominik.dobos333@gmail.com"],
+    "eIdentifiers": [
+      {
+        "scheme": "DE:LWID",
+        "id": "10101010-STO-10"
       }
+    ]
+  },
+  "document": {
+    "documentType": "invoice",
+    "invoice": {
+      "invoiceNumber": "202112008",
+      "issueDate": "2021-12-07",
+      "documentCurrencyCode": "EUR",
+      "taxSystem": "tax_line_percentages",
+      "accountingCustomerParty": {
+        "party": {
+          "companyName": "ManyMarkets Inc.",
+          "address": {
+            "street1": "Street 123",
+            "zip": "1111AA",
+            "city": "Here",
+            "country": "DE"
+          }
+        },
+        "publicIdentifiers": [
+          {
+            "scheme": "DE:LWID",
+            "id": "10101010-STO-10"
+          }
+        ]
+      },
+      "invoiceLines": [
+        {
+          "description": "The things you purchased",
+          "amountExcludingVat": 10,
+          "tax": {
+            "percentage": 19,
+            "category": "standard",
+            "country": "DE"
+          }
+        }
+      ],
+      "taxSubtotals": [
+        {
+          "percentage": 19,
+          "category": "standard",
+          "country": "DE",
+          "taxableAmount": 10,
+          "taxAmount": 1.9
+        }
+      ],
+      "paymentMeansArray": [
+        {
+          "account": "NL50ABNA0552321249",
+          "holder": "Storecove",
+          "code": "credit_transfer"
+        }
+      ],
+      "amountIncludingVat": 11.9
     }
   }
+}

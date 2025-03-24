@@ -1,0 +1,9 @@
+{
+  "acts_as_receiver": true,
+  "acts_as_sender": true,
+  "city": "Gent",
+  "country": "BE",
+  "line1": "Dendermondsesteenweg 39",
+  "party_name": "Creative Finance",
+  "zip": "9000"
+}
