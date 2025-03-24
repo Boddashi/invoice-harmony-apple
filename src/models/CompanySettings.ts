@@ -36,6 +36,9 @@ export interface CompanySettings {
   
   // Legal entity (Storecove)
   legal_entity_id?: number | null;
+  
+  // PEPPOL identifier
+  peppol_identifier?: any;
 }
 
 export const defaultCompanySettings: CompanySettings = {
@@ -65,5 +68,6 @@ export const defaultCompanySettings: CompanySettings = {
   logo_url: '',
   terms_and_conditions_url: '',
   
-  legal_entity_id: null
+  legal_entity_id: null,
+  peppol_identifier: null
 };

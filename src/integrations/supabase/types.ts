@@ -83,6 +83,7 @@ export type Database = {
           legal_entity_id: number | null
           logo_url: string | null
           number: string | null
+          peppol_identifier: Json | null
           postal_code: string | null
           street: string | null
           swift: string | null
@@ -111,6 +112,7 @@ export type Database = {
           legal_entity_id?: number | null
           logo_url?: string | null
           number?: string | null
+          peppol_identifier?: Json | null
           postal_code?: string | null
           street?: string | null
           swift?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           legal_entity_id?: number | null
           logo_url?: string | null
           number?: string | null
+          peppol_identifier?: Json | null
           postal_code?: string | null
           street?: string | null
           swift?: string | null

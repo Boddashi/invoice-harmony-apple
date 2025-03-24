@@ -92,6 +92,7 @@ serve(async (req) => {
     
     // Extract the legal entity ID from the response
     const legalEntityId = responseData.id;
+    let peppolData = null;
     
     // If we have a legal entity ID and VAT number, create PEPPOL identifier
     if (legalEntityId && companySettings.vat_number && companySettings.country) {
@@ -122,7 +123,7 @@ serve(async (req) => {
           body: JSON.stringify(peppolPayload)
         });
         
-        const peppolData = await peppolResponse.json();
+        peppolData = await peppolResponse.json();
         
         if (!peppolResponse.ok) {
           console.error("Error creating PEPPOL identifier:", JSON.stringify(peppolData));

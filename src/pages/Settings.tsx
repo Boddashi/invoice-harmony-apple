@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { User, Building, CreditCard, FileText } from "lucide-react";
@@ -63,6 +64,7 @@ const Settings = () => {
             yuki_email: data.yuki_email || "",
             terms_and_conditions_url: data.terms_and_conditions_url || "",
             legal_entity_id: data.legal_entity_id || null,
+            peppol_identifier: data.peppol_identifier || null,
           });
 
           if (data.default_currency) {
@@ -157,17 +159,31 @@ const Settings = () => {
             const legalEntityId = data.data.id;
             console.log("Saving legal entity ID:", legalEntityId);
             
+            // Store the legal entity ID
+            const updateData: Partial<CompanySettings> = { 
+              legal_entity_id: legalEntityId 
+            };
+            
+            // If we have PEPPOL data, store that too
+            if (data.peppol && data.peppol.success && data.peppol.data) {
+              console.log("Saving PEPPOL identifier:", data.peppol.data);
+              updateData.peppol_identifier = data.peppol.data;
+            }
+            
+            // Update the database with both legal entity ID and PEPPOL identifier
             const updateResult = await supabase
               .from("company_settings")
-              .update({ legal_entity_id: legalEntityId })
+              .update(updateData)
               .eq("user_id", user.id);
               
             if (updateResult.error) {
-              console.error("Error saving legal entity ID:", updateResult.error);
+              console.error("Error saving legal entity and PEPPOL data:", updateResult.error);
             } else {
+              // Update local state
               setCompanySettings(prev => ({
                 ...prev,
-                legal_entity_id: legalEntityId
+                legal_entity_id: legalEntityId,
+                peppol_identifier: data.peppol?.success ? data.peppol.data : null
               }));
             }
           }
