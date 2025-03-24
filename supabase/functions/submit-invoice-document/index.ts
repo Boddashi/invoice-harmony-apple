@@ -123,8 +123,8 @@ serve(async (req) => {
     // Format data for Storecove API - using the company's legal entity ID as the sender
     // and the client's legal entity ID as the receiver
     const documentSubmission = {
-      legalEntityId: companySettings.legal_entity_id, // Changed to use company's legal entity ID as the sender
-      receiverLegalEntityId: client.legal_entity_id, // Added to specify client as the receiver
+      legalEntityId: companySettings.legal_entity_id, // Company's legal entity ID as the sender
+      receiverLegalEntityId: client.legal_entity_id, // Client's legal entity ID as the receiver
       routing: {
         emails: client.email ? [client.email] : []
       },
