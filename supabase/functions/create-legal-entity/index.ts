@@ -120,7 +120,7 @@ serve(async (req) => {
 
         // Prepare PEPPOL identifier payload
         const peppolPayload = {
-          identifier: companySettings.vat_number.slice(2),
+          identifier: companySettings.vat_number,
           scheme: `${countryCode}:VAT`,
           superscheme: "iso6523-actorid-upis",
         };
