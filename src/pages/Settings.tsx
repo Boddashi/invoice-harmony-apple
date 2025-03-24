@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { User, Building, CreditCard, FileText } from "lucide-react";
@@ -137,10 +138,34 @@ const Settings = () => {
         throw saveError;
       }
 
-      toast({
-        title: "Company information saved",
-        description: "Your company details have been updated successfully.",
-      });
+      // After saving to Supabase, create legal entity via API
+      try {
+        const { data, error } = await supabase.functions.invoke("create-legal-entity", {
+          body: { companySettings: settingsData },
+        });
+
+        if (error) {
+          console.error("Error creating legal entity:", error);
+          toast({
+            variant: "destructive",
+            title: "Warning",
+            description: "Company information saved, but failed to create legal entity.",
+          });
+        } else {
+          console.log("Legal entity created:", data);
+          toast({
+            title: "Success",
+            description: "Company information saved and legal entity created.",
+          });
+        }
+      } catch (apiError) {
+        console.error("Exception creating legal entity:", apiError);
+        toast({
+          variant: "destructive",
+          title: "Warning",
+          description: "Company information saved, but failed to create legal entity.",
+        });
+      }
     } catch (error) {
       console.error("Failed to save company settings:", error);
       toast({
