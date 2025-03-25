@@ -75,6 +75,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
   element.style.backgroundColor = 'white';
   element.style.position = 'fixed';
   element.style.left = '-9999px';
+  element.style.fontFamily = 'Arial, sans-serif';
   document.body.appendChild(element);
 
   element.innerHTML = `
@@ -192,10 +193,15 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
   try {
     console.log("Rendering PDF content to canvas");
+    // Improved quality settings for html2canvas
     const canvas = await html2canvas(element, {
-      scale: 1.25,
+      scale: 2, // Increased from 1.25 to 2 for higher resolution
       useCORS: true,
-      logging: false
+      logging: false,
+      letterRendering: true,
+      allowTaint: true,
+      backgroundColor: "#ffffff",
+      imageTimeout: 0 // No timeout for images
     });
 
     document.body.removeChild(element);
@@ -208,14 +214,29 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       compress: true
     });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.5);
+    // Optimize the quality vs size ratio by adjusting jpeg quality
+    const imgData = canvas.toDataURL('image/jpeg', 0.8); // Increased quality from 0.5 to 0.8
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
     pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
 
+    // Get PDF size and optimize if needed
     const pdfBase64 = pdf.output('datauristring');
+    const pdfSizeInBytes = Math.ceil((pdfBase64.length * 3) / 4);
+    console.log(`Generated PDF size: ${Math.round(pdfSizeInBytes / 1024)} KB`);
+    
+    // If PDF is too large (>3.5MB), create a more compressed version
+    if (pdfSizeInBytes > 3.5 * 1024 * 1024) {
+      console.log("PDF is too large, generating a more compressed version");
+      const compressedImgData = canvas.toDataURL('image/jpeg', 0.6); // Reduce quality
+      pdf.deletePage(1);
+      pdf.addImage(compressedImgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      const compressedPdfBase64 = pdf.output('datauristring');
+      console.log(`Compressed PDF size: ${Math.round(compressedPdfBase64.length * 3 / 4 / 1024)} KB`);
+      return compressedPdfBase64;
+    }
     
     console.log("PDF generated successfully, saving to storage...");
     const pdfUrl = await saveInvoicePDF(invoiceData.id, pdfBase64);
@@ -240,7 +261,7 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Prom
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     
-    const sliceSize = 512; // Increased slice size for better performance
+    const sliceSize = 1024; // Adjusted slice size for better memory performance
     for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
       const slice = byteCharacters.slice(offset, offset + sliceSize);
       

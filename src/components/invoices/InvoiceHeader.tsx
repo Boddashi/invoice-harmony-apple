@@ -1,3 +1,4 @@
+
 import React, { useContext } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -50,7 +51,7 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               <Loader2 className="animate-spin" size={16} />
               <span>
                 {isGeneratingPDF
-                  ? "Generating PDF..."
+                  ? "Generating high-quality PDF..."
                   : isSendingEmail
                   ? "Sending email..."
                   : isSubmittingToStorecove

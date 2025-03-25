@@ -52,6 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
       companyName,
       includeAttachments,
       hasPdfData: !!pdfBase64,
+      pdfDataLength: pdfBase64 ? pdfBase64.length : 0,
       yukiEmail,
     }));
 
@@ -75,18 +76,25 @@ const handler = async (req: Request): Promise<Response> => {
         if (pdfBase64) {
           console.log("Using provided PDF base64 data");
           
-          // Extract the base64 data (remove data:application/pdf;base64, prefix if present)
-          const base64Data = pdfBase64.includes("base64,") 
-            ? pdfBase64.split("base64,")[1]
-            : pdfBase64;
+          // Check PDF size limit (roughly 3.5MB when base64 encoded is about 4.7MB)
+          const isTooLarge = pdfBase64.length > 4.7 * 1024 * 1024;
           
-          // Add the PDF as an attachment
-          attachments.push({
-            filename: `invoice-${invoiceNumber}.pdf`,
-            content: base64Data,
-          });
-          
-          console.log("PDF attachment added successfully");
+          if (isTooLarge) {
+            console.warn(`PDF is too large (${Math.round(pdfBase64.length / 1024 / 1024 * 100) / 100}MB), sending link only`);
+          } else {
+            // Extract the base64 data (remove data:application/pdf;base64, prefix if present)
+            const base64Data = pdfBase64.includes("base64,") 
+              ? pdfBase64.split("base64,")[1]
+              : pdfBase64;
+            
+            // Add the PDF as an attachment
+            attachments.push({
+              filename: `invoice-${invoiceNumber}.pdf`,
+              content: base64Data,
+            });
+            
+            console.log("PDF attachment added successfully");
+          }
         } else if (pdfUrl) {
           console.log(`Fetching PDF from URL: ${pdfUrl}`);
           try {
@@ -97,23 +105,29 @@ const handler = async (req: Request): Promise<Response> => {
             }
             
             const pdfBuffer = await pdfResponse.arrayBuffer();
-            const pdfBase64 = btoa(
-              String.fromCharCode(...new Uint8Array(pdfBuffer))
-            );
             
-            attachments.push({
-              filename: `invoice-${invoiceNumber}.pdf`,
-              content: pdfBase64,
-            });
-            
-            console.log("PDF fetched and attached successfully");
+            // Check PDF size limit (roughly 3.5MB)
+            if (pdfBuffer.byteLength > 3.5 * 1024 * 1024) {
+              console.warn(`PDF from URL is too large (${Math.round(pdfBuffer.byteLength / 1024 / 1024 * 100) / 100}MB), sending link only`);
+            } else {
+              const pdfBase64 = btoa(
+                String.fromCharCode(...new Uint8Array(pdfBuffer))
+              );
+              
+              attachments.push({
+                filename: `invoice-${invoiceNumber}.pdf`,
+                content: pdfBase64,
+              });
+              
+              console.log("PDF fetched and attached successfully");
+            }
           } catch (fetchError) {
             console.error("Error fetching PDF from URL:", fetchError);
             // Continue without attachment if fetch fails
           }
         }
         
-        // Add terms and conditions if available
+        // Add terms and conditions if available and not too large
         if (termsAndConditionsUrl) {
           console.log(`Fetching Terms and Conditions from URL: ${termsAndConditionsUrl}`);
           try {
@@ -121,16 +135,22 @@ const handler = async (req: Request): Promise<Response> => {
             
             if (termsResponse.ok) {
               const termsBuffer = await termsResponse.arrayBuffer();
-              const termsBase64 = btoa(
-                String.fromCharCode(...new Uint8Array(termsBuffer))
-              );
               
-              attachments.push({
-                filename: "terms-and-conditions.pdf",
-                content: termsBase64,
-              });
-              
-              console.log("Terms and Conditions attached successfully");
+              // Only attach if not too large (1MB limit for terms)
+              if (termsBuffer.byteLength <= 1 * 1024 * 1024) {
+                const termsBase64 = btoa(
+                  String.fromCharCode(...new Uint8Array(termsBuffer))
+                );
+                
+                attachments.push({
+                  filename: "terms-and-conditions.pdf",
+                  content: termsBase64,
+                });
+                
+                console.log("Terms and Conditions attached successfully");
+              } else {
+                console.warn(`Terms and Conditions file too large (${Math.round(termsBuffer.byteLength / 1024)}KB), not attaching`);
+              }
             } else {
               console.warn(`Could not fetch Terms and Conditions: ${termsResponse.status}`);
             }
@@ -152,7 +172,10 @@ const handler = async (req: Request): Promise<Response> => {
         <h2>Invoice #${invoiceNumber}</h2>
         <p>Dear ${clientName},</p>
         <p>Your invoice #${invoiceNumber} is now available.</p>
-        <p>Please find the attached invoice PDF for your records.</p>
+        ${attachments.length > 0 
+          ? `<p>Please find the attached invoice PDF for your records.</p>` 
+          : `<p>Your invoice is available for viewing at <a href="${pdfUrl}" target="_blank">this link</a>.</p>`
+        }
         <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
         <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
       </div>
