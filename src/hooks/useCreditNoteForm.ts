@@ -678,6 +678,11 @@ export function useCreditNoteForm() {
     if (!user) return;
     
     try {
+      // Make sure newClient contains all required fields
+      if (!newClient.email || !newClient.name || !newClient.type) {
+        throw new Error('Client requires email, name, and type fields');
+      }
+
       const { data, error } = await supabase
         .from('clients')
         .insert({ ...newClient, user_id: user.id })
@@ -713,7 +718,7 @@ export function useCreditNoteForm() {
   }, [pdfUrl]);
   
   // Handle send email
-  const handleSendEmail = useCallback(async () => {
+  const handleSendEmail = useCallback(() => {
     // For now, just log that email would be sent
     toast({
       title: 'Info',
