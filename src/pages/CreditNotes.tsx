@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -262,6 +263,8 @@ const CreditNotes = () => {
         return "bg-apple-orange/10 text-apple-orange border-apple-orange/20";
       case "paid":
         return "bg-apple-green/10 text-apple-green border-apple-green/20";
+      default:
+        return "bg-gray-100 text-gray-600 border-gray-200";
     }
   };
 
@@ -273,4 +276,235 @@ const CreditNotes = () => {
         return "Pending";
       case "paid":
         return "Paid";
-   
+      default:
+        return "Unknown";
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+          <h1 className="text-2xl font-semibold">Credit Notes</h1>
+          <button
+            onClick={() => navigate("/creditnotes/new")}
+            className="apple-button mt-2 md:mt-0"
+          >
+            <Plus size={20} />
+            New Credit Note
+          </button>
+        </div>
+
+        <CustomCard className="mb-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full lg:w-auto">
+              <div className="relative w-full md:w-64">
+                <input
+                  type="text"
+                  placeholder="Search credit notes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border rounded-lg w-full"
+                />
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+              </div>
+
+              <Select
+                value={filter}
+                onValueChange={(value) => setFilter(value as CreditNoteStatus)}
+              >
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-2 mt-2 lg:mt-0 w-full lg:w-auto">
+              <Select
+                value={itemsPerPage.toString()}
+                onValueChange={(value) => setItemsPerPage(parseInt(value))}
+              >
+                <SelectTrigger className="w-full md:w-32">
+                  <SelectValue placeholder="Show" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="10">10 per page</SelectItem>
+                    <SelectItem value="20">20 per page</SelectItem>
+                    <SelectItem value="50">50 per page</SelectItem>
+                    <SelectItem value="100">100 per page</SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="py-8 flex justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-gray-900"></div>
+            </div>
+          ) : paginatedCreditNotes.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-lg text-gray-500">No credit notes found</p>
+              {filter !== "all" && (
+                <button
+                  onClick={() => setFilter("all")}
+                  className="mt-2 text-apple-blue hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("invoice_number")}
+                      >
+                        Credit Note #
+                        {renderSortIcon("invoice_number")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("client.name")}
+                      >
+                        Client
+                        {renderSortIcon("client.name")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("issue_date")}
+                      >
+                        Issue Date
+                        {renderSortIcon("issue_date")}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("total_amount")}
+                      >
+                        Amount
+                        {renderSortIcon("total_amount")}
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedCreditNotes.map((creditNote) => (
+                      <TableRow
+                        key={creditNote.id}
+                        className="cursor-pointer hover:bg-gray-50"
+                        onClick={() =>
+                          navigate(`/creditnotes/edit/${creditNote.id}`)
+                        }
+                      >
+                        <TableCell className="font-medium">
+                          {creditNote.invoice_number}
+                        </TableCell>
+                        <TableCell>
+                          {creditNote.client?.name || "Unknown Client"}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(creditNote.issue_date)}
+                        </TableCell>
+                        <TableCell>
+                          {formatAmount(creditNote.total_amount)}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                              creditNote.status
+                            )}`}
+                          >
+                            {getStatusLabel(creditNote.status)}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <CreditNoteActions
+                            creditNoteId={creditNote.id}
+                            status={creditNote.status}
+                            onStatusChange={handleCreditNoteStatusChange}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(prev - 1, 1))
+                        }
+                        className={cn(
+                          currentPage === 1 && "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .slice(
+                        Math.max(
+                          0,
+                          currentPage - 2 - Math.max(0, currentPage + 1 - totalPages)
+                        ),
+                        Math.min(
+                          totalPages,
+                          currentPage + 1 + Math.max(0, 3 - currentPage)
+                        )
+                      )
+                      .map((page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(page)}
+                            isActive={currentPage === page}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          )
+                        }
+                        className={cn(
+                          currentPage === totalPages &&
+                            "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </>
+          )}
+        </CustomCard>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default CreditNotes;
