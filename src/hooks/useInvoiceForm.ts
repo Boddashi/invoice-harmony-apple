@@ -669,7 +669,11 @@ export const useInvoiceForm = () => {
         pdfBase64: pdfBase64,
         yukiEmail,
       };
-      console.log("Email parameters:", emailParams);
+      console.log("Email parameters:", JSON.stringify({
+        recipient: emailParams.clientEmail,
+        yukiCopy: !!emailParams.yukiEmail,
+        hasAttachment: !!emailParams.pdfBase64,
+      }));
 
       let response;
       try {
@@ -686,7 +690,7 @@ export const useInvoiceForm = () => {
 
       if (response.error) {
         console.error("Supabase function error:", response.error);
-        if (response.error.message.includes("WORKER_LIMIT")) {
+        if (response.error.message?.includes("WORKER_LIMIT")) {
           throw new Error(
             "Our servers are currently experiencing high load. Please try again in a few minutes."
           );
@@ -706,6 +710,8 @@ export const useInvoiceForm = () => {
         title: "Email Sent",
         description: emailSentMessage,
       });
+      
+      return true;
     } catch (error: any) {
       console.error("Error sending email:", error);
       toast({
@@ -713,6 +719,7 @@ export const useInvoiceForm = () => {
         title: "Error Sending Email",
         description: error.message || "Failed to send invoice by email",
       });
+      return false;
     } finally {
       setIsSendingEmail(false);
     }
@@ -1081,6 +1088,26 @@ export const useInvoiceForm = () => {
       const pdfBase64 = await generatePDF(invoiceId);
       
       if (pdfBase64) {
+        try {
+          // Upload the PDF to Supabase storage
+          const { error: uploadError } = await supabase.storage
+            .from("invoices")
+            .upload(`${invoiceId}/invoice.pdf`, 
+              // Convert base64 to a blob
+              new Blob([Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0))], 
+              { type: 'application/pdf' }), 
+              { upsert: true }
+            );
+            
+          if (uploadError) {
+            console.error("Error uploading PDF to storage:", uploadError);
+          } else {
+            console.log("PDF successfully uploaded to storage");
+          }
+        } catch (storageError) {
+          console.error("Exception uploading PDF:", storageError);
+        }
+        
         const { data: urlData } = supabase.storage
           .from('invoices')
           .getPublicUrl(`${invoiceId}/invoice.pdf`);
@@ -1093,11 +1120,15 @@ export const useInvoiceForm = () => {
 
       if (status === "pending") {
         if (sendToYuki) {
-          await handleSendEmail(invoiceId, true);
+          const emailSent = await handleSendEmail(invoiceId, true);
+          if (!emailSent) {
+            console.warn("Failed to send email to Yuki");
+          }
         } else {
           const storecoveResult = await submitToStorecove(invoiceId, invoiceData);
-          if (!storecoveResult) {
-            // If Storecove submission fails, just send via email
+          if (!storecoveResult || !storecoveResult.emailSent) {
+            console.log("Storecove didn't send email or submission failed, sending directly...");
+            // If Storecove submission fails or didn't send email, send via email
             await handleSendEmail(invoiceId);
           }
         }

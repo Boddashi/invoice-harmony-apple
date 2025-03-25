@@ -286,14 +286,42 @@ serve(async (req) => {
     
     // Always send email with PDF attachment regardless of Storecove submission
     let emailSent = false;
+    let emailError = null;
+    
     try {
       console.log("Sending invoice email via send-invoice-email function");
+      
+      // Verify that client email exists
+      if (!client.email) {
+        console.error("Cannot send email: Client email is missing");
+        throw new Error("Client email is required for email sending");
+      }
       
       // Prepare terms and conditions URL
       const termsAndConditionsUrl = companySettings?.terms_and_conditions_url || null;
       
       // Check if we should include Yuki email
       const yukiEmail = companySettings?.yuki_email || null;
+      
+      // Prepare email data
+      const emailData = {
+        clientName: client.name,
+        clientEmail: client.email,
+        invoiceNumber: invoice.invoice_number,
+        pdfUrl: pdfUrl,
+        termsAndConditionsUrl: termsAndConditionsUrl,
+        companyName: companySettings?.company_name || "PowerPeppol",
+        includeAttachments: true,
+        pdfBase64: pdfBase64,
+        yukiEmail: yukiEmail
+      };
+      
+      console.log("Preparing to send email with data:", {
+        to: client.email,
+        invoiceNumber: invoice.invoice_number,
+        yukiCopy: !!yukiEmail,
+        hasAttachment: !!pdfBase64
+      });
       
       // Call send-invoice-email function with the PDF data
       const emailResponse = await fetch("https://sjwqxbjxjlsdngbldhcq.supabase.co/functions/v1/send-invoice-email", {
@@ -302,26 +330,17 @@ serve(async (req) => {
           "Content-Type": "application/json",
           ...corsHeaders
         },
-        body: JSON.stringify({
-          clientName: client.name,
-          clientEmail: client.email,
-          invoiceNumber: invoice.invoice_number,
-          pdfUrl: pdfUrl,
-          termsAndConditionsUrl: termsAndConditionsUrl,
-          companyName: companySettings?.company_name || "PowerPeppol",
-          includeAttachments: true,
-          pdfBase64: pdfBase64,
-          yukiEmail: yukiEmail
-        })
+        body: JSON.stringify(emailData)
       });
 
       if (!emailResponse.ok) {
-        const emailError = await emailResponse.json();
-        console.error("Email sending error:", JSON.stringify(emailError));
-        // We don't fail the whole operation if email fails, just log the error
+        const emailErrorData = await emailResponse.json();
+        console.error("Email sending error:", JSON.stringify(emailErrorData));
+        emailError = emailErrorData.error || "Unknown email error";
+        throw new Error(`Email sending failed: ${emailError}`);
       } else {
-        const emailData = await emailResponse.json();
-        console.log("Email sent successfully:", JSON.stringify(emailData));
+        const emailResult = await emailResponse.json();
+        console.log("Email sent successfully:", JSON.stringify(emailResult));
         emailSent = true;
       }
     } catch (emailError) {
@@ -332,8 +351,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: storecoveSubmissionResult,
-        emailSent: emailSent
+        data: storecoveSubmissionResult || { guid: invoice.id },
+        emailSent: emailSent,
+        emailError: emailError
       }),
       { 
         status: 200, 

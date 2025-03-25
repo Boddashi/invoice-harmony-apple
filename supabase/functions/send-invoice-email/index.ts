@@ -29,7 +29,6 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Received request to send invoice email");
     const requestData = await req.json();
-    console.log("Request data:", JSON.stringify(requestData));
     
     const { 
       clientName, 
@@ -42,6 +41,19 @@ const handler = async (req: Request): Promise<Response> => {
       pdfBase64,
       yukiEmail
     }: SendInvoiceEmailRequest = requestData;
+
+    // Log request data without potentially large PDF base64
+    console.log("Request data:", JSON.stringify({
+      clientName,
+      clientEmail,
+      invoiceNumber,
+      pdfUrl,
+      hasTermsUrl: !!termsAndConditionsUrl,
+      companyName,
+      includeAttachments,
+      hasPdfData: !!pdfBase64,
+      yukiEmail,
+    }));
 
     if (!clientEmail) {
       console.error("Client email is required but was not provided");
@@ -77,23 +89,28 @@ const handler = async (req: Request): Promise<Response> => {
           console.log("PDF attachment added successfully");
         } else if (pdfUrl) {
           console.log(`Fetching PDF from URL: ${pdfUrl}`);
-          const pdfResponse = await fetch(pdfUrl);
-          
-          if (!pdfResponse.ok) {
-            throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+          try {
+            const pdfResponse = await fetch(pdfUrl);
+            
+            if (!pdfResponse.ok) {
+              throw new Error(`Failed to fetch PDF: ${pdfResponse.status} ${pdfResponse.statusText}`);
+            }
+            
+            const pdfBuffer = await pdfResponse.arrayBuffer();
+            const pdfBase64 = btoa(
+              String.fromCharCode(...new Uint8Array(pdfBuffer))
+            );
+            
+            attachments.push({
+              filename: `invoice-${invoiceNumber}.pdf`,
+              content: pdfBase64,
+            });
+            
+            console.log("PDF fetched and attached successfully");
+          } catch (fetchError) {
+            console.error("Error fetching PDF from URL:", fetchError);
+            // Continue without attachment if fetch fails
           }
-          
-          const pdfBuffer = await pdfResponse.arrayBuffer();
-          const pdfBase64 = btoa(
-            String.fromCharCode(...new Uint8Array(pdfBuffer))
-          );
-          
-          attachments.push({
-            filename: `invoice-${invoiceNumber}.pdf`,
-            content: pdfBase64,
-          });
-          
-          console.log("PDF fetched and attached successfully");
         }
         
         // Add terms and conditions if available
@@ -167,7 +184,7 @@ const handler = async (req: Request): Promise<Response> => {
     try {
       // Send the email with Resend
       emailResponse = await resend.emails.send(emailConfig);
-      console.log("Email sent successfully:", emailResponse);
+      console.log("Email sent successfully:", JSON.stringify(emailResponse));
     } catch (emailError: any) {
       console.error("Resend API error:", emailError);
       throw emailError;
