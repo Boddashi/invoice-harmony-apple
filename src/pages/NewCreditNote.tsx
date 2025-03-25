@@ -71,7 +71,7 @@ const NewCreditNote = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-5xl mx-auto p-2 md:p-0 space-y-6">
+      <div className="credit-note-page max-w-5xl mx-auto p-4 sm:p-6 md:p-8 space-y-6">
         <CreditNoteHeader 
           isEditMode={isEditMode}
           pdfUrl={pdfUrl}
@@ -100,9 +100,9 @@ const NewCreditNote = () => {
               setSelectedClientId={setSelectedClientId}
               setIsAddClientModalOpen={setIsAddClientModalOpen}
             />
-            
-            <CreditNoteFrom userEmail={user?.email} />
           </div>
+          
+          <CreditNoteFrom userEmail={user?.email} />
           
           <CreditNoteItems 
             items={items}
