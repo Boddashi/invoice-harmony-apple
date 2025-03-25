@@ -920,6 +920,32 @@ export const useInvoiceForm = () => {
     }
   };
 
+  const getVatGroups = (): VatGroup[] => {
+    const vatGroups: Record<string, VatGroup> = {};
+    
+    items.forEach(item => {
+      const vatRate = item.vat_rate;
+      if (!vatRate) return;
+      
+      if (!vatGroups[vatRate]) {
+        vatGroups[vatRate] = {
+          rate: vatRate,
+          subtotal: 0,
+          vat: 0
+        };
+      }
+      
+      const group = vatGroups[vatRate];
+      group.subtotal += item.amount;
+      
+      // Calculate VAT amount
+      const rateNumber = parseFloat(vatRate) / 100;
+      group.vat += item.amount * rateNumber;
+    });
+    
+    return Object.values(vatGroups);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with status:", status);
@@ -1014,126 +1040,4 @@ export const useInvoiceForm = () => {
             due_date: dueDate,
             status: status,
             amount: subTotal,
-            tax_rate: taxRate,
-            tax_amount: taxAmount,
-            total_amount: total,
-            notes: notes,
-          })
-          .select()
-          .single();
-        if (invoiceError) throw invoiceError;
-        invoiceId = invoice.id;
-        invoiceData = invoice;
-
-        console.log("Created invoice in database:", invoiceId);
-
-        const invoiceItems = items.map((item) => ({
-          invoice_id: invoice.id,
-          item_id: item.description,
-          quantity: item.quantity,
-          total_amount: item.amount,
-        }));
-        const { error: invoiceItemsError } = await supabase
-          .from("invoice_items")
-          .insert(invoiceItems);
-        if (invoiceItemsError) throw invoiceItemsError;
-      }
-
-      // Always generate PDF regardless of status
-      console.log("Generating PDF for invoice:", invoiceId);
-      const pdfBase64 = await generatePDF(invoiceId);
-      
-      if (pdfBase64) {
-        const { data: urlData } = supabase.storage
-          .from('invoices')
-          .getPublicUrl(`${invoiceId}/invoice.pdf`);
-        
-        if (urlData?.publicUrl) {
-          setPdfUrl(urlData.publicUrl);
-          console.log("PDF URL set:", urlData.publicUrl);
-        }
-      }
-
-      if (status === "pending") {
-        if (sendToYuki) {
-          console.log("Sending invoice to Yuki:", invoiceId);
-          await handleSendEmail(invoiceId, true);
-        } else {
-          console.log("Sending invoice to client:", invoiceId);
-          await handleSendEmail(invoiceId, false);
-        }
-
-        const hasLegalEntities = selectedClientData?.legal_entity_id && companySettings?.legal_entity_id;
-        if (hasLegalEntities) {
-          console.log("Submitting invoice to Storecove:", invoiceId);
-          await submitToStorecove(invoiceId, invoiceData);
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: status === "draft" 
-          ? "Invoice saved as draft" 
-          : "Invoice created and sent",
-      });
-
-      // Navigate to invoice list after successful creation
-      navigate("/invoices");
-    } catch (error: any) {
-      console.error("Error submitting invoice:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to submit invoice.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return {
-    clients,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isSubmittingToStorecove,
-    isAddClientModalOpen,
-    invoiceNumber,
-    selectedClientId,
-    selectedClient,
-    issueDate,
-    dueDate,
-    status,
-    notes,
-    items,
-    subTotal,
-    taxRate,
-    taxAmount,
-    total,
-    availableItems,
-    vats,
-    pdfUrl,
-    selectedClientData,
-    setIsAddClientModalOpen,
-    setSelectedClientId,
-    setInvoiceNumber,
-    setIssueDate,
-    setDueDate,
-    setNotes,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleAddClient,
-    handleSubmit,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleCreateAndSendYuki,
-    handleDownloadPDF,
-    handleSendEmail,
-  };
-};
-
+            tax_rate: tax
