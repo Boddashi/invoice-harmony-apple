@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -60,8 +61,11 @@ interface CompanySettings {
   legal_entity_id?: number | null;
   terms_and_conditions_url?: string;
   yuki_email?: string;
+  invoice_prefix?: string;
   [key: string]: any;
 }
+
+type CreditNoteStatus = 'draft' | 'pending' | 'paid' | 'overdue';
 
 export function useCreditNoteForm() {
   const navigate = useNavigate();
@@ -86,7 +90,7 @@ export function useCreditNoteForm() {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
-  const [status, setStatus] = useState<'draft' | 'pending' | 'paid' | 'overdue'>('draft');
+  const [status, setStatus] = useState<CreditNoteStatus>('draft');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<CreditNoteItem[]>([
     {
@@ -222,7 +226,7 @@ export function useCreditNoteForm() {
           setInvoiceNumber(creditNoteData.invoice_number);
           setIssueDate(creditNoteData.issue_date);
           setSelectedClientId(creditNoteData.client_id);
-          setStatus(creditNoteData.status);
+          setStatus(creditNoteData.status as CreditNoteStatus);
           setNotes(creditNoteData.notes || '');
           
           if (creditNoteItemsData && creditNoteItemsData.length > 0) {
@@ -471,7 +475,7 @@ export function useCreditNoteForm() {
         client_id: selectedClientId,
         invoice_number: invoiceNumber,
         issue_date: issueDate,
-        status: 'draft',
+        status: 'draft' as CreditNoteStatus,
         amount: subtotal,
         tax_amount: vatTotal,
         total_amount: total,
@@ -581,7 +585,7 @@ export function useCreditNoteForm() {
         client_id: selectedClientId,
         invoice_number: invoiceNumber,
         issue_date: issueDate,
-        status: 'pending',
+        status: 'pending' as CreditNoteStatus,
         amount: subtotal,
         tax_amount: vatTotal,
         total_amount: total,
