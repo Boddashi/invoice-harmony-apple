@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -72,7 +71,6 @@ const AddClientModal = ({
     vatNumber: "",
   });
 
-  // List of countries with code and name for the dropdown
   const countries = [
     { code: "AF", name: "Afghanistan" },
     { code: "AL", name: "Albania" },
@@ -268,7 +266,6 @@ const AddClientModal = ({
     { code: "ZW", name: "Zimbabwe" },
   ];
 
-  // Initialize form data when editing a client
   useEffect(() => {
     if (clientToEdit) {
       setFormData({
@@ -325,10 +322,11 @@ const AddClientModal = ({
       
       console.log("Legal entity created:", data);
       
-      // Return both the legal entity ID and PEPPOL identifier (if available)
+      const peppolData = (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null;
+      
       return { 
         legalEntityId: data?.data?.id || null,
-        peppolIdentifier: (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null
+        peppolIdentifier: peppolData 
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
@@ -355,7 +353,6 @@ const AddClientModal = ({
       return;
     }
     
-    // Required fields for legal entity creation
     if (!formData.street || !formData.city || !formData.postcode || !formData.country) {
       toast({
         variant: "destructive",
@@ -366,7 +363,6 @@ const AddClientModal = ({
     }
 
     try {
-      // Only create legal entity if we're adding a new client or updating one without a legal entity
       let legalEntityId = null;
       let peppolIdentifier = null;
       
@@ -382,12 +378,14 @@ const AddClientModal = ({
         onUpdateClient({
           id: clientToEdit.id,
           ...formData,
+          vat_number: formData.vatNumber,
           legal_entity_id: legalEntityId || clientToEdit.legal_entity_id,
           peppol_identifier: peppolIdentifier || clientToEdit.peppol_identifier,
         });
       } else {
         onAddClient({
           ...formData,
+          vat_number: formData.vatNumber,
           legal_entity_id: legalEntityId,
           peppol_identifier: peppolIdentifier,
         });
