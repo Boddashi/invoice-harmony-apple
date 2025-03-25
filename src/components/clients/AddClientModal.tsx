@@ -361,17 +361,20 @@ const AddClientModal = ({
     try {
       let legalEntityId = null;
       
-      if (!isEditMode || !clientToEdit?.legal_entity_id) {
-        const result = await createLegalEntity(formData);
-        legalEntityId = result.legalEntityId;
-        
-        console.log("Received from legal entity creation:", { legalEntityId });
-      }
+      const clientDataForRequest = {
+        ...formData,
+        legal_entity_id: clientToEdit?.legal_entity_id || null
+      };
+      
+      const result = await createLegalEntity(clientDataForRequest);
+      legalEntityId = result.legalEntityId || clientToEdit?.legal_entity_id;
+      
+      console.log("Received from legal entity creation:", { legalEntityId });
 
       const clientData = {
         ...formData,
         vat_number: formData.vatNumber,
-        legal_entity_id: legalEntityId || (clientToEdit?.legal_entity_id || null)
+        legal_entity_id: legalEntityId
       };
       
       console.log("Storing client data:", clientData);
