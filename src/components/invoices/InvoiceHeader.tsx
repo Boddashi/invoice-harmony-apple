@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useContext } from "react";
+import { Loader2 } from "lucide-react";
 
 interface InvoiceHeaderProps {
   isEditMode: boolean;
@@ -30,7 +30,6 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
   handleCreateAndSendYuki,
   handleSendEmail,
 }) => {
-  
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
       <div>
@@ -38,20 +37,22 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
           {isEditMode ? "Edit Invoice" : "New Invoice"}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {isEditMode ? "Update and manage your invoice details" : "Create a new invoice for your client"}
+          {isEditMode
+            ? "Update and manage your invoice details"
+            : "Create a new invoice for your client"}
         </p>
       </div>
-      
+
       <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
         {isSubmitting ? (
           <div className="w-full flex justify-center sm:w-auto">
             <div className="flex items-center gap-2 bg-muted px-4 py-2 rounded-full">
               <Loader2 className="animate-spin" size={16} />
               <span>
-                {isGeneratingPDF 
-                  ? "Generating PDF..." 
-                  : isSendingEmail 
-                  ? "Sending email..." 
+                {isGeneratingPDF
+                  ? "Generating PDF..."
+                  : isSendingEmail
+                  ? "Sending email..."
                   : isSubmittingToStorecove
                   ? "Submitting to Storecove..."
                   : "Saving..."}
@@ -74,8 +75,8 @@ const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({
               Create & Send
             </button>
             {handleCreateAndSendYuki && (
-              <button onClick={handleCreateAndSendYuki} className="apple-button">
-                Create & Send to Yuki
+              <button onClick={handleCreateAndSendYuki} className="yuki-button">
+                Create & Send & Yuki
               </button>
             )}
             {handleSendEmail && (
