@@ -11,6 +11,7 @@ interface Client {
   name: string;
   email: string;
   legal_entity_id?: number | null;
+  type: string;
   [key: string]: any;
 }
 
@@ -649,7 +650,10 @@ export function useCreditNoteForm() {
 
       const { data, error } = await supabase
         .from('clients')
-        .insert({ ...newClient, user_id: user.id })
+        .insert({ 
+          ...newClient, 
+          user_id: user.id 
+        })
         .select();
         
       if (error) throw error;
