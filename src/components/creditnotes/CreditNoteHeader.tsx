@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CreditNoteHeaderProps {
   isEditMode: boolean;
@@ -61,22 +62,34 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
         ) : (
           <>
             {pdfUrl && (
-              <button onClick={handleDownloadPDF} className="secondary-button">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadPDF}
+              >
                 Download PDF
-              </button>
+              </Button>
             )}
             {status === "draft" ? (
-              <button onClick={handleSaveAsDraft} className="secondary-button">
+              <Button 
+                variant="outline" 
+                onClick={handleSaveAsDraft}
+              >
                 Save as Draft
-              </button>
+              </Button>
             ) : null}
-            <button onClick={handleCreateAndSend} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
+            <Button
+              onClick={handleCreateAndSend}
+              className="bg-apple-red hover:bg-apple-red/90"
+            >
               Create & Send
-            </button>
+            </Button>
             {handleSendEmail && (
-              <button onClick={handleSendEmail} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
+              <Button
+                onClick={handleSendEmail}
+                className="bg-apple-red hover:bg-apple-red/90"
+              >
                 Send Email
-              </button>
+              </Button>
             )}
           </>
         )}
