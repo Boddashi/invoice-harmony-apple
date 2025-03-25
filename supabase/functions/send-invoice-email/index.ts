@@ -128,6 +128,9 @@ const handler = async (req: Request): Promise<Response> => {
         }
         
         // Add terms and conditions if available and not too large
+        // Reduce maximum size for terms and conditions to 500KB (half of previous 1MB limit)
+        const TERMS_MAX_SIZE = 500 * 1024; // 500KB limit for terms
+        
         if (termsAndConditionsUrl) {
           console.log(`Fetching Terms and Conditions from URL: ${termsAndConditionsUrl}`);
           try {
@@ -136,8 +139,8 @@ const handler = async (req: Request): Promise<Response> => {
             if (termsResponse.ok) {
               const termsBuffer = await termsResponse.arrayBuffer();
               
-              // Only attach if not too large (1MB limit for terms)
-              if (termsBuffer.byteLength <= 1 * 1024 * 1024) {
+              // Only attach if not too large (500KB limit for terms)
+              if (termsBuffer.byteLength <= TERMS_MAX_SIZE) {
                 const termsBase64 = btoa(
                   String.fromCharCode(...new Uint8Array(termsBuffer))
                 );
@@ -149,7 +152,7 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 console.log("Terms and Conditions attached successfully");
               } else {
-                console.warn(`Terms and Conditions file too large (${Math.round(termsBuffer.byteLength / 1024)}KB), not attaching`);
+                console.warn(`Terms and Conditions file too large (${Math.round(termsBuffer.byteLength / 1024)}KB > ${Math.round(TERMS_MAX_SIZE / 1024)}KB limit), not attaching`);
               }
             } else {
               console.warn(`Could not fetch Terms and Conditions: ${termsResponse.status}`);

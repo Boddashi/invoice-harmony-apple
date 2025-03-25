@@ -2,7 +2,7 @@
 import React, { useRef, useState } from "react";
 import CustomCard from "../ui/CustomCard";
 import { CompanySettings } from "@/models/CompanySettings";
-import { FileText, Loader2, Upload, Download, X } from "lucide-react";
+import { FileText, Loader2, Upload, Download, X, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,6 +24,10 @@ const TermsTab = ({
   const { toast } = useToast();
   const termsFileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingTerms, setUploadingTerms] = useState(false);
+  const [fileTooBig, setFileTooBig] = useState(false);
+  
+  // Maximum file size for Terms & Conditions (500KB)
+  const MAX_FILE_SIZE = 500 * 1024;
 
   const handleUploadTermsClick = () => {
     if (termsFileInputRef.current) {
@@ -47,6 +51,24 @@ const TermsTab = ({
       });
       return;
     }
+    
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      setFileTooBig(true);
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: `Terms & Conditions must be less than ${MAX_FILE_SIZE / 1024}KB to be included in emails. Please compress your file.`,
+      });
+      
+      // Reset file input
+      if (termsFileInputRef.current) {
+        termsFileInputRef.current.value = "";
+      }
+      return;
+    }
+    
+    setFileTooBig(false);
 
     const fileExt = file.name.split(".").pop();
     const fileName = `terms_${Math.random()
@@ -139,6 +161,7 @@ const TermsTab = ({
       });
     } finally {
       setUploadingTerms(false);
+      setFileTooBig(false);
     }
   };
 
@@ -251,11 +274,20 @@ const TermsTab = ({
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground mt-2">
-                Please upload a PDF document with your company's
-                terms and conditions. This document will be used in
-                your invoices and other legal documents.
-              </p>
+              <div className="text-xs text-muted-foreground mt-2">
+                <p>
+                  Please upload a PDF document with your company's
+                  terms and conditions. This document will be used in
+                  your invoices and other legal documents.
+                </p>
+                <div className="flex items-center gap-1 mt-2 text-amber-600">
+                  <AlertTriangle size={14} />
+                  <p>
+                    <strong>File size restriction:</strong> Terms & Conditions must be smaller than {MAX_FILE_SIZE / 1024}KB 
+                    to be included in invoice emails. Larger files will not be attached.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
