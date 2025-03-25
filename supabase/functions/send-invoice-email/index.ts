@@ -56,7 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     const attachments = [];
     
-    if (includeAttachments && pdfUrl) {
+    if (includeAttachments) {
       try {
         console.log("Attempting to attach PDF document");
         
