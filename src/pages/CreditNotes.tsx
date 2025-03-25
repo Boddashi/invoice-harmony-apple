@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -280,94 +281,130 @@ const CreditNotes = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    const newItemsPerPage = parseInt(value, 10);
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+  };
+
+  const generatePaginationItems = () => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const items = new Set([1, totalPages, currentPage]);
+
+    if (currentPage > 1) items.add(currentPage - 1);
+    if (currentPage < totalPages) items.add(currentPage + 1);
+
+    return Array.from(items).sort((a, b) => a - b);
+  };
+
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-2xl font-semibold">Credit Notes</h1>
+      <div className="w-full max-w-6xl mx-auto px-2 md:px-0 space-y-4 md:space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
+          <h2 className="text-xl font-semibold">Your Credit Notes</h2>
           <button
+            className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full"
             onClick={() => navigate("/creditnotes/new")}
-            className="apple-button mt-2 md:mt-0"
           >
-            <Plus size={20} />
-            New Credit Note
+            <Plus size={18} />
+            <span>New Credit Note</span>
           </button>
         </div>
 
-        <CustomCard className="mb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-2 w-full lg:w-auto">
-              <div className="relative w-full md:w-64">
-                <input
-                  type="text"
-                  placeholder="Search credit notes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 pr-4 py-2 border rounded-lg w-full"
-                />
-                <Search
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={16}
-                />
-              </div>
-
-              <Select
-                value={filter}
-                onValueChange={(value) => setFilter(value as CreditNoteStatus)}
-              >
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-2 mt-2 lg:mt-0 w-full lg:w-auto">
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => setItemsPerPage(parseInt(value))}
-              >
-                <SelectTrigger className="w-full md:w-32">
-                  <SelectValue placeholder="Show" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="20">20 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                    <SelectItem value="100">100 per page</SelectItem>
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="flex flex-col gap-3">
+          <div className="relative w-full">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search credit notes..."
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
-          {isLoading ? (
-            <div className="py-8 flex justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-gray-900"></div>
+          <div className="flex overflow-x-auto pb-1 -mx-2 px-4 py-4 xmd:mx-2 xmd:px-4 xmd:py-4 scrollbar-none">
+            <div className="flex gap-2 min-w-max">
+              <button
+                onClick={() => setFilter("all")}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === "all"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : "hover:bg-secondary"
+                )}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter("draft")}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === "draft"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : "hover:bg-secondary"
+                )}
+              >
+                Draft
+              </button>
+              <button
+                onClick={() => setFilter("pending")}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === "pending"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : "hover:bg-secondary"
+                )}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => setFilter("paid")}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
+                  filter === "paid"
+                    ? "apple-button text-white hover:!shadow-none"
+                    : "hover:bg-secondary"
+                )}
+              >
+                Paid
+              </button>
             </div>
-          ) : paginatedCreditNotes.length === 0 ? (
-            <div className="py-8 text-center">
-              <p className="text-lg text-gray-500">No credit notes found</p>
-              {filter !== "all" && (
-                <button
-                  onClick={() => setFilter("all")}
-                  className="mt-2 text-apple-blue hover:underline"
-                >
-                  Clear filters
-                </button>
-              )}
+          </div>
+        </div>
+
+        <CustomCard
+          padding="none"
+          className="animate-fade-in w-full overflow-hidden"
+        >
+          {isLoading ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">Loading credit notes...</p>
+            </div>
+          ) : sortedAndFilteredCreditNotes.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-muted-foreground">
+                {searchQuery.trim()
+                  ? "No credit notes match your search. Try a different search term."
+                  : "No credit notes found. Create your first credit note to get started."}
+              </p>
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
+              <div className="hidden xmd:block overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -375,70 +412,72 @@ const CreditNotes = () => {
                         className="cursor-pointer"
                         onClick={() => handleSort("invoice_number")}
                       >
-                        Credit Note #
-                        {renderSortIcon("invoice_number")}
+                        Credit Note # {renderSortIcon("invoice_number")}
                       </TableHead>
                       <TableHead
                         className="cursor-pointer"
                         onClick={() => handleSort("client.name")}
                       >
-                        Client
-                        {renderSortIcon("client.name")}
+                        Client {renderSortIcon("client.name")}
                       </TableHead>
                       <TableHead
                         className="cursor-pointer"
                         onClick={() => handleSort("issue_date")}
                       >
-                        Issue Date
-                        {renderSortIcon("issue_date")}
+                        Issue Date {renderSortIcon("issue_date")}
                       </TableHead>
                       <TableHead
-                        className="cursor-pointer"
+                        className="text-right cursor-pointer"
                         onClick={() => handleSort("total_amount")}
                       >
-                        Amount
-                        {renderSortIcon("total_amount")}
+                        Amount {renderSortIcon("total_amount")}
                       </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
+                      <TableHead className="w-16"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedCreditNotes.map((creditNote) => (
                       <TableRow
                         key={creditNote.id}
-                        className="cursor-pointer hover:bg-gray-50"
-                        onClick={() =>
-                          navigate(`/creditnotes/edit/${creditNote.id}`)
-                        }
+                        onClick={() => navigate(`/creditnotes/edit/${creditNote.id}`)}
+                        className="cursor-pointer"
                       >
                         <TableCell className="font-medium">
                           {creditNote.invoice_number}
                         </TableCell>
                         <TableCell>
-                          {creditNote.client?.name || "Unknown Client"}
+                          {creditNote.client
+                            ? creditNote.client.name
+                            : "Unknown Client"}
                         </TableCell>
-                        <TableCell>
-                          {formatDate(creditNote.issue_date)}
-                        </TableCell>
-                        <TableCell>
+                        <TableCell>{formatDate(creditNote.issue_date)}</TableCell>
+                        <TableCell className="text-right font-medium">
                           {formatAmount(creditNote.total_amount)}
                         </TableCell>
                         <TableCell>
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-                              creditNote.status
-                            )}`}
-                          >
-                            {getStatusLabel(creditNote.status)}
-                          </span>
+                          <div className="flex justify-center">
+                            <span
+                              className={cn(
+                                "px-3 py-1 text-xs font-medium border rounded-full",
+                                getStatusColor(creditNote.status)
+                              )}
+                            >
+                              {getStatusLabel(creditNote.status)}
+                            </span>
+                          </div>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <CreditNoteActions
-                            creditNoteId={creditNote.id}
-                            status={creditNote.status}
-                            onStatusChange={handleCreditNoteStatusChange}
-                          />
+                        <TableCell>
+                          <div
+                            className="flex justify-center"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <CreditNoteActions
+                              creditNoteId={creditNote.id}
+                              status={creditNote.status}
+                              onStatusChange={handleCreditNoteStatusChange}
+                            />
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -446,58 +485,181 @@ const CreditNotes = () => {
                 </Table>
               </div>
 
-              <div className="mt-4">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() =>
-                          setCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
+              <div className="xmd:hidden divide-y divide-border">
+                {paginatedCreditNotes.map((creditNote) => (
+                  <div
+                    key={creditNote.id}
+                    className="p-4 hover:bg-secondary/30 transition-colors active:bg-secondary/50"
+                    onClick={() => navigate(`/creditnotes/edit/${creditNote.id}`)}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="mr-2 flex-1">
+                        <h3 className="font-medium truncate">
+                          {creditNote.invoice_number}
+                        </h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {creditNote.client?.name || "Unknown Client"}
+                        </p>
+                      </div>
+                      <span
                         className={cn(
-                          currentPage === 1 && "pointer-events-none opacity-50"
+                          "px-2.5 py-0.5 text-xs font-medium border rounded-full shrink-0",
+                          getStatusColor(creditNote.status)
                         )}
-                      />
-                    </PaginationItem>
+                      >
+                        {getStatusLabel(creditNote.status)}
+                      </span>
+                    </div>
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .slice(
-                        Math.max(
-                          0,
-                          currentPage - 2 - Math.max(0, currentPage + 1 - totalPages)
-                        ),
-                        Math.min(
-                          totalPages,
-                          currentPage + 1 + Math.max(0, 3 - currentPage)
-                        )
-                      )
-                      .map((page) => (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(page)}
-                            isActive={currentPage === page}
-                          >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      ))}
+                    <div className="grid grid-cols-2 gap-y-1 text-sm mb-3">
+                      <div className="text-muted-foreground">Issue Date:</div>
+                      <div className="text-right truncate">
+                        {formatDate(creditNote.issue_date)}
+                      </div>
 
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() =>
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          )
-                        }
-                        className={cn(
-                          currentPage === totalPages &&
-                            "pointer-events-none opacity-50"
-                        )}
+                      <div className="text-muted-foreground">Amount:</div>
+                      <div className="text-right font-medium">
+                        {formatAmount(creditNote.total_amount)}
+                      </div>
+                    </div>
+
+                    <div
+                      className="flex justify-end"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <CreditNoteActions
+                        creditNoteId={creditNote.id}
+                        status={creditNote.status}
+                        onStatusChange={handleCreditNoteStatusChange}
                       />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {totalPages > 1 && (
+                <div className="p-4 border-t border-border">
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div className="flex items-center gap-2 text-sm w-full sm:w-auto">
+                      <span className="text-muted-foreground whitespace-nowrap">
+                        Rows per page:
+                      </span>
+                      <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={handleItemsPerPageChange}
+                      >
+                        <SelectTrigger className="w-20 h-8">
+                          <SelectValue placeholder="10" />
+                        </SelectTrigger>
+                        <SelectContent align="end">
+                          <SelectGroup>
+                            <SelectItem value="5">5</SelectItem>
+                            <SelectItem value="10">10</SelectItem>
+                            <SelectItem value="25">25</SelectItem>
+                            <SelectItem value="50">50</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(1)}
+                            disabled={currentPage === 1}
+                            className={cn(
+                              "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                              currentPage === 1
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-secondary"
+                            )}
+                            aria-label="Go to first page"
+                          >
+                            <ChevronsLeft size={16} />
+                          </button>
+                        </PaginationItem>
+
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={cn(
+                              "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                              currentPage === 1
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-secondary"
+                            )}
+                          >
+                            <ChevronLeft size={16} />
+                            <span className="hidden sm:inline">Previous</span>
+                          </button>
+                        </PaginationItem>
+
+                        {generatePaginationItems().map((page, index, array) => {
+                          const showEllipsisBefore =
+                            index > 0 && page > array[index - 1] + 1;
+
+                          return (
+                            <React.Fragment key={page}>
+                              {showEllipsisBefore && (
+                                <PaginationItem className="hidden sm:inline-block">
+                                  <PaginationEllipsis />
+                                </PaginationItem>
+                              )}
+                              <PaginationItem>
+                                <button
+                                  onClick={() => handlePageChange(page)}
+                                  className={cn(
+                                    "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                                    currentPage === page
+                                      ? "bg-primary text-primary-foreground"
+                                      : "hover:bg-secondary"
+                                  )}
+                                >
+                                  {page}
+                                </button>
+                              </PaginationItem>
+                            </React.Fragment>
+                          );
+                        })}
+
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={cn(
+                              "flex items-center gap-1 px-2 py-1 rounded-md text-sm",
+                              currentPage === totalPages
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-secondary"
+                            )}
+                          >
+                            <span className="hidden sm:inline">Next</span>
+                            <ChevronRight size={16} />
+                          </button>
+                        </PaginationItem>
+
+                        <PaginationItem>
+                          <button
+                            onClick={() => handlePageChange(totalPages)}
+                            disabled={currentPage === totalPages}
+                            className={cn(
+                              "flex items-center justify-center h-9 w-9 rounded-md text-sm",
+                              currentPage === totalPages
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-secondary"
+                            )}
+                            aria-label="Go to last page"
+                          >
+                            <ChevronsRight size={16} />
+                          </button>
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CustomCard>
