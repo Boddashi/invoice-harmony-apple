@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -203,7 +204,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       foreignObjectRendering: true,
       onclone: (documentClone) => {
         // Ensure styles are properly applied in the cloned document
-        const invoiceElement = documentClone.querySelector('.invoice-pdf-content');
+        const invoiceElement = documentClone.querySelector('.invoice-pdf-content') as HTMLElement;
         if (invoiceElement) {
           invoiceElement.style.width = '210mm';
           invoiceElement.style.backgroundColor = 'white';
