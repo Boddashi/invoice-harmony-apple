@@ -156,6 +156,111 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_note_items: {
+        Row: {
+          created_at: string
+          credit_note_id: string
+          item_id: string
+          quantity: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_note_id: string
+          item_id: string
+          quantity?: number
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_note_id?: string
+          item_id?: string
+          quantity?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_note_items_credit_note_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "credit_notes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_invoice_id_fkey"
+            columns: ["credit_note_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_note_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_notes: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          id: string
+          invoice_number: string
+          issue_date: string
+          notes: string | null
+          status: string
+          tax_amount: number | null
+          tax_rate: number | null
+          total_amount: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          client_id: string
+          created_at?: string
+          id?: string
+          invoice_number: string
+          issue_date?: string
+          notes?: string | null
+          status: string
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          invoice_number?: string
+          issue_date?: string
+          notes?: string | null
+          status?: string
+          tax_amount?: number | null
+          tax_rate?: number | null
+          total_amount?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_notes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoice_items: {
         Row: {
           created_at: string

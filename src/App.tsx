@@ -11,6 +11,8 @@ import Clients from './pages/Clients';
 import Items from './pages/Items';
 import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
+import CreditNotes from './pages/CreditNotes';
+import NewCreditNote from './pages/NewCreditNote';
 import Settings from './pages/Settings';
 import Reports from './pages/Reports';
 import NotFound from './pages/NotFound';
@@ -35,6 +37,9 @@ function App() {
                 <Route path="/invoices/new" element={<NewInvoice />} />
                 <Route path="/invoices/edit/:id" element={<NewInvoice />} />
                 <Route path="/invoices/:id" element={<ViewInvoice />} />
+                <Route path="/creditnotes" element={<CreditNotes />} />
+                <Route path="/creditnotes/new" element={<NewCreditNote />} />
+                <Route path="/creditnotes/edit/:id" element={<NewCreditNote />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="*" element={<NotFound />} />

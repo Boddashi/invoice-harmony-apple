@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   X,
   BarChart,
+  FileMinus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Header from "./Header";
@@ -44,6 +45,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const navItems = [
     { icon: LayoutGrid, label: "Dashboard", href: "/" },
     { icon: FileText, label: "Invoices", href: "/invoices" },
+    { icon: FileMinus, label: "Credit Notes", href: "/creditnotes" },
     { icon: Users, label: "Clients", href: "/clients" },
     { icon: Package, label: "Items", href: "/items" },
     { icon: BarChart, label: "Reports", href: "/reports" },
@@ -51,6 +53,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   const moreNavItems = [
     { icon: FileText, label: "Invoices", href: "/invoices" },
+    { icon: FileMinus, label: "Credit Notes", href: "/creditnotes" },
     { icon: Users, label: "Clients", href: "/clients" },
     { icon: Package, label: "Items", href: "/items" },
     { icon: BarChart, label: "Reports", href: "/reports" },
