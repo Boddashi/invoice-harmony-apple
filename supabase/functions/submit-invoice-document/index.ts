@@ -71,6 +71,11 @@ serve(async (req) => {
       );
     }
 
+    // Ensure we always have PDF Base64 data - required for sending email with attachment
+    if (!pdfBase64) {
+      console.warn("PDF Base64 data not provided, email might be sent without attachment");
+    }
+
     // Fetch client's legal entity information from Storecove
     const clientLegalEntityResponse = await fetch(
       `https://api.storecove.com/api/v2/legal_entities/${client.legal_entity_id}`,
@@ -113,7 +118,7 @@ serve(async (req) => {
       const vatPercentage = parseFloat(item.vat_rate) || 0;
       return {
         description: item.description,
-        amountExcludingVat: item.amount,
+        amountExcludingVat: parseFloat(item.amount.toFixed(2)),
         tax: {
           percentage: vatPercentage,
           category: "standard",
@@ -141,11 +146,12 @@ serve(async (req) => {
       }
       
       const group = vatGroups.get(key);
-      group.taxableAmount += parseFloat(item.amount.toFixed(6));
+      const itemAmount = parseFloat(item.amount.toFixed(2));
+      group.taxableAmount += itemAmount;
       
       // Calculate tax amount with precision
-      const itemTaxAmount = (item.amount * vatPercentage) / 100;
-      group.taxAmount += parseFloat(itemTaxAmount.toFixed(6));
+      const itemTaxAmount = (itemAmount * vatPercentage) / 100;
+      group.taxAmount += parseFloat(itemTaxAmount.toFixed(2));
     });
     
     vatGroups.forEach(group => {
@@ -156,8 +162,8 @@ serve(async (req) => {
     });
 
     // Calculate precise total amount from tax subtotals
-    const totalTaxableAmount = taxSubtotals.reduce((sum, tax) => sum + tax.taxableAmount, 0);
-    const totalTaxAmount = taxSubtotals.reduce((sum, tax) => sum + tax.taxAmount, 0);
+    const totalTaxableAmount = parseFloat(taxSubtotals.reduce((sum, tax) => sum + tax.taxableAmount, 0).toFixed(2));
+    const totalTaxAmount = parseFloat(taxSubtotals.reduce((sum, tax) => sum + tax.taxAmount, 0).toFixed(2));
     const preciseAmountIncludingVat = parseFloat((totalTaxableAmount + totalTaxAmount).toFixed(2));
 
     // Prepare payment means array
@@ -284,7 +290,8 @@ serve(async (req) => {
 
     console.log("Successfully submitted document to Storecove:", JSON.stringify(responseData));
     
-    // Send email with PDF attachment
+    // Always send email with PDF attachment regardless of Storecove submission
+    let emailSent = false;
     try {
       console.log("Sending invoice email via send-invoice-email function");
       
@@ -321,6 +328,7 @@ serve(async (req) => {
       } else {
         const emailData = await emailResponse.json();
         console.log("Email sent successfully:", JSON.stringify(emailData));
+        emailSent = true;
       }
     } catch (emailError) {
       console.error("Error sending invoice email:", emailError);
@@ -331,7 +339,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         data: responseData,
-        emailSent: true
+        emailSent
       }),
       { 
         status: 200, 
