@@ -124,7 +124,7 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
           </DropdownMenuItem>
         )}
 
-        {(status === "pending" || status === "overdue") && (
+        {status === "pending" && (
           <DropdownMenuItem onClick={(e) => handleStatusChange("paid", e)}>
             <Check className="w-4 h-4 mr-2" />
             Mark as Paid

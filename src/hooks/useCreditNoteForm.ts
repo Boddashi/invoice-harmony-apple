@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -65,7 +64,7 @@ interface CompanySettings {
   [key: string]: any;
 }
 
-type CreditNoteStatus = 'draft' | 'pending' | 'paid' | 'overdue';
+type CreditNoteStatus = 'draft' | 'pending' | 'paid';
 
 export function useCreditNoteForm() {
   const navigate = useNavigate();
@@ -226,7 +225,8 @@ export function useCreditNoteForm() {
           setInvoiceNumber(creditNoteData.invoice_number);
           setIssueDate(creditNoteData.issue_date);
           setSelectedClientId(creditNoteData.client_id);
-          setStatus(creditNoteData.status as CreditNoteStatus);
+          const fetchedStatus = creditNoteData.status as string;
+          setStatus(fetchedStatus === 'overdue' ? 'pending' : fetchedStatus as CreditNoteStatus);
           setNotes(creditNoteData.notes || '');
           
           if (creditNoteItemsData && creditNoteItemsData.length > 0) {

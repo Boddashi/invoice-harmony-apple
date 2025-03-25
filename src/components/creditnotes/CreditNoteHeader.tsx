@@ -9,7 +9,7 @@ interface CreditNoteHeaderProps {
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
   isSubmittingToStorecove?: boolean;
-  status: "draft" | "pending" | "paid" | "overdue";
+  status: "draft" | "pending" | "paid"; // Removed 'overdue' option
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
