@@ -32,7 +32,9 @@ serve(async (req) => {
       invoice, 
       client, 
       items,
-      companySettings
+      companySettings,
+      pdfBase64,   // Added to receive PDF data for email
+      pdfUrl       // Added to receive PDF URL for email
     } = requestData;
 
     console.log("Received invoice data:", JSON.stringify(requestData));
@@ -280,12 +282,56 @@ serve(async (req) => {
       );
     }
 
-    console.log("Successfully submitted document:", JSON.stringify(responseData));
+    console.log("Successfully submitted document to Storecove:", JSON.stringify(responseData));
+    
+    // Send email with PDF attachment
+    try {
+      console.log("Sending invoice email via send-invoice-email function");
+      
+      // Prepare terms and conditions URL
+      const termsAndConditionsUrl = companySettings?.terms_and_conditions_url || null;
+      
+      // Check if we should include Yuki email
+      const yukiEmail = companySettings?.yuki_email || null;
+      
+      // Call send-invoice-email function with the PDF data
+      const emailResponse = await fetch("https://sjwqxbjxjlsdngbldhcq.supabase.co/functions/v1/send-invoice-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        },
+        body: JSON.stringify({
+          clientName: client.name,
+          clientEmail: client.email,
+          invoiceNumber: invoice.invoice_number,
+          pdfUrl: pdfUrl,
+          termsAndConditionsUrl: termsAndConditionsUrl,
+          companyName: companySettings?.company_name || "PowerPeppol",
+          includeAttachments: true,
+          pdfBase64: pdfBase64,
+          yukiEmail: yukiEmail
+        })
+      });
+
+      if (!emailResponse.ok) {
+        const emailError = await emailResponse.json();
+        console.error("Email sending error:", JSON.stringify(emailError));
+        // We don't fail the whole operation if email fails, just log the error
+      } else {
+        const emailData = await emailResponse.json();
+        console.log("Email sent successfully:", JSON.stringify(emailData));
+      }
+    } catch (emailError) {
+      console.error("Error sending invoice email:", emailError);
+      // We don't fail the whole operation if email fails, just log the error
+    }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: responseData 
+        data: responseData,
+        emailSent: true
       }),
       { 
         status: 200, 

@@ -838,6 +838,22 @@ export const useInvoiceForm = () => {
           description: foundItem?.title || item.description,
         };
       });
+
+      let pdfBase64 = null;
+      try {
+        pdfBase64 = await generatePDF(invoiceId);
+      } catch (pdfError) {
+        console.error("Error generating PDF:", pdfError);
+      }
+
+      let pdfUrl = null;
+      if (pdfBase64) {
+        const { data: urlData } = supabase.storage
+          .from('invoices')
+          .getPublicUrl(`${invoiceId}/invoice.pdf`);
+        
+        pdfUrl = urlData?.publicUrl || null;
+      }
       
       const response = await supabase.functions.invoke("submit-invoice-document", {
         body: {
@@ -846,11 +862,14 @@ export const useInvoiceForm = () => {
             invoice_number: invoiceNumber,
             issue_date: issueDate,
             due_date: dueDate,
+            notes: notes,
             total_amount: total
           },
           client: selectedClientData,
           items: itemsWithDetails,
-          companySettings
+          companySettings,
+          pdfBase64: pdfBase64,
+          pdfUrl: pdfUrl
         }
       });
       
@@ -865,6 +884,14 @@ export const useInvoiceForm = () => {
       }
       
       console.log("Storecove submission successful:", response.data);
+      
+      if (response.data?.emailSent) {
+        toast({
+          title: "Invoice Sent",
+          description: "Invoice has been sent to client via email"
+        });
+      }
+      
       return response.data;
     } catch (error: any) {
       console.error("Error in submitToStorecove:", error);
@@ -996,9 +1023,11 @@ export const useInvoiceForm = () => {
         if (invoiceItemsError) throw invoiceItemsError;
       }
 
+      let storecoveSubmitted = false;
+      
       if (selectedClientData?.legal_entity_id && status === "pending") {
         try {
-          await submitToStorecove(invoiceId!, invoiceData || { 
+          const result = await submitToStorecove(invoiceId!, invoiceData || { 
             id: invoiceId,
             invoice_number: invoiceNumber,
             issue_date: issueDate,
@@ -1007,10 +1036,13 @@ export const useInvoiceForm = () => {
             total_amount: total
           });
           
-          toast({
-            title: "Storecove Submission",
-            description: "Invoice was successfully submitted to Storecove"
-          });
+          if (result) {
+            storecoveSubmitted = true;
+            toast({
+              title: "Storecove Submission",
+              description: "Invoice was successfully submitted to Storecove"
+            });
+          }
         } catch (storecoveError: any) {
           console.error("Storecove submission error:", storecoveError);
           toast({
@@ -1021,7 +1053,8 @@ export const useInvoiceForm = () => {
         }
       }
 
-      if (status === "pending") {
+      if (status === "pending" && !storecoveSubmitted) {
+        // Only generate PDF and send email separately if the Storecove integration didn't handle it
         const pdfBase64 = await generatePDF(invoiceId!);
         if (pdfBase64) {
           setPdfUrl(pdfBase64);
@@ -1051,18 +1084,17 @@ export const useInvoiceForm = () => {
               description: "Failed to process PDF for email"
             });
           }
-          navigate("/invoices");
-          return;
         }
       }
 
+      navigate("/invoices");
+      
       toast({
         title: "Success",
         description: `Invoice ${
           status === "draft" ? "saved as draft" : "created"
         } successfully.`,
       });
-      navigate("/invoices");
     } catch (error: any) {
       console.error("Error saving invoice:", error);
       toast({
@@ -1156,3 +1188,4 @@ export const useInvoiceForm = () => {
     submitToStorecove,
   };
 };
+
