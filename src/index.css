@@ -46,6 +46,11 @@
     --gradient-start: 255, 255, 255;
     --gradient-mid: 242, 238, 255;
     --gradient-end: 229, 222, 255;
+    
+    /* Red gradient for credit note pages */
+    --credit-note-gradient-start: 255, 255, 255;
+    --credit-note-gradient-mid: 255, 235, 235;
+    --credit-note-gradient-end: 255, 210, 210;
   }
 
   .dark {
@@ -89,6 +94,11 @@
     --gradient-start: 25, 23, 36;
     --gradient-mid: 40, 35, 60;
     --gradient-end: 65, 48, 97;
+    
+    /* Dark red gradient for credit note pages */
+    --credit-note-gradient-start: 40, 23, 25;
+    --credit-note-gradient-mid: 65, 30, 35;
+    --credit-note-gradient-end: 97, 38, 48;
   }
 
   * {
@@ -106,6 +116,16 @@
     );
     background-attachment: fixed;
     min-height: 100vh;
+  }
+  
+  /* Credit note page gradient */
+  .credit-note-page {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--credit-note-gradient-start)) 0%,
+      rgb(var(--credit-note-gradient-end)) 100%
+    );
+    background-attachment: fixed;
   }
 
   /* Light mode styling */

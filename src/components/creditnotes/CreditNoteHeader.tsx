@@ -70,11 +70,11 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
                 Save as Draft
               </button>
             ) : null}
-            <button onClick={handleCreateAndSend} className="apple-button">
+            <button onClick={handleCreateAndSend} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
               Create & Send
             </button>
             {handleSendEmail && (
-              <button onClick={handleSendEmail} className="apple-button">
+              <button onClick={handleSendEmail} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
                 Send Email
               </button>
             )}
