@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import { User, Building, CreditCard, FileText } from "lucide-react";
@@ -20,7 +19,7 @@ import TermsTab from "@/components/settings/TermsTab";
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const { toast } = useToast();
-  const { currency, setCurrency } = useCurrency();
+  const { currency } = useCurrency();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,11 +64,8 @@ const Settings = () => {
             terms_and_conditions_url: data.terms_and_conditions_url || "",
             legal_entity_id: data.legal_entity_id || null,
             peppol_identifier: data.peppol_identifier || null,
+            default_currency: 'EUR',
           });
-
-          if (data.default_currency) {
-            setCurrency(data.default_currency);
-          }
         }
       } catch (error) {
         console.error("Failed to fetch company settings:", error);
@@ -84,7 +80,7 @@ const Settings = () => {
     };
 
     fetchCompanySettings();
-  }, [user, setCurrency, toast]);
+  }, [user, toast]);
 
   const handleSaveCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +100,7 @@ const Settings = () => {
       const settingsData = {
         ...companySettings,
         user_id: user.id,
-        default_currency: currency,
+        default_currency: 'EUR',
       };
 
       const { data: existingSettings, error: checkError } = await supabase
@@ -159,18 +155,15 @@ const Settings = () => {
             const legalEntityId = data.data.id;
             console.log("Saving legal entity ID:", legalEntityId);
             
-            // Store the legal entity ID
             const updateData: Partial<CompanySettings> = { 
               legal_entity_id: legalEntityId 
             };
             
-            // If we have PEPPOL data, store that too
             if (data.peppol && data.peppol.success && data.peppol.data) {
               console.log("Saving PEPPOL identifier:", data.peppol.data);
               updateData.peppol_identifier = data.peppol.data;
             }
             
-            // Update the database with both legal entity ID and PEPPOL identifier
             const updateResult = await supabase
               .from("company_settings")
               .update(updateData)
@@ -179,7 +172,6 @@ const Settings = () => {
             if (updateResult.error) {
               console.error("Error saving legal entity and PEPPOL data:", updateResult.error);
             } else {
-              // Update local state
               setCompanySettings(prev => ({
                 ...prev,
                 legal_entity_id: legalEntityId,
@@ -263,8 +255,6 @@ const Settings = () => {
               <CompanyTab
                 companySettings={companySettings}
                 setCompanySettings={setCompanySettings}
-                currency={currency}
-                setCurrency={setCurrency}
                 loading={loading}
                 saving={saving}
                 handleSaveCompany={handleSaveCompany}

@@ -17,8 +17,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface CompanyTabProps {
   companySettings: CompanySettings;
   setCompanySettings: React.Dispatch<React.SetStateAction<CompanySettings>>;
-  currency: string;
-  setCurrency: (currency: string) => void;
   loading: boolean;
   saving: boolean;
   handleSaveCompany: (e: React.FormEvent) => Promise<void>;
@@ -27,8 +25,6 @@ interface CompanyTabProps {
 const CompanyTab = ({
   companySettings,
   setCompanySettings,
-  currency,
-  setCurrency,
   loading,
   saving,
   handleSaveCompany,
@@ -232,15 +228,6 @@ const CompanyTab = ({
     { code: "ZW", name: "Zimbabwe" },
   ];
 
-  const currencies = [
-    { code: "EUR", label: "Euro (€)", symbol: "€" },
-    { code: "USD", label: "US Dollar ($)", symbol: "$" },
-    { code: "GBP", label: "British Pound (£)", symbol: "£" },
-    { code: "JPY", label: "Japanese Yen (¥)", symbol: "¥" },
-    { code: "CNY", label: "Chinese Yuan (¥)", symbol: "¥" },
-    { code: "INR", label: "Indian Rupee (₹)", symbol: "₹" },
-  ];
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCompanySettings((prev) => ({
@@ -253,14 +240,6 @@ const CompanyTab = ({
     setCompanySettings((prev) => ({
       ...prev,
       country: value,
-    }));
-  };
-
-  const handleCurrencyChange = (currencyCode: string) => {
-    setCurrency(currencyCode);
-    setCompanySettings((prev) => ({
-      ...prev,
-      default_currency: currencyCode,
     }));
   };
 
@@ -466,31 +445,6 @@ const CompanyTab = ({
               <p className="text-xs text-muted-foreground mt-1">
                 Required for e-invoicing. Format as country code + VAT number without spaces (e.g. BE0628719851).
               </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Default Currency
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {currencies.map((curr) => (
-                  <button
-                    key={curr.code}
-                    type="button"
-                    onClick={() => handleCurrencyChange(curr.code)}
-                    className={cn(
-                      "px-3 py-2 border rounded-md flex items-center gap-2 transition-colors",
-                      currency === curr.code
-                        ? "bg-apple-blue dark:bg-apple-purple text-white border-apple-blue dark:border-apple-purple"
-                        : "bg-background border-border hover:bg-secondary"
-                    )}
-                  >
-                    <span>{curr.symbol}</span>
-                    <span>{curr.code}</span>
-                    {currency === curr.code && <Check size={16} />}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -735,4 +689,3 @@ const CompanyTab = ({
 };
 
 export default CompanyTab;
-

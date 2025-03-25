@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +26,8 @@ export interface InvoiceData {
 }
 
 export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<string> => {
+  console.log("Starting PDF generation for invoice:", invoiceData.invoice_number);
+  
   const { data: companyData } = await supabase
     .from('company_settings')
     .select('*')
@@ -59,6 +62,11 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
         invoice_number_type: 'incremental',
         logo_url: ''
       };
+
+  console.log("Company settings loaded for PDF:", {
+    companyName: companySettings.company_name,
+    hasLogo: !!companySettings.logo_url,
+  });
 
   const element = document.createElement('div');
   element.className = 'invoice-pdf-content';
@@ -183,6 +191,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
   `;
 
   try {
+    console.log("Rendering PDF content to canvas");
     const canvas = await html2canvas(element, {
       scale: 1.25,
       useCORS: true,
@@ -191,6 +200,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
     document.body.removeChild(element);
 
+    console.log("Creating PDF document");
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -230,7 +240,7 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Prom
     const byteCharacters = atob(base64Data);
     const byteArrays = [];
     
-    const sliceSize = 256;
+    const sliceSize = 512; // Increased slice size for better performance
     for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
       const slice = byteCharacters.slice(offset, offset + sliceSize);
       
@@ -247,6 +257,14 @@ export const saveInvoicePDF = async (invoiceId: string, pdfBase64: string): Prom
     const file = new File([blob], `invoice-${invoiceId}.pdf`, { type: 'application/pdf' });
     
     console.log(`Created PDF file, size: ${file.size} bytes`);
+
+    // Check if invoices bucket exists, if not, we'll see an error in the logs
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const invoicesBucketExists = buckets?.some(bucket => bucket.name === 'invoices');
+    
+    if (!invoicesBucketExists) {
+      console.warn("Invoices bucket doesn't exist. Using default public bucket.");
+    }
 
     const { data, error } = await supabase.storage
       .from('invoices')

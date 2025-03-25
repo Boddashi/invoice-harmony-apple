@@ -53,7 +53,7 @@ export const defaultCompanySettings: CompanySettings = {
   postal_code: '',
   city: '',
   country: '',
-  default_currency: 'EUR',
+  default_currency: 'EUR', // Fixed as EUR
   
   bank_name: '',
   account_number: '',

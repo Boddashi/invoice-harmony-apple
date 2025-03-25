@@ -17,13 +17,13 @@ const ClientStatus = () => {
       try {
         setLoading(true);
         
-        // Get count of business clients with PEPPOL identifier
+        // Get count of business clients with legal entity ID (which means they have PEPPOL capability)
         const { count: peppolCount, error: peppolError } = await supabase
           .from('clients')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('type', 'business')
-          .not('peppol_identifier', 'is', null);
+          .not('legal_entity_id', 'is', null);
           
         if (peppolError) throw peppolError;
         

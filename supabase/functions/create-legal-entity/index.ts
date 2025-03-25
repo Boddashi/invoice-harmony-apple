@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -58,33 +59,59 @@ serve(async (req) => {
       zip: companySettings.postal_code || "",
     };
 
-    console.log(
-      "Preparing legal entity payload:",
-      JSON.stringify(legalEntityData)
-    );
+    let response;
+    let responseData;
 
-    // Make request to Storecove API to create legal entity
-    const response = await fetch(
-      "https://api.storecove.com/api/v2/legal_entities",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${STORECOVE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(legalEntityData),
-      }
-    );
+    // Check if we have an existing legal entity ID
+    if (companySettings.legal_entity_id) {
+      console.log(
+        "Updating existing legal entity with ID:",
+        companySettings.legal_entity_id
+      );
+      console.log("Update payload:", JSON.stringify(legalEntityData));
 
-    const responseData = await response.json();
+      // Make PATCH request to Storecove API to update legal entity
+      response = await fetch(
+        `https://api.storecove.com/api/v2/legal_entities/${companySettings.legal_entity_id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${STORECOVE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(legalEntityData),
+        }
+      );
+    } else {
+      console.log(
+        "Creating new legal entity with payload:",
+        JSON.stringify(legalEntityData)
+      );
+
+      // Make request to Storecove API to create legal entity
+      response = await fetch(
+        "https://api.storecove.com/api/v2/legal_entities",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${STORECOVE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(legalEntityData),
+        }
+      );
+    }
+
+    responseData = await response.json();
 
     // Check if the request was successful
     if (!response.ok) {
       console.error("Storecove API error:", JSON.stringify(responseData));
       return new Response(
         JSON.stringify({
-          error: "Failed to create legal entity",
+          error: "Failed to create or update legal entity",
           details: responseData,
         }),
         {
@@ -95,7 +122,7 @@ serve(async (req) => {
     }
 
     console.log(
-      "Successfully created legal entity:",
+      "Successfully created or updated legal entity:",
       JSON.stringify(responseData)
     );
 
@@ -103,7 +130,7 @@ serve(async (req) => {
     const legalEntityId = responseData.id;
     let peppolData = null;
 
-    // If we have a legal entity ID and VAT number, create PEPPOL identifier
+    // If we have a legal entity ID and VAT number, check for existing PEPPOL identifier and create a new one
     if (
       legalEntityId &&
       companySettings.vat_number &&
@@ -111,9 +138,63 @@ serve(async (req) => {
     ) {
       try {
         console.log(
-          "Creating PEPPOL identifier for legal entity ID:",
+          "Handling PEPPOL identifier for legal entity ID:",
           legalEntityId
         );
+
+        // First, check if we need to delete an existing PEPPOL identifier
+        if (companySettings.peppol_identifier && companySettings.legal_entity_id) {
+          try {
+            // Fetch the legal entity details to get current PEPPOL identifiers
+            console.log("Fetching legal entity details to check PEPPOL identifiers");
+            const legalEntityResponse = await fetch(
+              `https://api.storecove.com/api/v2/legal_entities/${legalEntityId}`,
+              {
+                method: "GET",
+                headers: {
+                  Accept: "application/json",
+                  Authorization: `Bearer ${STORECOVE_API_KEY}`,
+                },
+              }
+            );
+            
+            const legalEntityDetails = await legalEntityResponse.json();
+            console.log("Legal entity details:", JSON.stringify(legalEntityDetails));
+            
+            if (legalEntityDetails.peppol_identifiers && legalEntityDetails.peppol_identifiers.length > 0) {
+              for (const peppol of legalEntityDetails.peppol_identifiers) {
+                console.log("Found existing PEPPOL identifier:", JSON.stringify(peppol));
+                
+                // Delete the existing PEPPOL identifier
+                console.log(`Deleting PEPPOL identifier: superscheme=${peppol.superscheme}, scheme=${peppol.scheme}, identifier=${peppol.identifier}`);
+                
+                const deleteResponse = await fetch(
+                  `https://api.storecove.com/api/v2/legal_entities/${legalEntityId}/peppol_identifiers/${encodeURIComponent(peppol.superscheme)}/${encodeURIComponent(peppol.scheme)}/${encodeURIComponent(peppol.identifier)}`,
+                  {
+                    method: "DELETE",
+                    headers: {
+                      Accept: "application/json",
+                      Authorization: `Bearer ${STORECOVE_API_KEY}`,
+                    },
+                  }
+                );
+                
+                if (!deleteResponse.ok) {
+                  const deleteError = await deleteResponse.text();
+                  console.error(`Error deleting PEPPOL identifier: ${deleteError}`);
+                  console.log("Will continue with creating new identifier");
+                } else {
+                  console.log("Successfully deleted PEPPOL identifier");
+                }
+              }
+            } else {
+              console.log("No existing PEPPOL identifiers found");
+            }
+          } catch (fetchError) {
+            console.error("Error fetching or deleting PEPPOL identifiers:", fetchError);
+            console.log("Will continue with creating new identifier");
+          }
+        }
 
         // Format the scheme based on country and VAT
         const countryCode = companySettings.country;
@@ -126,7 +207,7 @@ serve(async (req) => {
         };
 
         console.log(
-          "PEPPOL identifier payload:",
+          "Creating new PEPPOL identifier payload:",
           JSON.stringify(peppolPayload)
         );
 

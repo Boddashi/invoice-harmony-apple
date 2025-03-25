@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -141,13 +140,11 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
       const { data: settings } = await supabase
         .from('company_settings')
-        .select('default_currency, company_name')
+        .select('default_currency, company_name, legal_entity_id, terms_and_conditions_url, iban')
         .eq('user_id', user.id)
         .single();
       
-      const currencySymbol = settings?.default_currency === 'USD' ? '$' : 
-                            settings?.default_currency === 'EUR' ? '€' : 
-                            settings?.default_currency === 'GBP' ? '£' : '$';
+      const currencySymbol = '€'; // Always use EUR
       
       // Generate the PDF and get its base64 string
       const pdfBase64 = await generateInvoicePDF({
@@ -165,35 +162,95 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         currencySymbol
       });
       
+      // Upload the PDF to storage
+      const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
+      
+      await supabase.storage
+        .from('invoices')
+        .upload(`${invoiceId}/invoice.pdf`, pdfBlob, {
+          upsert: true,
+          cacheControl: "3600",
+        });
+      
       const { data: urlData } = supabase.storage
         .from('invoices')
         .getPublicUrl(`${invoiceId}/invoice.pdf`);
-
-      const { data: termsData } = await supabase
-        .from('company_settings')
-        .select('terms_and_conditions_url')
-        .single();
       
-      const termsUrl = termsData?.terms_and_conditions_url || null;
-      
-      // Pass the PDF base64 data to the edge function
-      await supabase.functions.invoke('send-invoice-email', {
-        body: {
-          clientName: invoice.client?.name || 'Client',
-          clientEmail: invoice.client?.email,
-          invoiceNumber: invoice.invoice_number,
-          pdfUrl: urlData?.publicUrl || null,
-          termsAndConditionsUrl: termsUrl,
-          companyName: settings?.company_name || 'PowerPeppol',
-          includeAttachments: true,
-          pdfBase64: pdfBase64 // Pass the PDF data directly
+      // If the client has a legal entity ID and the company has settings, send to Storecove
+      if (invoice.client?.legal_entity_id && settings?.legal_entity_id) {
+        try {
+          const response = await supabase.functions.invoke("submit-invoice-document", {
+            body: {
+              invoice: {
+                id: invoiceId,
+                invoice_number: invoice.invoice_number,
+                issue_date: invoice.issue_date,
+                due_date: invoice.due_date,
+                notes: invoice.notes,
+                total_amount: invoice.total_amount
+              },
+              client: invoice.client,
+              items: itemsForPDF,
+              companySettings: settings,
+              pdfBase64: pdfBase64,
+              pdfUrl: urlData?.publicUrl || null
+            }
+          });
+          
+          if (response.error) {
+            throw new Error(response.error.message || "Failed to submit to Storecove");
+          }
+          
+          if (response.data?.error) {
+            throw new Error(response.data.error);
+          }
+          
+          toast({
+            title: "Success",
+            description: "Invoice submitted to Storecove and sent via email"
+          });
+        } catch (storecoveError: any) {
+          console.error('Error submitting to Storecove:', storecoveError);
+          
+          // If Storecove fails, still try to send the email directly
+          await supabase.functions.invoke('send-invoice-email', {
+            body: {
+              clientName: invoice.client?.name || 'Client',
+              clientEmail: invoice.client?.email,
+              invoiceNumber: invoice.invoice_number,
+              pdfUrl: urlData?.publicUrl || null,
+              termsAndConditionsUrl: settings?.terms_and_conditions_url || null,
+              companyName: settings?.company_name || 'PowerPeppol',
+              includeAttachments: true,
+              pdfBase64: pdfBase64
+            }
+          });
+          
+          toast({
+            title: "Partial Success",
+            description: "Invoice sent via email, but Storecove submission failed: " + storecoveError.message
+          });
         }
-      });
-      
-      toast({
-        title: "Success",
-        description: "Invoice sent successfully with PDF attachment"
-      });
+      } else {
+        // If not sending to Storecove, send email directly
+        await supabase.functions.invoke('send-invoice-email', {
+          body: {
+            clientName: invoice.client?.name || 'Client',
+            clientEmail: invoice.client?.email,
+            invoiceNumber: invoice.invoice_number,
+            pdfUrl: urlData?.publicUrl || null,
+            termsAndConditionsUrl: settings?.terms_and_conditions_url || null,
+            companyName: settings?.company_name || 'PowerPeppol',
+            includeAttachments: true,
+            pdfBase64: pdfBase64
+          }
+        });
+        
+        toast({
+          title: "Success",
+          description: "Invoice sent successfully with PDF attachment"
+        });
+      }
 
       if (onStatusChange) {
         onStatusChange();

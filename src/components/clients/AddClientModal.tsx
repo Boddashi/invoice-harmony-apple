@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,6 @@ interface Client {
   vatNumber?: string | null;
   vat_number?: string | null;
   legal_entity_id?: number | null;
-  peppol_identifier?: any | null;
 }
 
 interface AddClientModalProps {
@@ -72,7 +70,6 @@ const AddClientModal = ({
     vatNumber: "",
   });
 
-  // List of countries with code and name for the dropdown
   const countries = [
     { code: "AF", name: "Afghanistan" },
     { code: "AL", name: "Albania" },
@@ -268,7 +265,6 @@ const AddClientModal = ({
     { code: "ZW", name: "Zimbabwe" },
   ];
 
-  // Initialize form data when editing a client
   useEffect(() => {
     if (clientToEdit) {
       setFormData({
@@ -320,15 +316,13 @@ const AddClientModal = ({
           title: "Error",
           description: "Failed to create legal entity. Please try again.",
         });
-        return { legalEntityId: null, peppolIdentifier: null };
+        return { legalEntityId: null };
       }
       
       console.log("Legal entity created:", data);
       
-      // Return both the legal entity ID and PEPPOL identifier (if available)
       return { 
-        legalEntityId: data?.data?.id || null,
-        peppolIdentifier: (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null
+        legalEntityId: data?.data?.id || null
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
@@ -337,7 +331,7 @@ const AddClientModal = ({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
-      return { legalEntityId: null, peppolIdentifier: null };
+      return { legalEntityId: null };
     } finally {
       setIsCreatingLegalEntity(false);
     }
@@ -355,7 +349,6 @@ const AddClientModal = ({
       return;
     }
     
-    // Required fields for legal entity creation
     if (!formData.street || !formData.city || !formData.postcode || !formData.country) {
       toast({
         variant: "destructive",
@@ -366,31 +359,33 @@ const AddClientModal = ({
     }
 
     try {
-      // Only create legal entity if we're adding a new client or updating one without a legal entity
       let legalEntityId = null;
-      let peppolIdentifier = null;
       
-      if (!isEditMode || !clientToEdit?.legal_entity_id) {
-        const result = await createLegalEntity(formData);
-        legalEntityId = result.legalEntityId;
-        peppolIdentifier = result.peppolIdentifier;
-        
-        console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
-      }
+      const clientDataForRequest = {
+        ...formData,
+        legal_entity_id: clientToEdit?.legal_entity_id || null
+      };
+      
+      const result = await createLegalEntity(clientDataForRequest);
+      legalEntityId = result.legalEntityId || clientToEdit?.legal_entity_id;
+      
+      console.log("Received from legal entity creation:", { legalEntityId });
+
+      const clientData = {
+        ...formData,
+        vat_number: formData.vatNumber,
+        legal_entity_id: legalEntityId
+      };
+      
+      console.log("Storing client data:", clientData);
 
       if (isEditMode && onUpdateClient && clientToEdit) {
         onUpdateClient({
           id: clientToEdit.id,
-          ...formData,
-          legal_entity_id: legalEntityId || clientToEdit.legal_entity_id,
-          peppol_identifier: peppolIdentifier || clientToEdit.peppol_identifier,
+          ...clientData,
         });
       } else {
-        onAddClient({
-          ...formData,
-          legal_entity_id: legalEntityId,
-          peppol_identifier: peppolIdentifier,
-        });
+        onAddClient(clientData);
       }
 
       setFormData({
