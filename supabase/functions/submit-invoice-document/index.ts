@@ -69,6 +69,43 @@ serve(async (req) => {
       );
     }
 
+    // Fetch client's legal entity information from Storecove
+    const clientLegalEntityResponse = await fetch(
+      `https://api.storecove.com/api/v2/legal_entities/${client.legal_entity_id}`,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "Authorization": `Bearer ${STORECOVE_API_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    if (!clientLegalEntityResponse.ok) {
+      console.error("Failed to fetch client's legal entity information:", await clientLegalEntityResponse.text());
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to fetch client's legal entity information",
+          status: clientLegalEntityResponse.status
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+
+    const clientLegalEntity = await clientLegalEntityResponse.json();
+    console.log("Client legal entity information:", JSON.stringify(clientLegalEntity));
+
+    // Extract PEPPOL identifier if available
+    let peppolIdentifier = null;
+    if (clientLegalEntity.peppol_identifiers && clientLegalEntity.peppol_identifiers.length > 0) {
+      peppolIdentifier = clientLegalEntity.peppol_identifiers[0];
+      console.log("Found PEPPOL identifier:", JSON.stringify(peppolIdentifier));
+    }
+
     // Create invoice lines and tax subtotals
     const invoiceLines = items.map(item => {
       const vatPercentage = parseFloat(item.vat_rate) || 0;
@@ -120,13 +157,22 @@ serve(async (req) => {
       });
     }
 
-    // Prepare eIdentifiers for routing section if client is a business with VAT number
+    // Prepare routing section with emails and eIdentifiers
     const routingConfig = {
       emails: client.email ? [client.email] : []
     };
 
-    // Add eIdentifiers for business clients with VAT number
-    if (client.type === 'business' && client.vat_number) {
+    // Add eIdentifiers from the retrieved PEPPOL identifier
+    if (peppolIdentifier && peppolIdentifier.scheme && peppolIdentifier.identifier) {
+      routingConfig.eIdentifiers = [
+        {
+          scheme: peppolIdentifier.scheme,
+          id: peppolIdentifier.identifier
+        }
+      ];
+    }
+    // Fallback to using client's VAT number if no PEPPOL identifier found but client is a business with VAT number
+    else if (client.type === 'business' && client.vat_number) {
       const countryCode = client.country || 'BE';
       routingConfig.eIdentifiers = [
         {
@@ -168,8 +214,17 @@ serve(async (req) => {
       }
     };
 
-    // Add publicIdentifiers to accountingCustomerParty for business clients with VAT number
-    if (client.type === 'business' && client.vat_number) {
+    // Add publicIdentifiers to accountingCustomerParty using the same identifiers retrieved from Storecove
+    if (peppolIdentifier && peppolIdentifier.scheme && peppolIdentifier.identifier) {
+      documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
+        {
+          scheme: peppolIdentifier.scheme,
+          id: peppolIdentifier.identifier
+        }
+      ];
+    }
+    // Fallback to using client's VAT number if no PEPPOL identifier found but client is a business with VAT number
+    else if (client.type === 'business' && client.vat_number) {
       const countryCode = client.country || 'BE';
       documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
         {
