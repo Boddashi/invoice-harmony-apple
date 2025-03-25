@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -58,33 +59,59 @@ serve(async (req) => {
       zip: companySettings.postal_code || "",
     };
 
-    console.log(
-      "Preparing legal entity payload:",
-      JSON.stringify(legalEntityData)
-    );
+    let response;
+    let responseData;
 
-    // Make request to Storecove API to create legal entity
-    const response = await fetch(
-      "https://api.storecove.com/api/v2/legal_entities",
-      {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${STORECOVE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(legalEntityData),
-      }
-    );
+    // Check if we have an existing legal entity ID
+    if (companySettings.legal_entity_id) {
+      console.log(
+        "Updating existing legal entity with ID:",
+        companySettings.legal_entity_id
+      );
+      console.log("Update payload:", JSON.stringify(legalEntityData));
 
-    const responseData = await response.json();
+      // Make PATCH request to Storecove API to update legal entity
+      response = await fetch(
+        `https://api.storecove.com/api/v2/legal_entities/${companySettings.legal_entity_id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${STORECOVE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(legalEntityData),
+        }
+      );
+    } else {
+      console.log(
+        "Creating new legal entity with payload:",
+        JSON.stringify(legalEntityData)
+      );
+
+      // Make request to Storecove API to create legal entity
+      response = await fetch(
+        "https://api.storecove.com/api/v2/legal_entities",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${STORECOVE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(legalEntityData),
+        }
+      );
+    }
+
+    responseData = await response.json();
 
     // Check if the request was successful
     if (!response.ok) {
       console.error("Storecove API error:", JSON.stringify(responseData));
       return new Response(
         JSON.stringify({
-          error: "Failed to create legal entity",
+          error: "Failed to create or update legal entity",
           details: responseData,
         }),
         {
@@ -95,7 +122,7 @@ serve(async (req) => {
     }
 
     console.log(
-      "Successfully created legal entity:",
+      "Successfully created or updated legal entity:",
       JSON.stringify(responseData)
     );
 
