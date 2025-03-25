@@ -15,6 +15,11 @@ interface InvoiceSummaryProps {
 }
 
 const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({ vatGroups, total, currencySymbol }) => {
+  // Calculate the correct total from the VAT groups
+  const calculatedSubtotal = vatGroups.reduce((acc, group) => acc + group.subtotal, 0);
+  const calculatedVatTotal = vatGroups.reduce((acc, group) => acc + group.vat, 0);
+  const calculatedTotal = calculatedSubtotal + calculatedVatTotal;
+
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Summary</h3>
@@ -36,7 +41,7 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({ vatGroups, total, curre
         
         <div className="border-t border-border pt-4 flex justify-between">
           <span className="font-medium">Total</span>
-          <span className="font-bold text-lg">{currencySymbol}{total.toFixed(2)}</span>
+          <span className="font-bold text-lg">{currencySymbol}{calculatedTotal.toFixed(2)}</span>
         </div>
       </div>
     </CustomCard>

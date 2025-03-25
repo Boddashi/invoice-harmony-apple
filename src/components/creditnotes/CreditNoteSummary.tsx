@@ -21,9 +21,9 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
 }) => {
   const subtotal = vatGroups.reduce((acc, group) => acc + group.value, 0);
   const vatTotal = vatGroups.reduce((acc, group) => acc + group.amount, 0);
-
-  // Ensure the total is calculated correctly as the sum of subtotal and VAT
-  // We still use the prop total in the UI for consistency with parent component
+  
+  // Calculate the correct total (sum of subtotal and VAT)
+  const calculatedTotal = subtotal + vatTotal;
   
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
@@ -57,7 +57,7 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
           <span>Total:</span>
           <span>
             {currencySymbol}
-            {formatAmount(total)}
+            {formatAmount(calculatedTotal)}
           </span>
         </div>
       </div>
