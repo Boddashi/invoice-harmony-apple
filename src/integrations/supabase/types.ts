@@ -190,13 +190,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "credit_note_items_invoice_id_fkey"
-            columns: ["credit_note_id"]
-            isOneToOne: false
-            referencedRelation: "invoices"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "credit_note_items_item_id_fkey"
             columns: ["item_id"]
             isOneToOne: false
