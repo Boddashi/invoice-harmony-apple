@@ -323,11 +323,11 @@ const AddClientModal = ({
       
       console.log("Legal entity created:", data);
       
-      // Explicitly store the full PEPPOL data object exactly as received
+      // Store the complete PEPPOL data object, including scheme and identifier
       let peppolIdentifier = null;
       if (data?.peppol?.success && data?.peppol?.data) {
         console.log("Storing PEPPOL data:", data.peppol.data);
-        peppolIdentifier = data.peppol.data;  // Store the complete PEPPOL data object
+        peppolIdentifier = data.peppol.data;  // Store the full PEPPOL data object
       }
       
       return { 
@@ -380,7 +380,7 @@ const AddClientModal = ({
         console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
       }
 
-      // For both new clients and updates, use the complete PEPPOL data object
+      // Prepare the client data with the complete PEPPOL identifier
       const clientData = {
         ...formData,
         vat_number: formData.vatNumber,

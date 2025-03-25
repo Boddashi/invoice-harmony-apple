@@ -194,14 +194,15 @@ serve(async (req) => {
           JSON.stringify(peppolData)
         );
 
-        // Return success with both legal entity and complete PEPPOL data
+        // Return success with both legal entity and PEPPOL data
+        // Important: The complete peppolData object is returned, containing scheme and identifier
         return new Response(
           JSON.stringify({
             success: true,
             data: responseData,
             peppol: {
               success: true,
-              data: peppolData,  // Return the full PEPPOL data object
+              data: peppolData,  // Return the complete PEPPOL data object with scheme and identifier
             },
           }),
           {
