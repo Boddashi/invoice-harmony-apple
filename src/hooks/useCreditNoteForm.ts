@@ -672,7 +672,7 @@ export function useCreditNoteForm() {
         description: error.message || 'Failed to add client.',
       });
     }
-  }, [user, toast]);
+  }, [user, toast, setClients, setSelectedClientId, setIsAddClientModalOpen]);
   
   const handleDownloadPDF = useCallback(() => {
     if (pdfUrl) {
