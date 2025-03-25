@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -198,10 +197,10 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       scale: 2, // Increased from 1.25 to 2 for higher resolution
       useCORS: true,
       logging: false,
-      letterRendering: true,
       allowTaint: true,
       backgroundColor: "#ffffff",
-      imageTimeout: 0 // No timeout for images
+      imageTimeout: 0, // No timeout for images
+      foreignObjectRendering: true // Enable this for better text rendering
     });
 
     document.body.removeChild(element);
@@ -467,3 +466,4 @@ export const generateReportPDF = async (report: { title: string; type: string; d
     throw error;
   }
 };
+
