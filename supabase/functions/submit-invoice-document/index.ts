@@ -193,7 +193,7 @@ serve(async (req) => {
         invoice: {
           invoiceNumber: invoice.invoice_number,
           issueDate: invoice.issue_date,
-          documentCurrencyCode: "EUR", // Assuming EUR as default currency
+          documentCurrencyCode: "EUR", // Always use EUR as currency
           taxSystem: "tax_line_percentages",
           accountingCustomerParty: {
             party: {
