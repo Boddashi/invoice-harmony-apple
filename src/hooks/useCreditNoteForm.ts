@@ -110,7 +110,7 @@ export function useCreditNoteForm() {
   
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
-  const total = items.reduce((sum, item) => sum + item.amount, 0);
+  const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -428,7 +428,11 @@ export function useCreditNoteForm() {
       }
     });
     
-    return Array.from(groups.values());
+    return Array.from(groups.values()).map(group => ({
+      ...group,
+      value: -Math.abs(group.value),
+      amount: -Math.abs(group.amount)
+    }));
   }, [items]);
   
   const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
@@ -447,9 +451,9 @@ export function useCreditNoteForm() {
       setIsSubmitting(true);
       
       const vatGroups = getVatGroups();
-      const subtotal = vatGroups.reduce((sum, group) => sum + group.value, 0);
-      const vatTotal = vatGroups.reduce((sum, group) => sum + group.amount, 0);
-      const total = subtotal + vatTotal;
+      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+      const totalAmount = subtotal + vatTotal;
       
       const creditNoteData = {
         user_id: user.id,
@@ -459,7 +463,7 @@ export function useCreditNoteForm() {
         status: 'draft' as CreditNoteStatus,
         amount: subtotal,
         tax_amount: vatTotal,
-        total_amount: total,
+        total_amount: totalAmount,
         notes: notes
       };
       
@@ -549,9 +553,9 @@ export function useCreditNoteForm() {
       setIsSubmitting(true);
       
       const vatGroups = getVatGroups();
-      const subtotal = vatGroups.reduce((sum, group) => sum + group.value, 0);
-      const vatTotal = vatGroups.reduce((sum, group) => sum + group.amount, 0);
-      const total = subtotal + vatTotal;
+      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+      const totalAmount = subtotal + vatTotal;
       
       const creditNoteData = {
         user_id: user.id,
@@ -561,7 +565,7 @@ export function useCreditNoteForm() {
         status: 'pending' as CreditNoteStatus,
         amount: subtotal,
         tax_amount: vatTotal,
-        total_amount: total,
+        total_amount: totalAmount,
         notes: notes
       };
       
@@ -748,3 +752,4 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
+

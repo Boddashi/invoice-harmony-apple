@@ -1,4 +1,3 @@
-
 import React from "react";
 import CustomCard from "../ui/CustomCard";
 
@@ -22,6 +21,10 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   const subtotal = vatGroups.reduce((acc, group) => acc + group.value, 0);
   const vatTotal = vatGroups.reduce((acc, group) => acc + group.amount, 0);
 
+  const formatAmount = (amount: number) => {
+    return amount.toFixed(2);
+  };
+
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Summary</h3>
@@ -30,7 +33,7 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
           <span className="text-muted-foreground">Subtotal:</span>
           <span>
             {currencySymbol}
-            {subtotal.toFixed(2)}
+            {formatAmount(subtotal)}
           </span>
         </div>
 
@@ -41,7 +44,7 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
             </span>
             <span>
               {currencySymbol}
-              {group.amount.toFixed(2)}
+              {formatAmount(group.amount)}
             </span>
           </div>
         ))}
@@ -50,7 +53,7 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
           <span>Total:</span>
           <span>
             {currencySymbol}
-            {total.toFixed(2)}
+            {formatAmount(total)}
           </span>
         </div>
       </div>
