@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -106,7 +105,6 @@ export default {
           medium: "#7E69AB",
           dark: "#5D4A8A",
         },
-        "yuki-green": "hsl(var(--yuki-green))",
       },
       borderRadius: {
         lg: "var(--radius)",

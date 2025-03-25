@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,178 +5,267 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --foreground: 240 10% 3.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --card-foreground: 240 10% 3.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --primary: 211 100% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
 
     --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent-foreground: 240 5.9% 10%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --ring: 222.2 84% 4.9%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 211 100% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.8rem;
 
-    --apple-blue: 48 100% 62%;
-    --apple-red: 0 100% 50%;
-    --apple-purple: 286 79% 69%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --yuki-green: 142 76% 46%;
-
-    --sidebar-primary: 220 89% 46%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-border: 200 16% 84%;
-
-    --background-color-rgb: 255, 255, 255;
+    --gradient-start: 255, 255, 255;
+    --gradient-mid: 242, 238, 255;
+    --gradient-end: 229, 222, 255;
+    
+    /* Red gradient for credit note pages */
+    --credit-note-gradient-start: 255, 255, 255;
+    --credit-note-gradient-mid: 255, 235, 235;
+    --credit-note-gradient-end: 255, 210, 210;
   }
- 
+
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 213 31% 91%;
+    --background: 240 10% 8%;
+    --foreground: 0 0% 98%;
 
-    --muted: 223 47% 11%;
-    --muted-foreground: 215.4 16.3% 56.9%;
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 224 71% 4%;
-    --popover-foreground: 215 20.2% 65.9%;
+    --popover: 240 10% 8%;
+    --popover-foreground: 0 0% 98%;
 
-    --card: 224 71% 4%;
-    --card-foreground: 213 31% 91%;
- 
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 1.2%;
- 
-    --secondary: 223 47% 11%;
-    --secondary-foreground: 215 20.2% 65.9%;
- 
-    --accent: 223 47% 11%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --ring: 216 34% 17%;
+    --primary: 263 85% 74%;
+    --primary-foreground: 240 5.9% 10%;
 
-    --background-color-rgb: 0, 0, 0;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 263 85% 74%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 60.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263 85% 74%;
+
+    --sidebar-background: 240 10% 6%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 263 85% 74%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 263 85% 74%;
+
+    --gradient-start: 25, 23, 36;
+    --gradient-mid: 40, 35, 60;
+    --gradient-end: 65, 48, 97;
+    
+    /* Dark red gradient for credit note pages */
+    --credit-note-gradient-start: 40, 23, 25;
+    --credit-note-gradient-mid: 65, 30, 35;
+    --credit-note-gradient-end: 97, 38, 48;
+  }
+
+  * {
+    @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground;
-  }
-}
-
-@layer components {
-  .btn {
-    @apply inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+      Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--gradient-start)) 0%,
+      rgb(var(--gradient-end)) 100%
+    );
+    background-attachment: fixed;
+    min-height: 100vh;
   }
   
+  /* Credit note page gradient */
+  .credit-note-page {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--credit-note-gradient-start)) 0%,
+      rgb(var(--credit-note-gradient-end)) 100%
+    );
+    background-attachment: fixed;
+  }
+
+  /* Light mode styling */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-apple-sm rounded-xl;
+  }
+
+  .elevated-card {
+    @apply bg-white shadow-apple-md rounded-xl transition-all duration-300 hover:shadow-apple-lg;
+  }
+
   .input-field {
-    @apply bg-background border border-input h-10 w-full rounded-md px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50;
+    @apply bg-secondary/50 border-0 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary/20 transition-all duration-200;
   }
-  
-  .secondary-button {
-    @apply inline-flex items-center justify-center rounded-md border border-input gap-2 bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
-  }
-  
+
   .apple-button {
-    @apply inline-flex items-center justify-center rounded-md gap-2 bg-apple-blue px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-apple-blue/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+    @apply rounded-full bg-apple-blue text-white font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-opacity-90 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
+           active:scale-[0.98] shadow-apple-sm;
   }
-  
+
+  .secondary-button {
+    @apply rounded-full bg-secondary text-foreground font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-secondary/80 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
+           active:scale-[0.98] shadow-apple-sm;
+  }
+
+  .ghost-button {
+    @apply rounded-full bg-transparent text-foreground font-medium px-6 py-2.5 
+           transition-all duration-300 hover:bg-secondary/50 
+           focus:outline-none focus:ring-2 focus:ring-primary/30 
+           active:scale-[0.98];
+  }
+
+  /* Dark mode styling */
+  .dark .glass-card {
+    @apply bg-card/40 backdrop-blur-md border border-white/5 shadow-neon-sm;
+  }
+
+  .dark .elevated-card {
+    @apply bg-card shadow-neon-sm rounded-xl transition-all duration-300 hover:shadow-neon-md;
+  }
+
+  .dark .apple-button {
+    @apply bg-neon-purple text-white shadow-neon-sm hover:shadow-neon-md;
+  }
+
+  .dark .secondary-button {
+    @apply bg-secondary border border-white/10;
+  }
+
+  .dark .ghost-button {
+    @apply text-white hover:bg-white/10;
+  }
+
   .yuki-button {
-    @apply inline-flex items-center justify-center rounded-md gap-2 text-white px-4 py-2 text-sm font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
-    background-color: hsl(var(--yuki-green));
+    @apply apple-button flex items-center gap-2 !bg-orange-500 text-white hover:!bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
   }
-  
-  .yuki-button:hover {
-    background-color: hsl(var(--yuki-green) / 0.9);
+
+  .dark .yuki-button {
+    @apply hover:!shadow-neon-orange;
   }
-  
-  .badge {
-    @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+
+  .draft-button {
+    @apply px-4 py-2 rounded-full  font-medium transition-colors;
   }
-  
-  .backdrop-blur-apple {
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+
+  .dark .draft-button {
+    @apply hover:bg-gray-200 hover:!shadow-gray-lg;
   }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
+
+  .dark .select-button {
+    @apply bg-neon-purple hover:!bg-neon-purple/70;
   }
-  
-  .bg-gradient-sidebar {
-    background-color: var(--background);
-    background-image: linear-gradient(
-      to bottom,
-      transparent,
-      rgba(var(--background-color-rgb), 0.2) 10%,
-      rgba(var(--background-color-rgb), 0.3) 50%
-    );
+
+  .neon-border {
+    @apply border border-neon-purple;
   }
-  
-  .bg-gradient-credit-note {
-    background-image: linear-gradient(
-      225deg,
-      rgba(255, 150, 150, 0.1) 0%,
-      rgba(255, 100, 100, 0.05) 40%,
-      rgba(255, 70, 70, 0.025) 100%
-    );
+
+  .dark .neon-border {
+    @apply border border-neon-purple shadow-neon-sm;
+  }
+
+  .neon-text {
+    @apply text-neon-purple;
+  }
+
+  .neon-glow {
+    @apply animate-glow;
+  }
+
+  /* Custom scrollbar styles */
+  /* For Webkit browsers (Chrome, Safari) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background/50;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-color: hsl(var(--muted)) transparent;
+    scrollbar-width: thin;
+  }
+
+  /* Dark mode mobile bottom navbar fix */
+  .dark .fixed.bottom-0.left-0.right-0.h-16 {
+    @apply bg-sidebar/90 backdrop-blur-apple border-sidebar-border;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Transition Group Animations */
+.page-enter {
+  opacity: 0;
+  transform: scale(0.98);
 }
-
-@keyframes slideInUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
+.page-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms, transform 300ms;
 }
-
-@keyframes slideOutDown {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(100%);
-  }
+.page-exit {
+  opacity: 1;
+  transform: scale(1);
 }
-
-.data-[state=open]:animate-slide-in-up {
-  animation: slideInUp 0.3s ease-out;
-}
-
-.data-[state=closed]:animate-slide-out-down {
-  animation: slideOutDown 0.3s ease-in;
+.page-exit-active {
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 300ms, transform 300ms;
 }
