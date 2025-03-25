@@ -648,12 +648,25 @@ export function useCreditNoteForm() {
         throw new Error('Client requires email, name, and type fields');
       }
 
+      const clientData = {
+        email: newClient.email,
+        name: newClient.name,
+        type: newClient.type,
+        user_id: user.id,
+        ...(newClient.phone && { phone: newClient.phone }),
+        ...(newClient.street && { street: newClient.street }),
+        ...(newClient.number && { number: newClient.number }),
+        ...(newClient.bus && { bus: newClient.bus }),
+        ...(newClient.postcode && { postcode: newClient.postcode }),
+        ...(newClient.city && { city: newClient.city }),
+        ...(newClient.country && { country: newClient.country }),
+        ...(newClient.vat_number && { vat_number: newClient.vat_number }),
+        ...(newClient.legal_entity_id && { legal_entity_id: newClient.legal_entity_id })
+      };
+
       const { data, error } = await supabase
         .from('clients')
-        .insert({ 
-          ...newClient, 
-          user_id: user.id 
-        })
+        .insert(clientData)
         .select();
         
       if (error) throw error;
