@@ -672,7 +672,7 @@ export function useCreditNoteForm() {
         description: error.message || 'Failed to add client.',
       });
     }
-  }, [user, toast, setClients, setSelectedClientId, setIsAddClientModalOpen]);
+  }, [user, toast]);
   
   const handleDownloadPDF = useCallback(() => {
     if (pdfUrl) {
@@ -681,5 +681,53 @@ export function useCreditNoteForm() {
   }, [pdfUrl]);
   
   const handleSendEmail = useCallback(() => {
-    toast
+    toast({
+      title: "Info",
+      description: "Email functionality will be implemented soon.",
+    });
+  }, [toast]);
 
+  return {
+    isEditMode,
+    isLoading,
+    isSubmitting,
+    isGeneratingPDF,
+    isSendingEmail,
+    isSubmittingToStorecove,
+    isAddClientModalOpen,
+    invoiceNumber,
+    selectedClientId,
+    issueDate,
+    status,
+    notes,
+    items,
+    total,
+    clients,
+    availableItems,
+    vats,
+    pdfUrl,
+    currencySymbol,
+    user,
+    companySettings,
+    
+    setIsAddClientModalOpen,
+    setInvoiceNumber,
+    setSelectedClientId,
+    setIssueDate,
+    setNotes,
+    handleAddClient,
+    handleItemDescriptionChange,
+    handleItemQuantityChange,
+    handleItemUnitPriceChange,
+    handleItemVatChange,
+    handleAddItem,
+    handleRemoveItem,
+    handleDownloadPDF,
+    handleSendEmail,
+    handleSaveAsDraft,
+    handleCreateAndSend,
+    handleSubmit,
+    getVatGroups,
+    fetchAvailableItems
+  };
+}
