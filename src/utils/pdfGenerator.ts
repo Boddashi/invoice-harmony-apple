@@ -192,15 +192,23 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
   try {
     console.log("Rendering PDF content to canvas");
-    // Improved quality settings for html2canvas
+    // Optimized quality settings for html2canvas
     const canvas = await html2canvas(element, {
-      scale: 2, // Increased from 1.25 to 2 for higher resolution
+      scale: 1.5, // Balanced scale for quality vs file size
       useCORS: true,
       logging: false,
       allowTaint: true,
       backgroundColor: "#ffffff",
-      imageTimeout: 0, // No timeout for images
-      foreignObjectRendering: true // Enable this for better text rendering
+      imageTimeout: 0,
+      foreignObjectRendering: true,
+      onclone: (documentClone) => {
+        // Ensure styles are properly applied in the cloned document
+        const invoiceElement = documentClone.querySelector('.invoice-pdf-content');
+        if (invoiceElement) {
+          invoiceElement.style.width = '210mm';
+          invoiceElement.style.backgroundColor = 'white';
+        }
+      }
     });
 
     document.body.removeChild(element);
@@ -213,23 +221,26 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       compress: true
     });
 
-    // Optimize the quality vs size ratio by adjusting jpeg quality
-    const imgData = canvas.toDataURL('image/jpeg', 0.8); // Increased quality from 0.5 to 0.8
+    // Optimize the image quality while keeping size reasonable
     const imgWidth = 210;
     const pageHeight = 297;
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+    // Use PNG for better quality of text and lines, but with compression
+    const imgData = canvas.toDataURL('image/png', 0.92);
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
     // Get PDF size and optimize if needed
     const pdfBase64 = pdf.output('datauristring');
     const pdfSizeInBytes = Math.ceil((pdfBase64.length * 3) / 4);
     console.log(`Generated PDF size: ${Math.round(pdfSizeInBytes / 1024)} KB`);
     
-    // If PDF is too large (>3.5MB), create a more compressed version
-    if (pdfSizeInBytes > 3.5 * 1024 * 1024) {
+    // If PDF is too large (>3MB), create a more compressed version
+    if (pdfSizeInBytes > 3 * 1024 * 1024) {
       console.log("PDF is too large, generating a more compressed version");
-      const compressedImgData = canvas.toDataURL('image/jpeg', 0.6); // Reduce quality
+      // Try JPEG with higher compression for large files
+      const compressedImgData = canvas.toDataURL('image/jpeg', 0.7);
       pdf.deletePage(1);
       pdf.addImage(compressedImgData, 'JPEG', 0, 0, imgWidth, imgHeight);
       const compressedPdfBase64 = pdf.output('datauristring');
@@ -466,4 +477,3 @@ export const generateReportPDF = async (report: { title: string; type: string; d
     throw error;
   }
 };
-
