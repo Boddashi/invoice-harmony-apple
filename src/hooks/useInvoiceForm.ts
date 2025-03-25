@@ -640,6 +640,16 @@ export const useInvoiceForm = () => {
       }
       console.log("PDF public URL:", publicUrlData.publicUrl);
 
+      // Generate PDF base64 data for direct attachment
+      let pdfBase64 = null;
+      try {
+        pdfBase64 = await generatePDF(actualInvoiceId);
+        console.log("Generated PDF base64 data for email attachment");
+      } catch (pdfError) {
+        console.error("Error generating PDF for email:", pdfError);
+        // Continue with just the URL if base64 generation fails
+      }
+
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
@@ -656,6 +666,7 @@ export const useInvoiceForm = () => {
         termsAndConditionsUrl,
         companyName: companySettings?.company_name || "PowerPeppol",
         includeAttachments: true,
+        pdfBase64: pdfBase64,
         yukiEmail,
       };
       console.log("Email parameters:", emailParams);
@@ -1166,3 +1177,4 @@ export const useInvoiceForm = () => {
     fetchAvailableItems
   };
 };
+
