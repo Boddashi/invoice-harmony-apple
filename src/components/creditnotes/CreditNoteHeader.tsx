@@ -8,8 +8,7 @@ interface CreditNoteHeaderProps {
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
-  isSubmittingToStorecove?: boolean;
-  status: "draft" | "pending" | "paid"; // Removed 'overdue' option
+  status: "draft" | "pending" | "paid" | "overdue";
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
@@ -22,7 +21,6 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
   isSubmitting,
   isGeneratingPDF,
   isSendingEmail,
-  isSubmittingToStorecove,
   status,
   handleDownloadPDF,
   handleSaveAsDraft,
@@ -52,8 +50,6 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
                   ? "Generating high-quality PDF..."
                   : isSendingEmail
                   ? "Sending email..."
-                  : isSubmittingToStorecove
-                  ? "Submitting to Storecove..."
                   : "Saving..."}
               </span>
             </div>
