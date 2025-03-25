@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -27,9 +26,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  className?: string;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({ children, className }: MainLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -90,7 +90,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col w-full">
+    <div className={cn("min-h-screen flex flex-col w-full", className)}>
       <Header />
 
       <div className="flex flex-1 w-full">
@@ -166,7 +166,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
 
-      {/* Bottom navigation - hidden when more menu is open */}
       {!moreMenuOpen && (
         <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
           <Link
