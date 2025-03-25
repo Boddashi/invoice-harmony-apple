@@ -120,14 +120,28 @@ serve(async (req) => {
       });
     }
 
+    // Prepare eIdentifiers for routing section if client is a business with VAT number
+    const routingConfig = {
+      emails: client.email ? [client.email] : []
+    };
+
+    // Add eIdentifiers for business clients with VAT number
+    if (client.type === 'business' && client.vat_number) {
+      const countryCode = client.country || 'BE';
+      routingConfig.eIdentifiers = [
+        {
+          scheme: `${countryCode}:VAT`,
+          id: client.vat_number
+        }
+      ];
+    }
+
     // Format data for Storecove API - using the company's legal entity ID as the sender
     // and the client's legal entity ID as the receiver
     const documentSubmission = {
-      legalEntityId: companySettings.legal_entity_id, // Changed to use company's legal entity ID as the sender
-      receiverLegalEntityId: client.legal_entity_id, // Added to specify client as the receiver
-      routing: {
-        emails: client.email ? [client.email] : []
-      },
+      legalEntityId: companySettings.legal_entity_id,
+      receiverLegalEntityId: client.legal_entity_id,
+      routing: routingConfig,
       document: {
         documentType: "invoice",
         invoice: {
@@ -153,6 +167,17 @@ serve(async (req) => {
         }
       }
     };
+
+    // Add publicIdentifiers to accountingCustomerParty for business clients with VAT number
+    if (client.type === 'business' && client.vat_number) {
+      const countryCode = client.country || 'BE';
+      documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
+        {
+          scheme: `${countryCode}:VAT`,
+          id: client.vat_number
+        }
+      ];
+    }
 
     console.log("Sending document submission to Storecove:", JSON.stringify(documentSubmission));
 
