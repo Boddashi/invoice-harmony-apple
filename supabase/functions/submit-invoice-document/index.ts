@@ -100,15 +100,39 @@ serve(async (req) => {
         console.log("Found PEPPOL identifier:", JSON.stringify(peppolIdentifier));
       }
 
+      // Helper function to determine the tax category based on VAT rate
+      const getTaxCategory = (vatRate: string | number): string => {
+        // Convert to number if it's a string
+        const rateValue = typeof vatRate === 'string' ? parseFloat(vatRate) : vatRate;
+        
+        // Handle different categories based on rate
+        if (rateValue === 0) return "zero";
+        if (rateValue > 0) return "standard";
+        
+        // If it's not a number (like "exempt"), use appropriate category
+        if (isNaN(rateValue)) {
+          if (vatRate === "exempt" || vatRate === "Exempt") return "exempt";
+          if (vatRate === "zero" || vatRate === "Zero" || vatRate === "0%") return "zero";
+        }
+        
+        // Default to standard for any other case
+        return "standard";
+      };
+
       // Create invoice lines and tax subtotals
       const invoiceLines = items.map(item => {
-        const vatPercentage = parseFloat(item.vat_rate) || 0;
+        const vatRateStr = item.vat_rate;
+        const vatPercentage = parseFloat(vatRateStr) || 0;
+        const taxCategory = getTaxCategory(vatRateStr);
+        
+        console.log(`Processing line item with VAT rate: ${vatRateStr}, category: ${taxCategory}`);
+        
         return {
           description: item.description,
           amountExcludingVat: parseFloat(item.amount.toFixed(2)),
           tax: {
             percentage: vatPercentage,
-            category: "standard",
+            category: taxCategory,
             country: client.country || "BE" // Default to Belgium if not provided
           }
         };
@@ -119,13 +143,15 @@ serve(async (req) => {
       const vatGroups = new Map();
       
       items.forEach(item => {
-        const vatPercentage = parseFloat(item.vat_rate) || 0;
-        const key = `${vatPercentage}-standard-${client.country || "BE"}`;
+        const vatRateStr = item.vat_rate;
+        const vatPercentage = parseFloat(vatRateStr) || 0;
+        const taxCategory = getTaxCategory(vatRateStr);
+        const key = `${vatPercentage}-${taxCategory}-${client.country || "BE"}`;
         
         if (!vatGroups.has(key)) {
           vatGroups.set(key, {
             percentage: vatPercentage,
-            category: "standard",
+            category: taxCategory,
             country: client.country || "BE",
             taxableAmount: 0,
             taxAmount: 0
@@ -301,7 +327,7 @@ serve(async (req) => {
       const termsAndConditionsUrl = companySettings?.terms_and_conditions_url || null;
       
       // Check if we should include Yuki email
-      const yukiEmail = companySettings?.yuki_email || null;
+      const yukiEmail = companySettings?.yuki_email || undefined;
       
       // Prepare email data
       const emailData = {

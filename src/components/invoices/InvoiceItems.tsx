@@ -63,6 +63,22 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
   handleRemoveItem,
   onItemAdded,
 }) => {
+  // Helper function to get the VAT display text with category hint
+  const getVatDisplayText = (vatTitle: string) => {
+    // Extract numeric part if possible
+    const vatRate = parseFloat(vatTitle);
+    
+    if (vatTitle === "0%" || vatRate === 0) {
+      return `${vatTitle} (Zero rated)`;
+    } else if (vatTitle === "Exempt" || vatTitle === "exempt") {
+      return `${vatTitle}`;
+    } else if (!isNaN(vatRate) && vatRate > 0) {
+      return `${vatTitle} (Standard)`;
+    }
+    
+    return vatTitle;
+  };
+
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Items</h3>
@@ -171,7 +187,7 @@ const InvoiceItems: React.FC<InvoiceItemsProps> = ({
                 <SelectContent>
                   {vats.map((vat) => (
                     <SelectItem key={vat.title} value={vat.title}>
-                      {vat.title}
+                      {getVatDisplayText(vat.title)}
                     </SelectItem>
                   ))}
                 </SelectContent>
