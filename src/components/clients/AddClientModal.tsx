@@ -374,6 +374,8 @@ const AddClientModal = ({
         const result = await createLegalEntity(formData);
         legalEntityId = result.legalEntityId;
         peppolIdentifier = result.peppolIdentifier;
+        
+        console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
       }
 
       if (isEditMode && onUpdateClient && clientToEdit) {
