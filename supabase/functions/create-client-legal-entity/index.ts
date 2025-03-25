@@ -201,7 +201,7 @@ serve(async (req) => {
             data: responseData,
             peppol: {
               success: true,
-              data: peppolData,  // Send the complete PEPPOL data object
+              data: peppolData,  // Return the full PEPPOL data object
             },
           }),
           {

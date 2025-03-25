@@ -323,16 +323,16 @@ const AddClientModal = ({
       
       console.log("Legal entity created:", data);
       
-      // Store the full PEPPOL data object
-      let peppolData = null;
+      // Explicitly store the full PEPPOL data object exactly as received
+      let peppolIdentifier = null;
       if (data?.peppol?.success && data?.peppol?.data) {
         console.log("Storing PEPPOL data:", data.peppol.data);
-        peppolData = data.peppol.data;
+        peppolIdentifier = data.peppol.data;  // Store the complete PEPPOL data object
       }
       
       return { 
         legalEntityId: data?.data?.id || null,
-        peppolIdentifier: peppolData 
+        peppolIdentifier: peppolIdentifier 
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
@@ -380,24 +380,25 @@ const AddClientModal = ({
         console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
       }
 
-      // For both new clients and updates, store the complete PEPPOL identifier data object
+      // For both new clients and updates, use the complete PEPPOL data object
+      const clientData = {
+        ...formData,
+        vat_number: formData.vatNumber,
+        legal_entity_id: legalEntityId || (clientToEdit?.legal_entity_id || null),
+        peppol_identifier: peppolIdentifier || (clientToEdit?.peppol_identifier || null),
+      };
+      
+      console.log("Storing client data with PEPPOL identifier:", clientData);
+
       if (isEditMode && onUpdateClient && clientToEdit) {
         console.log("Updating client with PEPPOL data:", peppolIdentifier || clientToEdit.peppol_identifier);
         onUpdateClient({
           id: clientToEdit.id,
-          ...formData,
-          vat_number: formData.vatNumber,
-          legal_entity_id: legalEntityId || clientToEdit.legal_entity_id,
-          peppol_identifier: peppolIdentifier || clientToEdit.peppol_identifier,
+          ...clientData,
         });
       } else {
         console.log("Adding client with PEPPOL data:", peppolIdentifier);
-        onAddClient({
-          ...formData,
-          vat_number: formData.vatNumber,
-          legal_entity_id: legalEntityId,
-          peppol_identifier: peppolIdentifier,
-        });
+        onAddClient(clientData);
       }
 
       setFormData({
