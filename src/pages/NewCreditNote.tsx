@@ -61,7 +61,7 @@ const NewCreditNote = () => {
 
   if (isLoading && isEditMode) {
     return (
-      <MainLayout className="credit-note-page">
+      <MainLayout>
         <div className="max-w-5xl mx-auto p-4 md:p-8 text-center">
           <p className="text-muted-foreground">Loading credit note data...</p>
         </div>
@@ -70,8 +70,8 @@ const NewCreditNote = () => {
   }
 
   return (
-    <MainLayout className="credit-note-page">
-      <div className="max-w-5xl mx-auto p-2 md:p-8 space-y-6">
+    <MainLayout>
+      <div className="max-w-5xl mx-auto p-2 md:p-0 space-y-6">
         <CreditNoteHeader 
           isEditMode={isEditMode}
           pdfUrl={pdfUrl}
@@ -85,50 +85,48 @@ const NewCreditNote = () => {
           handleSendEmail={pdfUrl ? () => handleSendEmail() : undefined}
         />
         
-        <div className="bg-white/80 backdrop-blur-md rounded-xl shadow-md p-6 md:p-8 space-y-6">
-          <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CreditNoteBasicInfo 
-                invoiceNumber={invoiceNumber}
-                issueDate={issueDate}
-                setInvoiceNumber={setInvoiceNumber}
-                setIssueDate={setIssueDate}
-              />
-              
-              <ClientSelection 
-                clients={clients}
-                selectedClientId={selectedClientId}
-                setSelectedClientId={setSelectedClientId}
-                setIsAddClientModalOpen={setIsAddClientModalOpen}
-              />
-              
-              <CreditNoteFrom userEmail={user?.email} />
-            </div>
-            
-            <CreditNoteItems 
-              items={items}
-              availableItems={availableItems}
-              vats={vats}
-              currencySymbol={currencySymbol}
-              handleItemDescriptionChange={handleItemDescriptionChange}
-              handleItemQuantityChange={handleItemQuantityChange}
-              handleItemUnitPriceChange={handleItemUnitPriceChange}
-              handleItemVatChange={handleItemVatChange}
-              handleAddItem={handleAddItem}
-              handleRemoveItem={handleRemoveItem}
-              onItemAdded={refreshItems}
+        <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CreditNoteBasicInfo 
+              invoiceNumber={invoiceNumber}
+              issueDate={issueDate}
+              setInvoiceNumber={setInvoiceNumber}
+              setIssueDate={setIssueDate}
             />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CreditNoteNotes notes={notes} setNotes={setNotes} />
-              <CreditNoteSummary 
-                vatGroups={getVatGroups()}
-                total={total}
-                currencySymbol={currencySymbol}
-              />
-            </div>
-          </form>
-        </div>
+            <ClientSelection 
+              clients={clients}
+              selectedClientId={selectedClientId}
+              setSelectedClientId={setSelectedClientId}
+              setIsAddClientModalOpen={setIsAddClientModalOpen}
+            />
+            
+            <CreditNoteFrom userEmail={user?.email} />
+          </div>
+          
+          <CreditNoteItems 
+            items={items}
+            availableItems={availableItems}
+            vats={vats}
+            currencySymbol={currencySymbol}
+            handleItemDescriptionChange={handleItemDescriptionChange}
+            handleItemQuantityChange={handleItemQuantityChange}
+            handleItemUnitPriceChange={handleItemUnitPriceChange}
+            handleItemVatChange={handleItemVatChange}
+            handleAddItem={handleAddItem}
+            handleRemoveItem={handleRemoveItem}
+            onItemAdded={refreshItems}
+          />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <CreditNoteNotes notes={notes} setNotes={setNotes} />
+            <CreditNoteSummary 
+              vatGroups={getVatGroups()}
+              total={total}
+              currencySymbol={currencySymbol}
+            />
+          </div>
+        </form>
         
         <AddClientModal 
           isOpen={isAddClientModalOpen} 
