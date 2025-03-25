@@ -34,6 +34,7 @@ const NewInvoice = () => {
     pdfUrl,
     currencySymbol,
     user,
+    companySettings,
     
     setIsAddClientModalOpen,
     setInvoiceNumber,

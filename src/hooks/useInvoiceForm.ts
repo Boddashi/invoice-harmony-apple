@@ -1119,18 +1119,19 @@ export const useInvoiceForm = () => {
       }
 
       if (status === "pending") {
+        // Always submit to Storecove first, regardless of Yuki option
+        const storecoveResult = await submitToStorecove(invoiceId, invoiceData);
+        
         if (sendToYuki) {
+          // If Yuki is selected, also send a copy to Yuki email
           const emailSent = await handleSendEmail(invoiceId, true);
           if (!emailSent) {
             console.warn("Failed to send email to Yuki");
           }
-        } else {
-          const storecoveResult = await submitToStorecove(invoiceId, invoiceData);
-          if (!storecoveResult || !storecoveResult.emailSent) {
-            console.log("Storecove didn't send email or submission failed, sending directly...");
-            // If Storecove submission fails or didn't send email, send via email
-            await handleSendEmail(invoiceId);
-          }
+        } else if (!storecoveResult || !storecoveResult.emailSent) {
+          // If not sending to Yuki and Storecove didn't send email, send directly
+          console.log("Storecove didn't send email or submission failed, sending directly...");
+          await handleSendEmail(invoiceId);
         }
       }
 
@@ -1208,3 +1209,4 @@ export const useInvoiceForm = () => {
     fetchAvailableItems
   };
 };
+
