@@ -37,7 +37,12 @@ serve(async (req) => {
       pdfUrl       // Added to receive PDF URL for email
     } = requestData;
 
-    console.log("Received invoice data:", JSON.stringify(requestData));
+    console.log("Received invoice data with PDF:", {
+      invoiceId: invoice?.id,
+      clientName: client?.name,
+      hasPdfData: !!pdfBase64,
+      pdfUrl: pdfUrl || 'Not provided'
+    });
 
     if (!invoice || !client || !items || items.length === 0 || !companySettings) {
       return new Response(

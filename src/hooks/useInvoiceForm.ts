@@ -549,10 +549,15 @@ export const useInvoiceForm = () => {
   };
 
   const generatePDF = async (invoiceId: string) => {
-    if (!selectedClient || !user) return null;
+    if (!selectedClientData || !user) {
+      console.error("Missing client or user data for PDF generation");
+      return null;
+    }
 
     setIsGeneratingPDF(true);
     try {
+      console.log("Starting PDF generation for invoice ID:", invoiceId);
+      
       const itemsWithTitles = items.map((item) => {
         const foundItem = availableItems.find((i) => i.id === item.description);
         return {
@@ -566,8 +571,8 @@ export const useInvoiceForm = () => {
         invoice_number: invoiceNumber,
         issue_date: issueDate,
         due_date: dueDate,
-        client_name: selectedClient.name,
-        user_email: user.email || "",
+        client_name: selectedClientData.name,
+        user_email: selectedClientData.email || "",
         items: itemsWithTitles,
         subTotal,
         taxAmount,
@@ -576,7 +581,15 @@ export const useInvoiceForm = () => {
         currencySymbol,
       };
 
+      console.log("Calling generateInvoicePDF with data:", {
+        invoiceNumber: invoiceData.invoice_number,
+        clientName: invoiceData.client_name,
+        totalItems: invoiceData.items.length
+      });
+
       const pdfBase64 = await generateInvoicePDF(invoiceData);
+      console.log("PDF generation completed, base64 data received");
+      
       return pdfBase64;
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -592,7 +605,7 @@ export const useInvoiceForm = () => {
   };
 
   const handleSendEmail = async (invoiceId?: string, includeYuki: boolean = false) => {
-    if (!selectedClient) {
+    if (!selectedClientData) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -600,7 +613,7 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-    if (!selectedClient.email) {
+    if (!selectedClientData.email) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -617,6 +630,7 @@ export const useInvoiceForm = () => {
         throw new Error("Invoice ID is missing");
       }
 
+      console.log(`Getting PDF URL for invoice ${actualInvoiceId}`);
       const { data: publicUrlData } = supabase.storage
         .from("invoices")
         .getPublicUrl(`${actualInvoiceId}/invoice.pdf`);
@@ -635,8 +649,8 @@ export const useInvoiceForm = () => {
       const yukiEmail = includeYuki ? companySettings?.yuki_email : undefined;
       
       const emailParams = {
-        clientName: selectedClient.name,
-        clientEmail: selectedClient.email,
+        clientName: selectedClientData.name,
+        clientEmail: selectedClientData.email,
         invoiceNumber,
         pdfUrl: publicUrlData.publicUrl,
         termsAndConditionsUrl,
@@ -674,8 +688,8 @@ export const useInvoiceForm = () => {
       }
 
       const emailSentMessage = includeYuki 
-        ? `Invoice has been sent to ${selectedClient.email} and ${yukiEmail}`
-        : `Invoice has been sent to ${selectedClient.email}`;
+        ? `Invoice has been sent to ${selectedClientData.email} and ${yukiEmail}`
+        : `Invoice has been sent to ${selectedClientData.email}`;
 
       toast({
         title: "Email Sent",
@@ -1011,6 +1025,8 @@ export const useInvoiceForm = () => {
         invoiceId = invoice.id;
         invoiceData = invoice;
 
+        console.log("Created invoice in database:", invoiceId);
+
         const invoiceItems = items.map((item) => ({
           invoice_id: invoice.id,
           item_id: item.description,
@@ -1023,169 +1039,5 @@ export const useInvoiceForm = () => {
         if (invoiceItemsError) throw invoiceItemsError;
       }
 
-      let storecoveSubmitted = false;
-      
-      if (selectedClientData?.legal_entity_id && status === "pending") {
-        try {
-          const result = await submitToStorecove(invoiceId!, invoiceData || { 
-            id: invoiceId,
-            invoice_number: invoiceNumber,
-            issue_date: issueDate,
-            due_date: dueDate,
-            status,
-            total_amount: total
-          });
-          
-          if (result) {
-            storecoveSubmitted = true;
-            toast({
-              title: "Storecove Submission",
-              description: "Invoice was successfully submitted to Storecove"
-            });
-          }
-        } catch (storecoveError: any) {
-          console.error("Storecove submission error:", storecoveError);
-          toast({
-            variant: "destructive",
-            title: "Storecove Error",
-            description: storecoveError.message || "Failed to submit to Storecove, but invoice was saved"
-          });
-        }
-      }
-
-      if (status === "pending" && !storecoveSubmitted) {
-        // Only generate PDF and send email separately if the Storecove integration didn't handle it
-        const pdfBase64 = await generatePDF(invoiceId!);
-        if (pdfBase64) {
-          setPdfUrl(pdfBase64);
-          try {
-            const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
-            if (!pdfBlob) throw new Error("PDF blob is empty");
-
-            const { error: uploadError } = await supabase.storage
-              .from("invoices")
-              .upload(`${invoiceId}/invoice.pdf`, pdfBlob, {
-                upsert: true,
-                cacheControl: "3600",
-              });
-            if (uploadError) {
-              console.error("Error uploading PDF:", uploadError);
-              throw new Error("Failed to upload PDF");
-            }
-
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-
-            await handleSendEmail(invoiceId, sendToYuki);
-          } catch (pdfError: any) {
-            console.error("Error processing PDF:", pdfError);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to process PDF for email"
-            });
-          }
-        }
-      }
-
-      navigate("/invoices");
-      
-      toast({
-        title: "Success",
-        description: `Invoice ${
-          status === "draft" ? "saved as draft" : "created"
-        } successfully.`,
-      });
-    } catch (error: any) {
-      console.error("Error saving invoice:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to save invoice.",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const getVatGroups = (): VatGroup[] => {
-    const vatGroups: Record<
-      string,
-      {
-        subtotal: number;
-        vat: number;
-      }
-    > = {};
-
-    items.forEach((item) => {
-      const vatRate = item.vat_rate || "0%";
-      const vatPercentage = parseFloat(vatRate) || 0;
-      if (!vatGroups[vatRate]) {
-        vatGroups[vatRate] = {
-          subtotal: 0,
-          vat: 0,
-        };
-      }
-      vatGroups[vatRate].subtotal += item.amount;
-      vatGroups[vatRate].vat += (item.amount * vatPercentage) / 100;
-    });
-
-    return Object.entries(vatGroups).map(([rate, values]) => ({
-      rate,
-      subtotal: values.subtotal,
-      vat: values.vat,
-    }));
-  };
-
-  return {
-    isEditMode,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isAddClientModalOpen,
-    invoiceNumber,
-    selectedClientId,
-    selectedClient,
-    issueDate,
-    dueDate,
-    status,
-    notes,
-    items,
-    subTotal,
-    taxRate,
-    taxAmount,
-    total,
-    clients,
-    availableItems,
-    vats,
-    pdfUrl,
-    currencySymbol,
-    user,
-
-    setIsAddClientModalOpen,
-    setInvoiceNumber,
-    setSelectedClientId,
-    setIssueDate,
-    setDueDate,
-    setNotes,
-    handleAddClient,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleDownloadPDF,
-    handleSendEmail,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleCreateAndSendYuki,
-    handleSubmit,
-    getVatGroups,
-    fetchAvailableItems,
-    isSubmittingToStorecove,
-    selectedClientData,
-    submitToStorecove,
-  };
-};
-
+      // Always generate PDF regardless of status
+      console.log
