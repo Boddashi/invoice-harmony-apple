@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -327,7 +328,7 @@ const AddClientModal = ({
       // Return both the legal entity ID and PEPPOL identifier (if available)
       return { 
         legalEntityId: data?.data?.id || null,
-        peppolIdentifier: (data?.peppol?.success && data?.peppol?.identifier) ? data.peppol.identifier : null
+        peppolIdentifier: (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
