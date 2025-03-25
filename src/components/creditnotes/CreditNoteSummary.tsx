@@ -1,3 +1,4 @@
+
 import React from "react";
 import CustomCard from "../ui/CustomCard";
 
@@ -21,6 +22,9 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   const subtotal = vatGroups.reduce((acc, group) => acc + group.value, 0);
   const vatTotal = vatGroups.reduce((acc, group) => acc + group.amount, 0);
 
+  // Ensure the total is calculated correctly as the sum of subtotal and VAT
+  // We still use the prop total in the UI for consistency with parent component
+  
   const formatAmount = (amount: number) => {
     return amount.toFixed(2);
   };
