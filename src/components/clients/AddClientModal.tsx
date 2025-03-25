@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +35,6 @@ interface Client {
   vatNumber?: string | null;
   vat_number?: string | null;
   legal_entity_id?: number | null;
-  peppol_identifier?: any | null;
 }
 
 interface AddClientModalProps {
@@ -318,21 +316,13 @@ const AddClientModal = ({
           title: "Error",
           description: "Failed to create legal entity. Please try again.",
         });
-        return { legalEntityId: null, peppolIdentifier: null };
+        return { legalEntityId: null };
       }
       
       console.log("Legal entity created:", data);
       
-      // Store the complete PEPPOL data object, including scheme and identifier
-      let peppolIdentifier = null;
-      if (data?.peppol?.success && data?.peppol?.data) {
-        console.log("Storing PEPPOL data:", data.peppol.data);
-        peppolIdentifier = data.peppol.data;  // Store the full PEPPOL data object
-      }
-      
       return { 
-        legalEntityId: data?.data?.id || null,
-        peppolIdentifier: peppolIdentifier 
+        legalEntityId: data?.data?.id || null
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
@@ -341,7 +331,7 @@ const AddClientModal = ({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
       });
-      return { legalEntityId: null, peppolIdentifier: null };
+      return { legalEntityId: null };
     } finally {
       setIsCreatingLegalEntity(false);
     }
@@ -370,34 +360,28 @@ const AddClientModal = ({
 
     try {
       let legalEntityId = null;
-      let peppolIdentifier = null;
       
       if (!isEditMode || !clientToEdit?.legal_entity_id) {
         const result = await createLegalEntity(formData);
         legalEntityId = result.legalEntityId;
-        peppolIdentifier = result.peppolIdentifier;
         
-        console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
+        console.log("Received from legal entity creation:", { legalEntityId });
       }
 
-      // Prepare the client data with the complete PEPPOL identifier
       const clientData = {
         ...formData,
         vat_number: formData.vatNumber,
-        legal_entity_id: legalEntityId || (clientToEdit?.legal_entity_id || null),
-        peppol_identifier: peppolIdentifier || (clientToEdit?.peppol_identifier || null),
+        legal_entity_id: legalEntityId || (clientToEdit?.legal_entity_id || null)
       };
       
-      console.log("Storing client data with PEPPOL identifier:", clientData);
+      console.log("Storing client data:", clientData);
 
       if (isEditMode && onUpdateClient && clientToEdit) {
-        console.log("Updating client with PEPPOL data:", peppolIdentifier || clientToEdit.peppol_identifier);
         onUpdateClient({
           id: clientToEdit.id,
           ...clientData,
         });
       } else {
-        console.log("Adding client with PEPPOL data:", peppolIdentifier);
         onAddClient(clientData);
       }
 

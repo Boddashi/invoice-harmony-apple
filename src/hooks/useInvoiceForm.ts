@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,13 +11,12 @@ interface Client {
   id: string;
   name: string;
   email?: string;
-  legal_entity_id?: number | null; // Changed from string to number | null to match the database
+  legal_entity_id?: number | null;
   street?: string;
   number?: string;
   postcode?: string;
   city?: string;
   country?: string;
-  peppol_identifier?: any;
 }
 
 interface InvoiceItem {
@@ -619,7 +617,6 @@ export const useInvoiceForm = () => {
         throw new Error("Invoice ID is missing");
       }
 
-      // Retrieve the public URL for the invoice PDF from Supabase Storage.
       const { data: publicUrlData } = supabase.storage
         .from("invoices")
         .getPublicUrl(`${actualInvoiceId}/invoice.pdf`);
@@ -629,7 +626,6 @@ export const useInvoiceForm = () => {
       }
       console.log("PDF public URL:", publicUrlData.publicUrl);
 
-      // Get terms and conditions URL if available.
       let termsAndConditionsUrl = null;
       if (companySettings?.terms_and_conditions_url) {
         termsAndConditionsUrl = companySettings.terms_and_conditions_url;
@@ -638,7 +634,6 @@ export const useInvoiceForm = () => {
 
       const yukiEmail = includeYuki ? companySettings?.yuki_email : undefined;
       
-      // Prepare email parameters.
       const emailParams = {
         clientName: selectedClient.name,
         clientEmail: selectedClient.email,
@@ -651,7 +646,6 @@ export const useInvoiceForm = () => {
       };
       console.log("Email parameters:", emailParams);
 
-      // Invoke the Supabase edge function to send the email.
       let response;
       try {
         response = await supabase.functions.invoke("send-invoice-email", {
@@ -665,10 +659,8 @@ export const useInvoiceForm = () => {
         );
       }
 
-      // Check response for errors.
       if (response.error) {
         console.error("Supabase function error:", response.error);
-        // Check specifically for worker limit error.
         if (response.error.message.includes("WORKER_LIMIT")) {
           throw new Error(
             "Our servers are currently experiencing high load. Please try again in a few minutes."
@@ -758,7 +750,6 @@ export const useInvoiceForm = () => {
         hasCompanyLegalEntity: companySettings?.legal_entity_id
       });
       
-      // Show more specific toast message based on what's missing
       if (!companySettings?.legal_entity_id) {
         toast({
           variant: "destructive",
@@ -776,7 +767,6 @@ export const useInvoiceForm = () => {
       return null;
     }
     
-    // Check if the client has a legal entity ID
     if (!selectedClientData.legal_entity_id) {
       console.log("Client has no legal entity ID, creating one...");
       
@@ -797,14 +787,12 @@ export const useInvoiceForm = () => {
         
         if (response.data.success) {
           console.log("Created client legal entity:", response.data);
-          // Update client data with new legal entity ID
           const updatedClientData = {
             ...selectedClientData,
             legal_entity_id: response.data.data.id
           };
           setSelectedClientData(updatedClientData);
           
-          // Also update in database
           await supabase
             .from("clients")
             .update({ legal_entity_id: response.data.data.id })
@@ -935,7 +923,6 @@ export const useInvoiceForm = () => {
       let invoiceData = null;
 
       if (isEditMode) {
-        // Update existing invoice.
         const { error: invoiceError } = await supabase
           .from("invoices")
           .update({
@@ -976,7 +963,6 @@ export const useInvoiceForm = () => {
           throw invoiceItemsError;
         }
       } else {
-        // Insert a new invoice.
         const { data: invoice, error: invoiceError } = await supabase
           .from("invoices")
           .insert({
@@ -1010,7 +996,6 @@ export const useInvoiceForm = () => {
         if (invoiceItemsError) throw invoiceItemsError;
       }
 
-      // If client has legal_entity_id, submit to Storecove
       if (selectedClientData?.legal_entity_id && status === "pending") {
         try {
           await submitToStorecove(invoiceId!, invoiceData || { 
@@ -1036,7 +1021,6 @@ export const useInvoiceForm = () => {
         }
       }
 
-      // If invoice is pending, generate and upload the PDF, then send email.
       if (status === "pending") {
         const pdfBase64 = await generatePDF(invoiceId!);
         if (pdfBase64) {
@@ -1056,10 +1040,8 @@ export const useInvoiceForm = () => {
               throw new Error("Failed to upload PDF");
             }
 
-            // Delay briefly to ensure file is available.
             await new Promise((resolve) => setTimeout(resolve, 1500));
 
-            // Send the email with Yuki CC if requested
             await handleSendEmail(invoiceId, sendToYuki);
           } catch (pdfError: any) {
             console.error("Error processing PDF:", pdfError);
