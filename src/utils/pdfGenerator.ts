@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,16 +67,22 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
     hasLogo: !!companySettings.logo_url,
   });
 
+  // Create a visible container to ensure proper rendering
   const element = document.createElement('div');
   element.className = 'invoice-pdf-content';
   element.style.width = '210mm';
   element.style.padding = '20mm';
   element.style.backgroundColor = 'white';
-  element.style.position = 'fixed';
-  element.style.left = '-9999px';
+  element.style.color = '#333';
   element.style.fontFamily = 'Arial, sans-serif';
+  // Instead of using position fixed which might cause issues, use absolute
+  element.style.position = 'absolute';
+  element.style.left = '-9999px';
+  element.style.top = '0';
+  element.style.zIndex = '-1000';
   document.body.appendChild(element);
 
+  // The rest of the HTML content remains the same
   element.innerHTML = `
     <div style="font-family: Arial, sans-serif; color: #333;">
       <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
@@ -193,26 +198,46 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
 
   try {
     console.log("Rendering PDF content to canvas");
-    // Optimized quality settings for html2canvas
+    
+    // Give the browser a moment to fully render the content before capturing
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Improved html2canvas settings for better visibility
     const canvas = await html2canvas(element, {
-      scale: 1.5, // Balanced scale for quality vs file size
+      scale: 2, // Higher scale for better quality
       useCORS: true,
-      logging: false,
+      logging: true, // Enable logging for troubleshooting
       allowTaint: true,
       backgroundColor: "#ffffff",
       imageTimeout: 0,
-      foreignObjectRendering: true,
       onclone: (documentClone) => {
-        // Ensure styles are properly applied in the cloned document
+        console.log("Canvas clone created, applying styles");
         const invoiceElement = documentClone.querySelector('.invoice-pdf-content') as HTMLElement;
         if (invoiceElement) {
+          // Make sure the element is visible in the cloned document
           invoiceElement.style.width = '210mm';
+          invoiceElement.style.position = 'static'; // Not hidden in the clone
+          invoiceElement.style.left = '0';
           invoiceElement.style.backgroundColor = 'white';
+          invoiceElement.style.color = '#333';
+          invoiceElement.style.zIndex = '1';
+          console.log("Styles applied to clone:", invoiceElement.style.cssText);
+        } else {
+          console.error("Could not find invoice element in cloned document");
         }
       }
     });
 
+    // Clean up - remove the element from the DOM
     document.body.removeChild(element);
+
+    console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
+    
+    // If canvas is empty or very small, log an error
+    if (canvas.width < 10 || canvas.height < 10) {
+      console.error("Canvas is too small, rendering failed");
+      throw new Error("PDF rendering failed - canvas is too small");
+    }
 
     console.log("Creating PDF document");
     const pdf = new jsPDF({
@@ -223,14 +248,34 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
     });
 
     // Optimize the image quality while keeping size reasonable
-    const imgWidth = 210;
-    const pageHeight = 297;
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
     const imgHeight = canvas.height * imgWidth / canvas.width;
     
-    // Use PNG for better quality of text and lines, but with compression
-    const imgData = canvas.toDataURL('image/png', 0.92);
+    console.log("PDF dimensions:", imgWidth, "x", imgHeight, "mm");
+    
+    // Use PNG for better quality of text and lines with good compression
+    const imgData = canvas.toDataURL('image/png', 0.95);
     
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+    // Check if multiple pages are needed
+    let heightLeft = imgHeight;
+    let position = 0;
+    
+    // If content exceeds a single page, add additional pages
+    if (imgHeight > pageHeight) {
+      console.log("Content exceeds page height, adding multiple pages");
+      heightLeft -= pageHeight;
+      position = -pageHeight;
+      
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+    }
 
     // Get PDF size and optimize if needed
     const pdfBase64 = pdf.output('datauristring');
@@ -242,9 +287,28 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
       console.log("PDF is too large, generating a more compressed version");
       // Try JPEG with higher compression for large files
       const compressedImgData = canvas.toDataURL('image/jpeg', 0.7);
-      pdf.deletePage(1);
-      pdf.addImage(compressedImgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-      const compressedPdfBase64 = pdf.output('datauristring');
+      const compressedPdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+      compressedPdf.addImage(compressedImgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      
+      // Handle multiple pages in compressed version too
+      if (imgHeight > pageHeight) {
+        heightLeft = imgHeight - pageHeight;
+        position = -pageHeight;
+        
+        while (heightLeft > 0) {
+          position -= pageHeight;
+          compressedPdf.addPage();
+          compressedPdf.addImage(compressedImgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+      }
+      
+      const compressedPdfBase64 = compressedPdf.output('datauristring');
       console.log(`Compressed PDF size: ${Math.round(compressedPdfBase64.length * 3 / 4 / 1024)} KB`);
       return compressedPdfBase64;
     }
