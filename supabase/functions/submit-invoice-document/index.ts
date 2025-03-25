@@ -214,6 +214,11 @@ serve(async (req) => {
       }
     };
 
+    // Add note to invoice if it exists
+    if (invoice.notes && invoice.notes.trim()) {
+      documentSubmission.document.invoice.note = invoice.notes.trim();
+    }
+
     // Add publicIdentifiers to accountingCustomerParty using the same identifiers retrieved from Storecove
     if (peppolIdentifier && peppolIdentifier.scheme && peppolIdentifier.identifier) {
       documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
