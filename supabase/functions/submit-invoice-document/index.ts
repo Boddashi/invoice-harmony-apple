@@ -120,7 +120,7 @@ serve(async (req) => {
       };
     });
 
-    // Create tax subtotals grouped by percentage
+    // Create tax subtotals grouped by percentage with precise calculations
     const taxSubtotals = [];
     const vatGroups = new Map();
     
@@ -139,13 +139,24 @@ serve(async (req) => {
       }
       
       const group = vatGroups.get(key);
-      group.taxableAmount += item.amount;
-      group.taxAmount += (item.amount * vatPercentage) / 100;
+      group.taxableAmount += parseFloat(item.amount.toFixed(6));
+      
+      // Calculate tax amount with precision
+      const itemTaxAmount = (item.amount * vatPercentage) / 100;
+      group.taxAmount += parseFloat(itemTaxAmount.toFixed(6));
     });
     
     vatGroups.forEach(group => {
+      // Format numbers to avoid floating point issues
+      group.taxableAmount = parseFloat(group.taxableAmount.toFixed(2));
+      group.taxAmount = parseFloat(group.taxAmount.toFixed(2));
       taxSubtotals.push(group);
     });
+
+    // Calculate precise total amount from tax subtotals
+    const totalTaxableAmount = taxSubtotals.reduce((sum, tax) => sum + tax.taxableAmount, 0);
+    const totalTaxAmount = taxSubtotals.reduce((sum, tax) => sum + tax.taxAmount, 0);
+    const preciseAmountIncludingVat = parseFloat((totalTaxableAmount + totalTaxAmount).toFixed(2));
 
     // Prepare payment means array
     const paymentMeansArray = [];
@@ -209,7 +220,7 @@ serve(async (req) => {
           invoiceLines: invoiceLines,
           taxSubtotals: taxSubtotals,
           paymentMeansArray: paymentMeansArray.length > 0 ? paymentMeansArray : undefined,
-          amountIncludingVat: invoice.total_amount
+          amountIncludingVat: preciseAmountIncludingVat // Use the accurately calculated total
         }
       }
     };
