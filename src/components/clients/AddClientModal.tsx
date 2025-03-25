@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -322,7 +323,12 @@ const AddClientModal = ({
       
       console.log("Legal entity created:", data);
       
-      const peppolData = (data?.peppol?.success && data?.peppol?.data) ? data.peppol.data : null;
+      // Store the full PEPPOL data object
+      let peppolData = null;
+      if (data?.peppol?.success && data?.peppol?.data) {
+        console.log("Storing PEPPOL data:", data.peppol.data);
+        peppolData = data.peppol.data;
+      }
       
       return { 
         legalEntityId: data?.data?.id || null,
@@ -374,7 +380,9 @@ const AddClientModal = ({
         console.log("Received from legal entity creation:", { legalEntityId, peppolIdentifier });
       }
 
+      // For both new clients and updates, store the complete PEPPOL identifier data object
       if (isEditMode && onUpdateClient && clientToEdit) {
+        console.log("Updating client with PEPPOL data:", peppolIdentifier || clientToEdit.peppol_identifier);
         onUpdateClient({
           id: clientToEdit.id,
           ...formData,
@@ -383,6 +391,7 @@ const AddClientModal = ({
           peppol_identifier: peppolIdentifier || clientToEdit.peppol_identifier,
         });
       } else {
+        console.log("Adding client with PEPPOL data:", peppolIdentifier);
         onAddClient({
           ...formData,
           vat_number: formData.vatNumber,
