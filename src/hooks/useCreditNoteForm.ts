@@ -111,7 +111,6 @@ export function useCreditNoteForm() {
   
   const total = items.reduce((sum, item) => sum + item.amount, 0);
 
-  // Fetch clients
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -137,7 +136,6 @@ export function useCreditNoteForm() {
     fetchClients();
   }, [user, toast]);
   
-  // Fetch vats
   useEffect(() => {
     const fetchVats = async () => {
       try {
@@ -160,7 +158,6 @@ export function useCreditNoteForm() {
     fetchVats();
   }, [toast]);
   
-  // Fetch company settings
   useEffect(() => {
     const fetchCompanySettings = async () => {
       if (!user) return;
@@ -187,7 +184,6 @@ export function useCreditNoteForm() {
     fetchCompanySettings();
   }, [user, toast]);
 
-  // Fetch existing credit note if in edit mode
   useEffect(() => {
     const fetchCreditNote = async () => {
       if (!user || !id) {
@@ -198,7 +194,6 @@ export function useCreditNoteForm() {
       try {
         setIsLoading(true);
         
-        // Fetch credit note
         const { data: creditNoteData, error: creditNoteError } = await supabase
           .from('credit_notes')
           .select('*')
@@ -208,7 +203,6 @@ export function useCreditNoteForm() {
           
         if (creditNoteError) throw creditNoteError;
         
-        // Fetch credit note items
         const { data: creditNoteItemsData, error: itemsError } = await supabase
           .from('credit_note_items')
           .select(`
@@ -219,7 +213,6 @@ export function useCreditNoteForm() {
           
         if (itemsError) throw itemsError;
         
-        // Update state with fetched data
         if (creditNoteData) {
           setCreditNoteId(creditNoteData.id);
           setInvoiceNumber(creditNoteData.invoice_number);
@@ -258,10 +251,8 @@ export function useCreditNoteForm() {
     fetchCreditNote();
   }, [user, id, toast]);
   
-  // Initialize invoice number if needed
   useEffect(() => {
     if (!isEditMode && companySettings && !invoiceNumber) {
-      // Generate a credit note number based on date format YYYYMMDD
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -273,7 +264,6 @@ export function useCreditNoteForm() {
     }
   }, [isEditMode, companySettings, invoiceNumber]);
 
-  // Fetch available items
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
     
@@ -299,7 +289,6 @@ export function useCreditNoteForm() {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
   
-  // Update item amount when quantity or unit price changes
   useEffect(() => {
     const updatedItems = items.map(item => {
       const amount = Number(item.quantity) * Number(item.unit_price);
@@ -312,12 +301,10 @@ export function useCreditNoteForm() {
     setItems(updatedItems);
   }, [items.map(item => `${item.quantity}-${item.unit_price}`)]);
   
-  // Handle item changes
   const handleItemDescriptionChange = useCallback((id: string, value: string) => {
     setItems(prevItems => {
       return prevItems.map(item => {
         if (item.id === id) {
-          // Find selected item
           const selectedItem = availableItems.find(i => i.id === value);
           
           if (selectedItem) {
@@ -402,7 +389,6 @@ export function useCreditNoteForm() {
   
   const handleRemoveItem = useCallback((id: string) => {
     setItems(prevItems => {
-      // Ensure at least one item remains
       if (prevItems.length === 1) {
         return prevItems;
       }
@@ -410,7 +396,6 @@ export function useCreditNoteForm() {
     });
   }, []);
   
-  // Helper function to calculate VAT groups
   const getVatGroups = useCallback((): VatGroup[] => {
     const groups = new Map<string, VatGroup>();
     
@@ -418,10 +403,8 @@ export function useCreditNoteForm() {
       const vatRate = item.vat_rate;
       const amount = item.amount;
       
-      // Skip if amount is 0
       if (amount === 0) return;
       
-      // Extract numeric VAT percentage if possible
       let vatPercentage = 0;
       if (vatRate !== 'Exempt' && vatRate !== 'exempt') {
         vatPercentage = parseFloat(vatRate) || 0;
@@ -447,7 +430,6 @@ export function useCreditNoteForm() {
     return Array.from(groups.values());
   }, [items]);
   
-  // Handle save as draft
   const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -463,13 +445,11 @@ export function useCreditNoteForm() {
     try {
       setIsSubmitting(true);
       
-      // Calculate totals
       const vatGroups = getVatGroups();
       const subtotal = vatGroups.reduce((sum, group) => sum + group.value, 0);
       const vatTotal = vatGroups.reduce((sum, group) => sum + group.amount, 0);
       const total = subtotal + vatTotal;
       
-      // Prepare credit note data
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
@@ -485,7 +465,6 @@ export function useCreditNoteForm() {
       let savedCreditNoteId = creditNoteId;
       
       if (isEditMode && id) {
-        // Update existing credit note
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update(creditNoteData)
@@ -495,7 +474,6 @@ export function useCreditNoteForm() {
         
         savedCreditNoteId = id;
         
-        // Delete existing items
         const { error: deleteItemsError } = await supabase
           .from('credit_note_items')
           .delete()
@@ -503,7 +481,6 @@ export function useCreditNoteForm() {
           
         if (deleteItemsError) throw deleteItemsError;
       } else {
-        // Insert new credit note
         const { data, error } = await supabase
           .from('credit_notes')
           .insert(creditNoteData)
@@ -517,7 +494,6 @@ export function useCreditNoteForm() {
         }
       }
       
-      // Insert credit note items
       const itemsToInsert = items
         .filter(item => item.description)
         .map(item => ({
@@ -540,7 +516,6 @@ export function useCreditNoteForm() {
         description: `Credit note saved as draft.`,
       });
       
-      // Redirect to credit notes page
       navigate('/creditnotes');
     } catch (error: any) {
       console.error('Error saving credit note:', error);
@@ -557,7 +532,6 @@ export function useCreditNoteForm() {
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
   
-  // Handle create and send
   const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -573,13 +547,11 @@ export function useCreditNoteForm() {
     try {
       setIsSubmitting(true);
       
-      // Calculate totals
       const vatGroups = getVatGroups();
       const subtotal = vatGroups.reduce((sum, group) => sum + group.value, 0);
       const vatTotal = vatGroups.reduce((sum, group) => sum + group.amount, 0);
       const total = subtotal + vatTotal;
       
-      // Prepare credit note data
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
@@ -595,7 +567,6 @@ export function useCreditNoteForm() {
       let savedCreditNoteId = creditNoteId;
       
       if (isEditMode && id) {
-        // Update existing credit note
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update(creditNoteData)
@@ -605,7 +576,6 @@ export function useCreditNoteForm() {
         
         savedCreditNoteId = id;
         
-        // Delete existing items
         const { error: deleteItemsError } = await supabase
           .from('credit_note_items')
           .delete()
@@ -613,7 +583,6 @@ export function useCreditNoteForm() {
           
         if (deleteItemsError) throw deleteItemsError;
       } else {
-        // Insert new credit note
         const { data, error } = await supabase
           .from('credit_notes')
           .insert(creditNoteData)
@@ -627,7 +596,6 @@ export function useCreditNoteForm() {
         }
       }
       
-      // Insert credit note items
       const itemsToInsert = items
         .filter(item => item.description)
         .map(item => ({
@@ -650,7 +618,6 @@ export function useCreditNoteForm() {
         description: `Credit note created and sent.`,
       });
       
-      // Redirect to credit notes page
       navigate('/creditnotes');
     } catch (error: any) {
       console.error('Error creating and sending credit note:', error);
@@ -667,18 +634,15 @@ export function useCreditNoteForm() {
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
   
-  // Handle form submission
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     handleCreateAndSend(e as unknown as React.MouseEvent);
   }, [handleCreateAndSend]);
   
-  // Handle add client
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
     
     try {
-      // Make sure newClient contains all required fields
       if (!newClient.email || !newClient.name || !newClient.type) {
         throw new Error('Client requires email, name, and type fields');
       }
@@ -708,65 +672,14 @@ export function useCreditNoteForm() {
         description: error.message || 'Failed to add client.',
       });
     }
-  }, [user, toast]);
+  }, [user, toast, setClients, setSelectedClientId, setIsAddClientModalOpen]);
   
-  // Handle download PDF
   const handleDownloadPDF = useCallback(() => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
     }
   }, [pdfUrl]);
   
-  // Handle send email
   const handleSendEmail = useCallback(() => {
-    // For now, just log that email would be sent
-    toast({
-      title: 'Info',
-      description: 'Email functionality not implemented for credit notes yet.',
-    });
-  }, [toast]);
-  
-  return {
-    isEditMode,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isSubmittingToStorecove,
-    isAddClientModalOpen,
-    invoiceNumber,
-    selectedClientId,
-    issueDate,
-    status,
-    notes,
-    items,
-    total,
-    clients,
-    availableItems,
-    vats,
-    pdfUrl,
-    currencySymbol,
-    user,
-    companySettings,
-    
-    setIsAddClientModalOpen,
-    setInvoiceNumber,
-    setSelectedClientId,
-    setIssueDate,
-    setNotes,
-    handleAddClient,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleDownloadPDF,
-    handleSendEmail,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleSubmit,
-    getVatGroups,
-    fetchAvailableItems
-  };
-}
+    toast
+
