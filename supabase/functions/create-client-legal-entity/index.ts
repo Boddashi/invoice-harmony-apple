@@ -202,7 +202,6 @@ serve(async (req) => {
             peppol: {
               success: true,
               data: peppolData,
-              identifier: JSON.stringify(peppolData),
             },
           }),
           {
