@@ -985,7 +985,8 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-    if (items.some((item) => !item.description || item.amount === 0)) {
+    
+    if (status !== "draft" && items.some((item) => !item.description || item.amount === 0)) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -993,7 +994,8 @@ export const useInvoiceForm = () => {
       });
       return;
     }
-    if (!dueDate) {
+    
+    if (status !== "draft" && !dueDate) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -1035,17 +1037,24 @@ export const useInvoiceForm = () => {
           throw deleteError;
         }
 
-        const invoiceItems = items.map((item) => ({
-          invoice_id: id,
-          item_id: item.description,
-          quantity: item.quantity,
-          total_amount: item.amount,
-        }));
-        const { error: invoiceItemsError } = await supabase
-          .from("invoice_items")
-          .insert(invoiceItems);
-        if (invoiceItemsError) {
-          throw invoiceItemsError;
+        if (items.some(item => item.description)) {
+          const invoiceItems = items
+            .filter(item => item.description)
+            .map((item) => ({
+              invoice_id: id,
+              item_id: item.description,
+              quantity: item.quantity,
+              total_amount: item.amount,
+            }));
+            
+          if (invoiceItems.length > 0) {
+            const { error: invoiceItemsError } = await supabase
+              .from("invoice_items")
+              .insert(invoiceItems);
+            if (invoiceItemsError) {
+              throw invoiceItemsError;
+            }
+          }
         }
       } else {
         const { data: invoice, error: invoiceError } = await supabase
@@ -1071,65 +1080,68 @@ export const useInvoiceForm = () => {
 
         console.log("Created invoice in database:", invoiceId);
 
-        const invoiceItems = items.map((item) => ({
-          invoice_id: invoice.id,
-          item_id: item.description,
-          quantity: item.quantity,
-          total_amount: item.amount,
-        }));
-        const { error: invoiceItemsError } = await supabase
-          .from("invoice_items")
-          .insert(invoiceItems);
-        if (invoiceItemsError) throw invoiceItemsError;
+        if (items.some(item => item.description)) {
+          const invoiceItems = items
+            .filter(item => item.description)
+            .map((item) => ({
+              invoice_id: invoice.id,
+              item_id: item.description,
+              quantity: item.quantity,
+              total_amount: item.amount,
+            }));
+            
+          if (invoiceItems.length > 0) {
+            const { error: invoiceItemsError } = await supabase
+              .from("invoice_items")
+              .insert(invoiceItems);
+            if (invoiceItemsError) throw invoiceItemsError;
+          }
+        }
       }
 
-      // Always generate PDF regardless of status
-      console.log("Generating PDF for invoice ID:", invoiceId);
-      const pdfBase64 = await generatePDF(invoiceId);
-      
-      if (pdfBase64) {
-        try {
-          // Upload the PDF to Supabase storage
-          const { error: uploadError } = await supabase.storage
-            .from("invoices")
-            .upload(`${invoiceId}/invoice.pdf`, 
-              // Convert base64 to a blob
-              new Blob([Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0))], 
-              { type: 'application/pdf' }), 
-              { upsert: true }
-            );
-            
-          if (uploadError) {
-            console.error("Error uploading PDF to storage:", uploadError);
-          } else {
-            console.log("PDF successfully uploaded to storage");
+      if (status !== "draft") {
+        console.log("Generating PDF for invoice ID:", invoiceId);
+        const pdfBase64 = await generatePDF(invoiceId);
+        
+        if (pdfBase64) {
+          try {
+            const { error: uploadError } = await supabase.storage
+              .from("invoices")
+              .upload(`${invoiceId}/invoice.pdf`, 
+                new Blob([Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0))], 
+                { type: 'application/pdf' }), 
+                { upsert: true }
+              );
+              
+            if (uploadError) {
+              console.error("Error uploading PDF to storage:", uploadError);
+            } else {
+              console.log("PDF successfully uploaded to storage");
+            }
+          } catch (storageError) {
+            console.error("Exception uploading PDF:", storageError);
           }
-        } catch (storageError) {
-          console.error("Exception uploading PDF:", storageError);
-        }
-        
-        const { data: urlData } = supabase.storage
-          .from('invoices')
-          .getPublicUrl(`${invoiceId}/invoice.pdf`);
-        
-        if (urlData?.publicUrl) {
-          setPdfUrl(urlData.publicUrl);
-          console.log("PDF URL set:", urlData.publicUrl);
+          
+          const { data: urlData } = supabase.storage
+            .from('invoices')
+            .getPublicUrl(`${invoiceId}/invoice.pdf`);
+          
+          if (urlData?.publicUrl) {
+            setPdfUrl(urlData.publicUrl);
+            console.log("PDF URL set:", urlData.publicUrl);
+          }
         }
       }
 
       if (status === "pending") {
-        // Always submit to Storecove first, regardless of Yuki option
         const storecoveResult = await submitToStorecove(invoiceId, invoiceData);
         
         if (sendToYuki) {
-          // If Yuki is selected, also send a copy to Yuki email
           const emailSent = await handleSendEmail(invoiceId, true);
           if (!emailSent) {
             console.warn("Failed to send email to Yuki");
           }
         } else if (!storecoveResult || !storecoveResult.emailSent) {
-          // If not sending to Yuki and Storecove didn't send email, send directly
           console.log("Storecove didn't send email or submission failed, sending directly...");
           await handleSendEmail(invoiceId);
         }
@@ -1143,7 +1155,6 @@ export const useInvoiceForm = () => {
             : "Invoice has been created and sent",
       });
 
-      // Redirect to invoices list
       navigate("/invoices");
     } catch (error: any) {
       console.error("Error saving invoice:", error);
@@ -1209,4 +1220,3 @@ export const useInvoiceForm = () => {
     fetchAvailableItems
   };
 };
-
