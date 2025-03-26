@@ -393,14 +393,17 @@ export type Database = {
       vats: {
         Row: {
           amount: number | null
+          category: string | null
           title: string
         }
         Insert: {
           amount?: number | null
+          category?: string | null
           title: string
         }
         Update: {
           amount?: number | null
+          category?: string | null
           title?: string
         }
         Relationships: []

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -100,20 +99,28 @@ serve(async (req) => {
         console.log("Found PEPPOL identifier:", JSON.stringify(peppolIdentifier));
       }
 
-      // Helper function to determine the tax category based on VAT rate
-      const getTaxCategory = (vatRate: string | number): string => {
-        // Convert to number if it's a string
+      // Helper function to map VAT rates to Storecove tax categories
+      const mapTaxCategory = (vatRate: string | number, category?: string): string => {
+        // If a category is provided from the item, use it directly
+        if (category) {
+          // Make sure we map to valid Storecove categories
+          switch (category.toLowerCase()) {
+            case "zero":
+              return "zero_rated";
+            case "exempt":
+              return "exempt";
+            case "standard":
+              return "standard";
+            default:
+              return "standard"; // Default fallback
+          }
+        }
+        
+        // Otherwise, determine based on rate
         const rateValue = typeof vatRate === 'string' ? parseFloat(vatRate) : vatRate;
         
-        // Handle different categories based on rate
-        if (rateValue === 0) return "zero";
-        if (rateValue > 0) return "standard";
-        
-        // If it's not a number (like "exempt"), use appropriate category
-        if (isNaN(rateValue)) {
-          if (vatRate === "exempt" || vatRate === "Exempt") return "exempt";
-          if (vatRate === "zero" || vatRate === "Zero" || vatRate === "0%") return "zero";
-        }
+        if (rateValue === 0) return "zero_rated";
+        if (isNaN(rateValue) || vatRate === "exempt" || vatRate === "Exempt") return "exempt";
         
         // Default to standard for any other case
         return "standard";
@@ -123,7 +130,7 @@ serve(async (req) => {
       const invoiceLines = items.map(item => {
         const vatRateStr = item.vat_rate;
         const vatPercentage = parseFloat(vatRateStr) || 0;
-        const taxCategory = getTaxCategory(vatRateStr);
+        const taxCategory = mapTaxCategory(vatRateStr, item.category);
         
         console.log(`Processing line item with VAT rate: ${vatRateStr}, category: ${taxCategory}`);
         
@@ -148,7 +155,7 @@ serve(async (req) => {
       items.forEach(item => {
         const vatRateStr = item.vat_rate;
         const vatPercentage = parseFloat(vatRateStr) || 0;
-        const taxCategory = getTaxCategory(vatRateStr);
+        const taxCategory = mapTaxCategory(vatRateStr, item.category);
         const key = `${vatPercentage}-${taxCategory}-${client.country || "BE"}`;
         
         if (!vatGroups.has(key)) {
@@ -407,3 +414,4 @@ serve(async (req) => {
     );
   }
 });
+
