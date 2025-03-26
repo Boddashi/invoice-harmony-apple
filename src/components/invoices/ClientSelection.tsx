@@ -1,4 +1,5 @@
-import React from "react";
+
+import React, { useEffect } from "react";
 import CustomCard from "../ui/CustomCard";
 import {
   Select,
@@ -30,6 +31,14 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
   setSelectedClientId,
   setIsAddClientModalOpen,
 }) => {
+  // Set first client automatically if there are clients and no selection yet
+  useEffect(() => {
+    if (clients.length > 0 && !selectedClientId && setSelectedClientId) {
+      console.log("Auto-selecting first client:", clients[0].id);
+      setSelectedClientId(clients[0].id);
+    }
+  }, [clients, selectedClientId, setSelectedClientId]);
+
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Client</h3>
@@ -44,6 +53,7 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
         <Select
           value={selectedClientId}
           onValueChange={(value) => {
+            console.log("Client selected:", value);
             setSelectedClientId(value);
           }}
         >
