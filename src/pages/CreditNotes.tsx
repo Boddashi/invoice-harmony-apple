@@ -123,6 +123,14 @@ const CreditNotes = () => {
     });
   };
 
+  const handleCreditNoteClick = (creditNoteId: string, status: CreditNoteStatus) => {
+    if (status === "draft") {
+      navigate(`/creditnotes/edit/${creditNoteId}`);
+    } else {
+      navigate(`/creditnotes/view/${creditNoteId}`);
+    }
+  };
+
   const handleCreditNoteStatusChange = () => {
     const fetchCreditNotes = async () => {
       if (!user) return;
@@ -439,7 +447,7 @@ const CreditNotes = () => {
                     {paginatedCreditNotes.map((creditNote) => (
                       <TableRow
                         key={creditNote.id}
-                        onClick={() => navigate(`/creditnotes/edit/${creditNote.id}`)}
+                        onClick={() => handleCreditNoteClick(creditNote.id, creditNote.status)}
                         className="cursor-pointer"
                       >
                         <TableCell className="font-medium">
@@ -489,7 +497,7 @@ const CreditNotes = () => {
                   <div
                     key={creditNote.id}
                     className="p-4 hover:bg-secondary/30 transition-colors active:bg-secondary/50"
-                    onClick={() => navigate(`/creditnotes/edit/${creditNote.id}`)}
+                    onClick={() => handleCreditNoteClick(creditNote.id, creditNote.status)}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="mr-2 flex-1">
@@ -668,3 +676,4 @@ const CreditNotes = () => {
 };
 
 export default CreditNotes;
+

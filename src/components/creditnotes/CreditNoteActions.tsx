@@ -29,6 +29,12 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
     navigate(`/creditnotes/edit/${creditNoteId}`);
   };
 
+  const handleView = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/creditnotes/view/${creditNoteId}`);
+  };
+
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -140,10 +146,15 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
 
         <DropdownMenuSeparator />
 
-        {status === "draft" && (
+        {status === "draft" ? (
           <DropdownMenuItem onClick={handleEdit}>
             <Edit className="w-4 h-4 mr-2" />
             Edit
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={handleView}>
+            <FileDown className="w-4 h-4 mr-2" />
+            View
           </DropdownMenuItem>
         )}
 
