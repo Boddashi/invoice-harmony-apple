@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import * as puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +26,7 @@ serve(async (req) => {
     
     console.log(`Starting PDF generation for: ${filename || 'unnamed document'}`);
     
-    // Launch headless browser
+    // Launch headless browser - fixed the import issue
     const browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
