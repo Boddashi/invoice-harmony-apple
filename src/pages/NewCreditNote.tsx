@@ -60,10 +60,10 @@ const NewCreditNote = () => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
 
-  // Add debugging for edge function URLs
+  // For debugging - removed environment variable dependency
   useEffect(() => {
-    // Log the Supabase function URL to verify it's correct
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    // Use hardcoded Supabase URL instead of environment variable
+    const supabaseUrl = 'https://sjwqxbjxjlsdngbldhcq.supabase.co';
     console.log('Supabase function URL:', 
       `${supabaseUrl}/functions/v1/submit-credit-note-document`);
     

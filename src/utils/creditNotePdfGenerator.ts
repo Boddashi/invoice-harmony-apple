@@ -184,21 +184,20 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
 
     console.log("Calling generate-pdf function...");
     
-    // Get Supabase URL from environment
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    // Get Supabase URL directly from the client instead of environment variables
+    const supabaseUrl = 'https://sjwqxbjxjlsdngbldhcq.supabase.co';
     
     if (!supabaseUrl) {
-      console.error("VITE_SUPABASE_URL is not defined in environment variables");
+      console.error("Failed to get Supabase URL");
       throw new Error("Missing Supabase URL configuration");
     }
     
     // Call the Supabase edge function to generate the PDF using fetch directly
-    // instead of supabase.functions.invoke() which might be having issues
     const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`
+        'Authorization': `Bearer ${await supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`
       },
       body: JSON.stringify({ 
         html, 
