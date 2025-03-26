@@ -62,6 +62,7 @@ interface CompanySettings {
   terms_and_conditions_url?: string;
   yuki_email?: string;
   invoice_prefix?: string;
+  credit_note_prefix?: string;
   [key: string]: any;
 }
 
@@ -184,7 +185,7 @@ export function useCreditNoteForm() {
     
     fetchCompanySettings();
   }, [user, toast]);
-
+  
   useEffect(() => {
     const fetchCreditNote = async () => {
       if (!user || !id) {
@@ -264,6 +265,52 @@ export function useCreditNoteForm() {
       setInvoiceNumber(`${prefix}${dateCode}`);
     }
   }, [isEditMode, companySettings, invoiceNumber]);
+
+  useEffect(() => {
+    const fetchLastCreditNoteNumber = async () => {
+      if (!user || isEditMode || invoiceNumber || !companySettings?.credit_note_prefix) return;
+      
+      try {
+        const prefix = companySettings.credit_note_prefix;
+        
+        const { data, error } = await supabase
+          .from('credit_notes')
+          .select('invoice_number')
+          .eq('user_id', user.id)
+          .ilike('invoice_number', `${prefix}%`)
+          .order('created_at', { ascending: false })
+          .limit(1);
+          
+        if (error) throw error;
+        
+        let nextNumber = '00001';
+        
+        if (data && data.length > 0 && data[0].invoice_number) {
+          const lastNumber = data[0].invoice_number.replace(prefix, '');
+          const lastNumberInt = parseInt(lastNumber, 10);
+          
+          if (!isNaN(lastNumberInt)) {
+            nextNumber = (lastNumberInt + 1).toString().padStart(5, '0');
+          }
+        }
+        
+        setInvoiceNumber(`${prefix}${nextNumber}`);
+      } catch (error: any) {
+        console.error('Error fetching last credit note number:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to generate credit note number.',
+        });
+        
+        if (companySettings?.credit_note_prefix) {
+          setInvoiceNumber(`${companySettings.credit_note_prefix}00001`);
+        }
+      }
+    };
+    
+    fetchLastCreditNoteNumber();
+  }, [user, isEditMode, invoiceNumber, companySettings, toast]);
 
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
@@ -752,4 +799,3 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
-
