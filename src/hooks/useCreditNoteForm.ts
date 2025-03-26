@@ -62,6 +62,7 @@ interface CompanySettings {
   terms_and_conditions_url?: string;
   yuki_email?: string;
   invoice_prefix?: string;
+  credit_note_prefix?: string;
   [key: string]: any;
 }
 
@@ -254,16 +255,46 @@ export function useCreditNoteForm() {
   
   useEffect(() => {
     if (!isEditMode && companySettings && !invoiceNumber) {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      
-      const prefix = companySettings.invoice_prefix || 'CN';
-      const dateCode = `${year}${month}${day}`;
-      setInvoiceNumber(`${prefix}${dateCode}`);
+      generateCreditNoteNumber();
     }
   }, [isEditMode, companySettings, invoiceNumber]);
+
+  const generateCreditNoteNumber = async () => {
+    if (!user || !companySettings) return;
+    
+    try {
+      const prefix = companySettings.credit_note_prefix || 'CN';
+      
+      const { data, error } = await supabase
+        .from('credit_notes')
+        .select('invoice_number')
+        .eq('user_id', user.id)
+        .ilike('invoice_number', `${prefix}-%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      
+      let nextNumber = 1;
+      
+      if (data && data.length > 0) {
+        const lastInvoiceNumber = data[0].invoice_number;
+        const lastNumberStr = lastInvoiceNumber.split('-')[1];
+        
+        if (lastNumberStr && !isNaN(parseInt(lastNumberStr))) {
+          nextNumber = parseInt(lastNumberStr) + 1;
+        }
+      }
+      
+      const formattedNumber = String(nextNumber).padStart(5, '0');
+      setInvoiceNumber(`${prefix}-${formattedNumber}`);
+      
+    } catch (error: any) {
+      console.error('Error generating credit note number:', error);
+      const prefix = companySettings.credit_note_prefix || 'CN';
+      setInvoiceNumber(`${prefix}-00001`);
+    }
+  };
 
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
@@ -752,4 +783,3 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
-
