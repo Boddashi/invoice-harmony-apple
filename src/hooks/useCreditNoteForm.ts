@@ -1090,7 +1090,7 @@ export function useCreditNoteForm() {
       setIsSendingEmail(false);
     }
   }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
-
+  
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
     
