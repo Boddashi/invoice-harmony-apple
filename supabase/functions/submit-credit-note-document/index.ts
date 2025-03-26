@@ -119,8 +119,8 @@ serve(async (req) => {
         return "standard";
       };
 
-      // Create credit note lines and tax subtotals
-      const creditNoteLines = items.map(item => {
+      // Create invoice lines and tax subtotals (using same naming conventions as invoices)
+      const invoiceLines = items.map(item => {
         const vatRateStr = item.vat_rate;
         const vatPercentage = parseFloat(vatRateStr) || 0;
         const taxCategory = getTaxCategory(vatRateStr);
@@ -214,16 +214,16 @@ serve(async (req) => {
         ];
       }
 
-      // Format data for Storecove API - using the company's legal entity ID as the sender
-      // and the client's legal entity ID as the receiver
+      // Format data for Storecove API - using the invoice structure with credit note data
+      // and the document type set to "creditnote"
       const documentSubmission = {
         legalEntityId: companySettings.legal_entity_id,
         receiverLegalEntityId: client.legal_entity_id,
         routing: routingConfig,
         document: {
-          documentType: "creditnote",  // Changed from "invoice" to "creditnote"
-          creditNote: {
-            creditNoteNumber: creditNote.credit_note_number,
+          documentType: "creditnote",  // Using creditnote as the document type
+          invoice: {                   // Still using invoice structure as expected by Storecove
+            invoiceNumber: creditNote.credit_note_number,  // Using credit note number for invoiceNumber
             issueDate: creditNote.issue_date,
             documentCurrencyCode: "EUR", // Always use EUR as currency
             taxSystem: "tax_line_percentages",
@@ -238,7 +238,7 @@ serve(async (req) => {
                 }
               }
             },
-            creditNoteLines: creditNoteLines,
+            invoiceLines: invoiceLines,   // Using the invoice lines structure
             taxSubtotals: taxSubtotals,
             paymentMeansArray: paymentMeansArray.length > 0 ? paymentMeansArray : undefined,
             amountIncludingVat: preciseAmountIncludingVat // Use the accurately calculated total
@@ -248,12 +248,12 @@ serve(async (req) => {
 
       // Add note to credit note if it exists
       if (creditNote.notes && creditNote.notes.trim()) {
-        documentSubmission.document.creditNote.note = creditNote.notes.trim();
+        documentSubmission.document.invoice.note = creditNote.notes.trim();
       }
 
       // Add publicIdentifiers to accountingCustomerParty using the same identifiers retrieved from Storecove
       if (peppolIdentifier && peppolIdentifier.scheme && peppolIdentifier.identifier) {
-        documentSubmission.document.creditNote.accountingCustomerParty.publicIdentifiers = [
+        documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
           {
             scheme: peppolIdentifier.scheme,
             id: peppolIdentifier.identifier
@@ -263,7 +263,7 @@ serve(async (req) => {
       // Fallback to using client's VAT number if no PEPPOL identifier found but client is a business with VAT number
       else if (client.type === 'business' && client.vat_number) {
         const countryCode = client.country || 'BE';
-        documentSubmission.document.creditNote.accountingCustomerParty.publicIdentifiers = [
+        documentSubmission.document.invoice.accountingCustomerParty.publicIdentifiers = [
           {
             scheme: `${countryCode}:VAT`,
             id: client.vat_number
