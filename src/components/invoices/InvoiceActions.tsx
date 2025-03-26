@@ -90,6 +90,22 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     
     setIsSending(true);
     try {
+      const { data: invoiceItems, error: itemsError } = await supabase
+        .from('invoice_items')
+        .select('id')
+        .eq('invoice_id', invoiceId);
+      
+      if (itemsError) throw itemsError;
+      
+      if (!invoiceItems || invoiceItems.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Cannot Send Invoice",
+          description: "This invoice has no items. Please add at least one item before sending."
+        });
+        return;
+      }
+      
       const { error: updateError } = await supabase
         .from('invoices')
         .update({ status: 'pending' })
@@ -108,7 +124,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
       if (invoiceError) throw invoiceError;
       
-      const { data: invoiceItems, error: itemsError } = await supabase
+      const { data: detailedInvoiceItems, error: detailedItemsError } = await supabase
         .from('invoice_items')
         .select(`
           *,
@@ -116,15 +132,15 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         `)
         .eq('invoice_id', invoiceId);
       
-      if (itemsError) throw itemsError;
+      if (detailedItemsError) throw detailedItemsError;
       
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!invoice || !invoiceItems || !user) {
+      if (!invoice || !detailedInvoiceItems || !user) {
         throw new Error("Could not retrieve all required data");
       }
       
-      const itemsForPDF = invoiceItems.map(item => {
+      const itemsForPDF = detailedInvoiceItems.map(item => {
         const itemData = item.items;
         return {
           description: itemData.title,
@@ -135,7 +151,7 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         };
       });
       
-      const subTotal = invoiceItems.reduce((sum, item) => sum + Number(item.total_amount), 0);
+      const subTotal = detailedInvoiceItems.reduce((sum, item) => sum + Number(item.total_amount), 0);
       const taxAmount = invoice.tax_amount || 0;
       
       const { data: settings } = await supabase
@@ -146,7 +162,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
       const currencySymbol = '€'; // Always use EUR
       
-      // Generate the PDF and get its base64 string
       const pdfBase64 = await generateInvoicePDF({
         id: invoiceId,
         invoice_number: invoice.invoice_number,
@@ -162,7 +177,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         currencySymbol
       });
       
-      // Upload the PDF to storage
       const pdfBlob = await fetch(pdfBase64).then((res) => res.blob());
       
       await supabase.storage
@@ -176,7 +190,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         .from('invoices')
         .getPublicUrl(`${invoiceId}/invoice.pdf`);
       
-      // If the client has a legal entity ID and the company has settings, send to Storecove
       if (invoice.client?.legal_entity_id && settings?.legal_entity_id) {
         try {
           const response = await supabase.functions.invoke("submit-invoice-document", {
@@ -212,7 +225,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
         } catch (storecoveError: any) {
           console.error('Error submitting to Storecove:', storecoveError);
           
-          // If Storecove fails, still try to send the email directly
           await supabase.functions.invoke('send-invoice-email', {
             body: {
               clientName: invoice.client?.name || 'Client',
@@ -232,7 +244,6 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
           });
         }
       } else {
-        // If not sending to Storecove, send email directly
         await supabase.functions.invoke('send-invoice-email', {
           body: {
             clientName: invoice.client?.name || 'Client',
