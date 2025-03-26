@@ -403,6 +403,39 @@ export function useCreditNoteForm() {
     }
   }, [creditNoteId, toast]);
 
+  const handleSendEmail = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          creditNoteId: creditNoteId,
+        }
+      });
+
+      if (error) {
+        console.error('Email sending error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Email Sending Failed',
+          description: error.message || 'Failed to send email.',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Email sent successfully!',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send email.',
+      });
+    }
+  }, [user, creditNoteId, toast]);
+
   const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
     if (!user || !selectedClientId) {
       toast({
