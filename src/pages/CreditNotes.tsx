@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -50,7 +49,7 @@ import {
 type CreditNoteStatus = "all" | "draft" | "pending" | "paid";
 type CreditNoteDBStatus = "draft" | "pending" | "paid";
 type SortField =
-  | "invoice_number"
+  | "credit_note_number"
   | "client.name"
   | "issue_date"
   | "total_amount";
@@ -59,7 +58,7 @@ type SortOrder = "asc" | "desc";
 interface CreditNote {
   id: string;
   client_id: string;
-  invoice_number: string;
+  credit_note_number: string;
   issue_date: string;
   status: CreditNoteDBStatus;
   amount: number;
@@ -90,7 +89,7 @@ const CreditNotes = () => {
   const filterParam = queryParams.get("filter") as CreditNoteStatus | null;
   const [filter, setFilter] = useState<CreditNoteStatus>(filterParam || "all");
 
-  const [sortBy, setSortBy] = useState<SortField>("invoice_number");
+  const [sortBy, setSortBy] = useState<SortField>("credit_note_number");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
   useEffect(() => {
@@ -185,8 +184,8 @@ const CreditNotes = () => {
       const multiplier = sortOrder === "asc" ? 1 : -1;
 
       switch (sortBy) {
-        case "invoice_number":
-          return multiplier * a.invoice_number.localeCompare(b.invoice_number);
+        case "credit_note_number":
+          return multiplier * a.credit_note_number.localeCompare(b.credit_note_number);
         case "client.name":
           return (
             multiplier *
@@ -229,7 +228,7 @@ const CreditNotes = () => {
 
         const query = searchQuery.toLowerCase();
         return (
-          creditNote.invoice_number.toLowerCase().includes(query) ||
+          creditNote.credit_note_number.toLowerCase().includes(query) ||
           (creditNote.client?.name &&
             creditNote.client.name.toLowerCase().includes(query)) ||
           formatDate(creditNote.issue_date).toLowerCase().includes(query) ||
@@ -410,9 +409,9 @@ const CreditNotes = () => {
                     <TableRow>
                       <TableHead
                         className="cursor-pointer"
-                        onClick={() => handleSort("invoice_number")}
+                        onClick={() => handleSort("credit_note_number")}
                       >
-                        Credit Note # {renderSortIcon("invoice_number")}
+                        Credit Note # {renderSortIcon("credit_note_number")}
                       </TableHead>
                       <TableHead
                         className="cursor-pointer"
@@ -444,7 +443,7 @@ const CreditNotes = () => {
                         className="cursor-pointer"
                       >
                         <TableCell className="font-medium">
-                          {creditNote.invoice_number}
+                          {creditNote.credit_note_number}
                         </TableCell>
                         <TableCell>
                           {creditNote.client
@@ -495,7 +494,7 @@ const CreditNotes = () => {
                     <div className="flex justify-between items-start mb-2">
                       <div className="mr-2 flex-1">
                         <h3 className="font-medium truncate">
-                          {creditNote.invoice_number}
+                          {creditNote.credit_note_number}
                         </h3>
                         <p className="text-sm text-muted-foreground truncate">
                           {creditNote.client?.name || "Unknown Client"}
