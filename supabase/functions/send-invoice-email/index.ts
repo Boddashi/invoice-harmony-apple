@@ -79,9 +79,15 @@ serve(async (req) => {
       if (pdfBase64) {
         console.log("Using provided PDF base64 data");
         try {
+          // Fix: Extract the base64 data correctly, removing the data URL prefix if present
+          const base64Content = pdfBase64.includes("base64,") 
+            ? pdfBase64.split("base64,")[1] 
+            : pdfBase64;
+          
           attachments.push({
             filename: isCreditNote ? `credit-note-${invoiceNumber}.pdf` : `invoice-${invoiceNumber}.pdf`,
-            content: pdfBase64
+            content: base64Content,
+            type: "application/pdf" // Explicitly set the content type to PDF
           });
           console.log("PDF attachment added successfully");
         } catch (err) {
@@ -99,7 +105,8 @@ serve(async (req) => {
             
             attachments.push({
               filename: isCreditNote ? `credit-note-${invoiceNumber}.pdf` : `invoice-${invoiceNumber}.pdf`,
-              content: pdfBase64String
+              content: pdfBase64String,
+              type: "application/pdf" // Explicitly set the content type to PDF
             });
             console.log("PDF downloaded and attached successfully");
           } else {
@@ -127,7 +134,8 @@ serve(async (req) => {
               
               attachments.push({
                 filename: "terms-and-conditions.pdf",
-                content: termsBase64
+                content: termsBase64,
+                type: "application/pdf" // Explicitly set the content type to PDF
               });
               console.log("Terms and Conditions attached successfully");
             } else {
