@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreHorizontal, Edit, Trash, Check, Clock, FileDown, Mail } from "lucide-react";
+import { MoreHorizontal, Edit, Trash, Check, Clock, FileDown, Mail, Download } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,6 +109,40 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
     }
   };
 
+  const handleDownloadPDF = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      // First, check if the credit note has a PDF file already
+      const { data, error } = await supabase
+        .from("credit_notes")
+        .select("id")
+        .eq("id", creditNoteId)
+        .single();
+
+      if (error) throw error;
+
+      // Get the public URL for the PDF
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+      if (urlData && urlData.publicUrl) {
+        window.open(urlData.publicUrl, '_blank');
+      } else {
+        throw new Error("PDF file not found");
+      }
+    } catch (error: any) {
+      console.error("Error downloading PDF:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Could not download the credit note PDF.",
+      });
+    }
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -145,6 +179,14 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
         )}
 
         <DropdownMenuSeparator />
+
+        {/* Only show download option for pending and paid status */}
+        {(status === "pending" || status === "paid") && (
+          <DropdownMenuItem onClick={handleDownloadPDF}>
+            <Download className="w-4 h-4 mr-2" />
+            Download PDF
+          </DropdownMenuItem>
+        )}
 
         {status === "draft" ? (
           <DropdownMenuItem onClick={handleEdit}>
