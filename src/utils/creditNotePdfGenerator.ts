@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings } from '@/models/CompanySettings';
 import { toast } from 'sonner';
@@ -351,9 +350,15 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
     console.log("PDF uploaded successfully:", data);
 
     // Update the credit note record with the PDF reference
+    type CreditNoteUpdateData = {
+      pdf_stored?: boolean;
+    };
+    
+    const updateData: CreditNoteUpdateData = { pdf_stored: true };
+    
     const { error: updateError } = await supabase
       .from('credit_notes')
-      .update({ pdf_stored: true })
+      .update(updateData)
       .eq('id', creditNoteId);
 
     if (updateError) {

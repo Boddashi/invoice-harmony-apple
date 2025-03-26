@@ -5,6 +5,8 @@ import { Loader2, Download } from "lucide-react";
 interface CreditNoteHeaderProps {
   isEditMode: boolean;
   pdfUrl: string | null;
+  pdfGenerated?: boolean; // Added this prop
+  creditNoteId?: string;  // Added this prop
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
@@ -19,6 +21,7 @@ interface CreditNoteHeaderProps {
 const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
   isEditMode,
   pdfUrl,
+  pdfGenerated,
   isSubmitting,
   isGeneratingPDF,
   isSendingEmail,
@@ -60,7 +63,7 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
           </div>
         ) : (
           <>
-            {pdfUrl && (
+            {(pdfUrl || pdfGenerated) && (
               <button 
                 onClick={handleDownloadPDF} 
                 className="secondary-button flex items-center gap-2"
@@ -87,7 +90,7 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
             >
               Create & Send
             </button>
-            {handleSendEmail && pdfUrl && (
+            {handleSendEmail && (pdfUrl || pdfGenerated) && (
               <button 
                 onClick={handleSendEmail}
                 className="apple-button" 
