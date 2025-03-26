@@ -221,9 +221,9 @@ serve(async (req) => {
         receiverLegalEntityId: client.legal_entity_id,
         routing: routingConfig,
         document: {
-          documentType: "creditnote",  // Using creditnote as the document type
-          invoice: {                   // Still using invoice structure as expected by Storecove
-            invoiceNumber: creditNote.credit_note_number,  // Using credit note number for invoiceNumber
+          documentType: "creditnote",
+          invoice: {
+            invoiceNumber: creditNote.credit_note_number,
             issueDate: creditNote.issue_date,
             documentCurrencyCode: "EUR", // Always use EUR as currency
             taxSystem: "tax_line_percentages",
@@ -238,7 +238,7 @@ serve(async (req) => {
                 }
               }
             },
-            invoiceLines: invoiceLines,   // Using the invoice lines structure
+            invoiceLines: invoiceLines,
             taxSubtotals: taxSubtotals,
             paymentMeansArray: paymentMeansArray.length > 0 ? paymentMeansArray : undefined,
             amountIncludingVat: preciseAmountIncludingVat // Use the accurately calculated total
