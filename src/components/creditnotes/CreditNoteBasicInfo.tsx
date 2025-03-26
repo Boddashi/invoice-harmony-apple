@@ -6,10 +6,8 @@ import CustomCard from "../ui/CustomCard";
 interface CreditNoteBasicInfoProps {
   creditNoteNumber: string;
   issueDate: string;
-  reference?: string;
   setCreditNoteNumber?: (value: string) => void;
   setIssueDate?: (value: string) => void;
-  setReference?: (value: string) => void;
   readOnly?: boolean;
   selectedClientId?: string;
   clients?: any[];
@@ -22,10 +20,8 @@ interface CreditNoteBasicInfoProps {
 const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
   creditNoteNumber,
   issueDate,
-  reference = "",
   setCreditNoteNumber = () => {},
   setIssueDate = () => {},
-  setReference = () => {},
   readOnly = false,
   // Additional props that might be passed but not used directly in this component
   selectedClientId,
@@ -80,24 +76,6 @@ const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
             />
           )}
         </div>
-
-        {reference !== undefined && (
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-muted-foreground">Reference (Optional)</label>
-            {readOnly ? (
-              <div className="px-3 py-2 bg-muted/30 rounded-md">{reference || "No reference"}</div>
-            ) : (
-              <Input 
-                type="text" 
-                value={reference} 
-                onChange={e => setReference(e.target.value)} 
-                className="w-full" 
-                placeholder="Invoice number or other reference" 
-                disabled={readOnly}
-              />
-            )}
-          </div>
-        )}
       </div>
     </CustomCard>
   );

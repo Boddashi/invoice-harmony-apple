@@ -13,6 +13,28 @@ import CreditNoteItems from "@/components/creditnotes/CreditNoteItems";
 import CreditNoteNotes from "@/components/creditnotes/CreditNoteNotes";
 import CreditNoteSummary from "@/components/creditnotes/CreditNoteSummary";
 
+interface CreditNoteItem {
+  credit_note_id: string;
+  item_id: string;
+  quantity: number;
+  total_amount: number;
+  item: {
+    id: string;
+    title: string;
+    price: number;
+    vat: string;
+  };
+}
+
+interface FormattedItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  amount: number;
+  vat_rate: string;
+}
+
 interface CreditNoteData {
   id: string;
   credit_note_number: string;
@@ -36,18 +58,7 @@ interface CreditNoteData {
     vat_number?: string;
     phone?: string;
   };
-  items?: Array<{
-    credit_note_id: string;
-    item_id: string;
-    quantity: number;
-    total_amount: number;
-    item: {
-      id: string;
-      title: string;
-      price: number;
-      vat: string;
-    };
-  }>;
+  items?: CreditNoteItem[];
 }
 
 interface VatGroup {
@@ -66,7 +77,7 @@ const ViewCreditNote = () => {
   const [creditNoteData, setCreditNoteData] = useState<CreditNoteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [formattedItems, setFormattedItems] = useState<any[]>([]);
+  const [formattedItems, setFormattedItems] = useState<FormattedItem[]>([]);
 
   useEffect(() => {
     const fetchCreditNoteData = async () => {
@@ -100,19 +111,10 @@ const ViewCreditNote = () => {
 
         if (itemsError) throw itemsError;
 
-        // Format the items for internal use
-        const items = creditNoteItems.map((item) => ({
-          credit_note_id: item.credit_note_id,
-          item_id: item.item_id,
-          quantity: item.quantity,
-          total_amount: item.total_amount,
-          item: item.item
-        }));
-
-        // Format items for the CreditNoteItems component
+        // Format items for internal use
         const formattedItemsForComponent = creditNoteItems.map((item) => ({
           id: item.item_id, // Use item_id as the identifier
-          description: item.item_id,
+          description: item.item.title || item.item_id,
           quantity: item.quantity,
           unit_price: Math.abs(item.total_amount) / item.quantity,
           amount: item.total_amount,
@@ -122,7 +124,7 @@ const ViewCreditNote = () => {
         setFormattedItems(formattedItemsForComponent);
         setCreditNoteData({
           ...creditNoteData,
-          items,
+          items: creditNoteItems,
         });
 
         // Check for PDF URL in storage
@@ -177,7 +179,7 @@ const ViewCreditNote = () => {
 
   // Calculate VAT groups for the summary
   const getVatGroups = (): VatGroup[] => {
-    if (!creditNoteData || !formattedItems || !formattedItems.length) return [];
+    if (!formattedItems || !formattedItems.length) return [];
     
     const groups = new Map<string, VatGroup>();
     
