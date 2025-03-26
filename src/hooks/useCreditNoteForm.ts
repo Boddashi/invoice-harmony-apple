@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -133,7 +132,108 @@ export function useCreditNoteForm() {
   
   const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
 
-  // Define handleSendEmail first, before it's used in other functions
+  const generatePDF = useCallback(async (creditNoteId: string, shouldUpdateStatus = true) => {
+    if (!user) return null;
+
+    try {
+      setIsGeneratingPDF(true);
+
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select(`
+          *,
+          client:clients(*),
+          items:credit_note_items(*, item:items(*))
+        `)
+        .eq('id', creditNoteId)
+        .single();
+
+      if (creditNoteError) throw creditNoteError;
+
+      console.log("Retrieved credit note data for PDF generation:", {
+        id: creditNoteData.id,
+        number: creditNoteData.credit_note_number,
+        clientName: creditNoteData.client.name,
+        itemCount: creditNoteData.items.length
+      });
+
+      const formattedItems = creditNoteData.items.map(item => ({
+        description: item.item ? item.item.title : 'Unknown Item',
+        quantity: item.quantity,
+        unit_price: Math.abs(item.total_amount) / item.quantity,
+        vat_rate: item.item?.vat || '0%',
+        amount: item.total_amount
+      }));
+
+      const clientAddress = [
+        creditNoteData.client.street ? `${creditNoteData.client.street} ${creditNoteData.client.number || ''}${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}` : '',
+        `${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}`
+      ].filter(Boolean).join('\n');
+
+      const pdfData = {
+        id: creditNoteData.id,
+        credit_note_number: creditNoteData.credit_note_number,
+        issue_date: creditNoteData.issue_date,
+        client_name: creditNoteData.client.name,
+        client_address: clientAddress,
+        client_vat: creditNoteData.client.vat_number,
+        user_email: user.email || '',
+        items: formattedItems,
+        subTotal: creditNoteData.amount,
+        taxAmount: creditNoteData.tax_amount || 0,
+        total: creditNoteData.total_amount,
+        notes: creditNoteData.notes,
+        currencySymbol: currencySymbol
+      };
+
+      console.log("Calling generateCreditNotePDF with data:", {
+        id: pdfData.id,
+        number: pdfData.credit_note_number,
+        itemCount: pdfData.items.length
+      });
+
+      const pdfResult = await generateCreditNotePDF(pdfData);
+      
+      if (!pdfResult || !pdfResult.base64) {
+        throw new Error("Failed to generate PDF: No data returned");
+      }
+      
+      if (shouldUpdateStatus) {
+        const { error: updateStatusError } = await supabase
+          .from('credit_notes')
+          .update({ status: 'pending' })
+          .eq('id', creditNoteId);
+          
+        if (updateStatusError) {
+          console.error("Error updating credit note status:", updateStatusError);
+        }
+        
+        setStatus('pending');
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+      
+      if (urlData && urlData.publicUrl) {
+        setPdfUrl(urlData.publicUrl);
+      }
+
+      setPdfGenerated(true);
+      return pdfResult;
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to generate credit note PDF.',
+      });
+      return null;
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  }, [user, currencySymbol, toast]);
+
   const handleSendEmail = useCallback(async () => {
     if (!user || !selectedClientId || !creditNoteId) {
       toast({
@@ -700,108 +800,6 @@ export function useCreditNoteForm() {
     user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
-  
-  const generatePDF = useCallback(async (creditNoteId: string, shouldUpdateStatus = true) => {
-    if (!user) return null;
-
-    try {
-      setIsGeneratingPDF(true);
-
-      const { data: creditNoteData, error: creditNoteError } = await supabase
-        .from('credit_notes')
-        .select(`
-          *,
-          client:clients(*),
-          items:credit_note_items(*, item:items(*))
-        `)
-        .eq('id', creditNoteId)
-        .single();
-
-      if (creditNoteError) throw creditNoteError;
-
-      console.log("Retrieved credit note data for PDF generation:", {
-        id: creditNoteData.id,
-        number: creditNoteData.credit_note_number,
-        clientName: creditNoteData.client.name,
-        itemCount: creditNoteData.items.length
-      });
-
-      const formattedItems = creditNoteData.items.map(item => ({
-        description: item.item ? item.item.title : 'Unknown Item',
-        quantity: item.quantity,
-        unit_price: Math.abs(item.total_amount) / item.quantity,
-        vat_rate: item.item?.vat || '0%',
-        amount: item.total_amount
-      }));
-
-      const clientAddress = [
-        creditNoteData.client.street ? `${creditNoteData.client.street} ${creditNoteData.client.number || ''}${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}` : '',
-        `${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}`
-      ].filter(Boolean).join('\n');
-
-      const pdfData = {
-        id: creditNoteData.id,
-        credit_note_number: creditNoteData.credit_note_number,
-        issue_date: creditNoteData.issue_date,
-        client_name: creditNoteData.client.name,
-        client_address: clientAddress,
-        client_vat: creditNoteData.client.vat_number,
-        user_email: user.email || '',
-        items: formattedItems,
-        subTotal: creditNoteData.amount,
-        taxAmount: creditNoteData.tax_amount || 0,
-        total: creditNoteData.total_amount,
-        notes: creditNoteData.notes,
-        currencySymbol: currencySymbol
-      };
-
-      console.log("Calling generateCreditNotePDF with data:", {
-        id: pdfData.id,
-        number: pdfData.credit_note_number,
-        itemCount: pdfData.items.length
-      });
-
-      const pdfResult = await generateCreditNotePDF(pdfData);
-      
-      if (!pdfResult || !pdfResult.base64) {
-        throw new Error("Failed to generate PDF: No data returned");
-      }
-      
-      if (shouldUpdateStatus) {
-        const { error: updateStatusError } = await supabase
-          .from('credit_notes')
-          .update({ status: 'pending' })
-          .eq('id', creditNoteId);
-          
-        if (updateStatusError) {
-          console.error("Error updating credit note status:", updateStatusError);
-        }
-        
-        setStatus('pending');
-      }
-
-      const { data: urlData } = supabase.storage
-        .from('credit_notes')
-        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-      
-      if (urlData && urlData.publicUrl) {
-        setPdfUrl(urlData.publicUrl);
-      }
-
-      setPdfGenerated(true);
-      return pdfResult;
-    } catch (error: any) {
-      console.error('Error generating PDF:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to generate credit note PDF.',
-      });
-      return null;
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  }, [user, currencySymbol, toast]);
   
   const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
     if (!user || !selectedClientId) return null;
