@@ -1000,3 +1000,5 @@ export function useCreditNoteForm() {
         
         setStatus('pending');
         setPdfGenerated(true);
+        
+        // Submit the
