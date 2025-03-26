@@ -32,7 +32,8 @@ const NewCreditNote = () => {
     clients,
     availableItems,
     vats,
-    pdfUrl,
+    pdfGenerated,
+    creditNoteId,
     currencySymbol,
     user,
     companySettings,
@@ -88,7 +89,8 @@ const NewCreditNote = () => {
       <div className="max-w-5xl mx-auto p-2 md:p-0 space-y-6">
         <CreditNoteHeader 
           isEditMode={isEditMode}
-          pdfUrl={pdfUrl}
+          pdfGenerated={pdfGenerated}
+          creditNoteId={creditNoteId}
           isSubmitting={isSubmitting}
           isGeneratingPDF={isGeneratingPDF}
           isSendingEmail={isSendingEmail}
@@ -97,7 +99,7 @@ const NewCreditNote = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
-          handleSendEmail={pdfUrl ? handleSendEmail : undefined}
+          handleSendEmail={pdfGenerated ? handleSendEmail : undefined}
         />
         
         <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">

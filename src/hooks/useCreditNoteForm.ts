@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -85,7 +84,7 @@ export function useCreditNoteForm() {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSubmittingToStorecove, setIsSubmittingToStorecove] = useState(false);
   
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfGenerated, setPdfGenerated] = useState(false);
   const [creditNoteId, setCreditNoteId] = useState<string>('');
   const [creditNoteNumber, setCreditNoteNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
@@ -632,15 +631,15 @@ export function useCreditNoteForm() {
 
       const pdfResult = await generateCreditNotePDF(pdfData);
       
-      if (!pdfResult || !pdfResult.url) {
-        throw new Error("Failed to generate PDF: No URL returned");
+      if (!pdfResult || !pdfResult.base64) {
+        throw new Error("Failed to generate PDF: No data returned");
       }
 
       if (shouldUpdateStatus) {
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update({
-            pdf_url: pdfResult.url,
+            pdf_stored: true,
             status: 'pending'
           })
           .eq('id', creditNoteId);
@@ -650,7 +649,7 @@ export function useCreditNoteForm() {
         setStatus('pending');
       }
 
-      setPdfUrl(pdfResult.url);
+      setPdfGenerated(true);
       return pdfResult;
     } catch (error: any) {
       console.error('Error generating PDF:', error);
@@ -666,7 +665,7 @@ export function useCreditNoteForm() {
   }, [user, currencySymbol, toast]);
 
   
-  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { url: string; base64: string }) => {
+  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string }) => {
     if (!user || !selectedClientId) return null;
     
     try {
@@ -732,7 +731,7 @@ export function useCreditNoteForm() {
             items: formattedItems,
             companySettings: companyData,
             pdfBase64: pdfData.base64,
-            pdfUrl: pdfData.url
+            creditNoteId: creditNoteId
           }
         });
         
@@ -785,7 +784,8 @@ export function useCreditNoteForm() {
         amount: subtotal,
         tax_amount: vatTotal,
         total_amount: totalAmount,
-        notes: notes
+        notes: notes,
+        pdf_stored: false
       };
       
       let savedCreditNoteId = creditNoteId;
@@ -841,12 +841,12 @@ export function useCreditNoteForm() {
       const pdfData = await generatePDF(savedCreditNoteId, false);
       
       if (pdfData) {
-        console.log('PDF generated successfully:', pdfData.url);
+        console.log('PDF generated successfully');
         
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update({
-            pdf_url: pdfData.url,
+            pdf_stored: true,
             status: 'pending'
           })
           .eq('id', savedCreditNoteId);
@@ -854,7 +854,7 @@ export function useCreditNoteForm() {
         if (updateError) throw updateError;
         
         setStatus('pending');
-        setPdfUrl(pdfData.url);
+        setPdfGenerated(true);
         
         console.log('Calling submitToStorecove with credit note ID:', savedCreditNoteId);
         const storecoveResult = await submitToStorecove(savedCreditNoteId, pdfData);
@@ -903,11 +903,11 @@ export function useCreditNoteForm() {
   }, [handleCreateAndSend]);
   
   const handleSendEmail = useCallback(async () => {
-    if (!user || !selectedClientId || !pdfUrl) {
+    if (!user || !selectedClientId || !creditNoteId) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Cannot send email without PDF or client.',
+        description: 'Cannot send email without credit note ID or client.',
       });
       return;
     }
@@ -926,7 +926,7 @@ export function useCreditNoteForm() {
       const { data: creditNoteData, error: creditNoteError } = await supabase
         .from('credit_notes')
         .select('*')
-        .eq('id', id)
+        .eq('id', creditNoteId)
         .single();
         
       if (creditNoteError) throw creditNoteError;
@@ -939,12 +939,20 @@ export function useCreditNoteForm() {
         
       if (companyError && companyError.code !== 'PGRST116') throw companyError;
       
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+      if (!urlData || !urlData.publicUrl) {
+        throw new Error("Failed to get public URL for the PDF");
+      }
+      
       const emailData = {
         clientName: clientData.name,
         clientEmail: clientData.email,
         invoiceNumber: creditNoteData.credit_note_number,
         isCredit: true,
-        pdfUrl: pdfUrl,
+        pdfUrl: urlData.publicUrl,
         termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
         companyName: companyData?.company_name || "PowerPeppol",
         includeAttachments: true,
@@ -973,7 +981,7 @@ export function useCreditNoteForm() {
     } finally {
       setIsSendingEmail(false);
     }
-  }, [user, selectedClientId, id, pdfUrl, toast]);
+  }, [user, selectedClientId, creditNoteId, toast]);
   
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
@@ -1024,18 +1032,35 @@ export function useCreditNoteForm() {
     }
   }, [user, toast, setClients, setSelectedClientId]);
   
-  const handleDownloadPDF = useCallback(() => {
-    if (!pdfUrl) {
+  const handleDownloadPDF = useCallback(async () => {
+    if (!creditNoteId) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'No PDF available for download.',
+        description: 'No credit note ID available for download.',
       });
       return;
     }
     
-    window.open(pdfUrl, '_blank');
-  }, [pdfUrl, toast]);
+    try {
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+      if (!urlData || !urlData.publicUrl) {
+        throw new Error("Failed to get public URL for the PDF");
+      }
+      
+      window.open(urlData.publicUrl, '_blank');
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to download PDF.',
+      });
+    }
+  }, [creditNoteId, toast]);
   
   return {
     isEditMode,
@@ -1055,7 +1080,8 @@ export function useCreditNoteForm() {
     clients,
     availableItems,
     vats,
-    pdfUrl,
+    pdfGenerated,
+    creditNoteId,
     currencySymbol,
     user,
     companySettings,

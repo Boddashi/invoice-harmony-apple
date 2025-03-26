@@ -30,7 +30,7 @@ export interface CreditNoteData {
   currencySymbol: string;
 }
 
-export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Promise<{ url: string; base64: string }> => {
+export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Promise<{ base64: string }> => {
   console.log("Starting PDF generation for credit note:", creditNoteData.credit_note_number);
   
   try {
@@ -245,9 +245,9 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
       console.log("PDF generated successfully with size:", pdfBase64.length);
       
       // Save the PDF to storage
-      const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfBase64);
+      await saveCreditNotePDF(creditNoteData.id, pdfBase64);
       
-      return { url: pdfUrl, base64: pdfBase64 };
+      return { base64: pdfBase64 };
     } catch (error: any) {
       console.error("Error generating PDF with html2canvas:", error);
       toast.error(`PDF generation failed locally: ${error.message}`);
@@ -265,7 +265,8 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
         const response = await supabase.functions.invoke("generate-pdf", {
           body: { 
             html, 
-            filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
+            documentId: creditNoteData.id,
+            documentType: "credit-note"
           }
         });
 
@@ -277,19 +278,19 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
 
         const pdfResult = response.data;
 
-        if (!pdfResult?.url || !pdfResult?.base64) {
+        if (!pdfResult?.base64) {
           console.error("Missing PDF data in response:", pdfResult);
-          toast.error('Failed to generate PDF: No URL or base64 data returned');
-          throw new Error('Failed to generate PDF: No URL or base64 data returned');
+          toast.error('Failed to generate PDF: No base64 data returned');
+          throw new Error('Failed to generate PDF: No base64 data returned');
         }
 
-        console.log("PDF generated successfully with URL:", pdfResult.url);
+        console.log("PDF generated successfully with server-side generation");
         
         // After generating the PDF, we'll save it to the credit_notes bucket
-        const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
+        await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
         
-        // Return both the temporary URL and the base64 data
-        return { url: pdfUrl, base64: pdfResult.base64 };
+        // Return the base64 data
+        return { base64: pdfResult.base64 };
       } catch (serverError: any) {
         console.error('Error calling generate-pdf function:', serverError);
         toast.error(`Server-side PDF generation failed: ${serverError.message || 'Unknown error'}`);
@@ -303,7 +304,7 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
   }
 };
 
-export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string): Promise<string> => {
+export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string): Promise<void> => {
   try {
     console.log(`Saving PDF for credit note ${creditNoteId} to storage...`);
     
@@ -349,16 +350,18 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
 
     console.log("PDF uploaded successfully:", data);
 
-    const { data: urlData } = supabase.storage
+    // Update the credit note record with the PDF reference
+    const { error: updateError } = await supabase
       .from('credit_notes')
-      .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+      .update({ pdf_stored: true })
+      .eq('id', creditNoteId);
 
-    if (!urlData || !urlData.publicUrl) {
-      throw new Error("Failed to get public URL for the uploaded PDF");
+    if (updateError) {
+      console.error('Error updating credit note record:', updateError);
+      throw updateError;
     }
-    
-    console.log("PDF public URL:", urlData.publicUrl);
-    return urlData.publicUrl;
+
+    console.log("Credit note record updated with PDF reference");
   } catch (error: any) {
     console.error('Error saving credit note PDF:', error);
     throw error;

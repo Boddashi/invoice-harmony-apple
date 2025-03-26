@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     // Parse the request body
-    const { html, filename } = await req.json();
+    const { html, documentId, documentType } = await req.json();
     
     if (!html) {
       return new Response(
@@ -23,7 +23,7 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Starting PDF generation for: ${filename || 'unnamed document'}`);
+    console.log(`Starting PDF generation for: ${documentType || 'document'} ID: ${documentId || 'unknown'}`);
     
     // Convert HTML directly to a PDF without external APIs
     // We'll generate a data URL with the HTML content and return it
@@ -40,7 +40,8 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        url: dataUrl,
+        documentId,
+        documentType,
         base64: dataUrl 
       }),
       { 
