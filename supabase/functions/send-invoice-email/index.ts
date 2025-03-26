@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Received request to send invoice email");
+    console.log("Received request to send invoice/credit note email");
     
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
     if (!RESEND_API_KEY) {

@@ -900,15 +900,58 @@ export function useCreditNoteForm() {
         
         if (storecoveResult) {
           console.log('Storecove submission successful:', storecoveResult);
+          
+          const creditNoteIdForEmail = savedCreditNoteId;
+          setCreditNoteId(creditNoteIdForEmail);
+          
+          if (!storecoveResult.emailSent) {
+            console.log('Email not sent by edge function, sending directly...');
+            const tempSelectedClientId = selectedClientId;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
+            
+            const sendEmailAfterCreation = async () => {
+              setSelectedClientId(tempSelectedClientId);
+              setCreditNoteId(creditNoteIdForEmail);
+              
+              try {
+                await handleSendEmail();
+                console.log('Email sent successfully after credit note creation');
+              } catch (emailError) {
+                console.error('Failed to send email after credit note creation:', emailError);
+              }
+            };
+            
+            await sendEmailAfterCreation();
+          }
+          
           toast({
             title: 'Success',
             description: `Credit note created and sent.${storecoveResult.emailSent ? ' Email sent successfully.' : ''}`,
           });
         } else {
           console.warn('Storecove submission returned null result');
+          
+          console.log('Attempting to send email directly after failed Storecove submission');
+          const tempSelectedClientId = selectedClientId;
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
+          
+          const sendEmailAfterCreation = async () => {
+            setSelectedClientId(tempSelectedClientId);
+            setCreditNoteId(creditNoteIdForEmail);
+            
+            try {
+              await handleSendEmail();
+              console.log('Email sent successfully after credit note creation');
+            } catch (emailError) {
+              console.error('Failed to send email after credit note creation:', emailError);
+            }
+          };
+          
+          await sendEmailAfterCreation();
+          
           toast({
             title: 'Partial Success',
-            description: 'Credit note created but not sent to Storecove.',
+            description: 'Credit note created and email sent, but not sent to Storecove.',
           });
         }
       } else {
@@ -933,7 +976,8 @@ export function useCreditNoteForm() {
     }
   }, [
     user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
-    creditNoteId, isEditMode, id, navigate, getVatGroups, toast, generatePDF, submitToStorecove
+    creditNoteId, isEditMode, id, navigate, getVatGroups, toast, generatePDF, submitToStorecove,
+    handleSendEmail, setCreditNoteId, setSelectedClientId
   ]);
   
   const handleSubmit = useCallback((e: React.FormEvent) => {
@@ -978,25 +1022,49 @@ export function useCreditNoteForm() {
         
       if (companyError && companyError.code !== 'PGRST116') throw companyError;
       
+      let pdfBase64 = null;
+      let pdfUrl = null;
+      
+      if (!pdfGenerated) {
+        const pdfResult = await generatePDF(creditNoteId, false);
+        if (pdfResult) {
+          pdfBase64 = pdfResult.base64;
+        } else {
+          throw new Error("Failed to generate PDF for credit note");
+        }
+      }
+      
       const { data: urlData } = supabase.storage
         .from('credit_notes')
         .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
 
-      if (!urlData || !urlData.publicUrl) {
-        throw new Error("Failed to get public URL for the PDF");
+      if (urlData && urlData.publicUrl) {
+        pdfUrl = urlData.publicUrl;
+      }
+      
+      if (!pdfUrl && !pdfBase64) {
+        throw new Error("Unable to get PDF for credit note");
       }
       
       const emailData = {
         clientName: clientData.name,
         clientEmail: clientData.email,
         invoiceNumber: creditNoteData.credit_note_number,
-        isCredit: true,
-        pdfUrl: urlData.publicUrl,
+        pdfUrl: pdfUrl,
         termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
         companyName: companyData?.company_name || "PowerPeppol",
         includeAttachments: true,
-        yukiEmail: companyData?.yuki_email
+        pdfBase64: pdfBase64,
+        yukiEmail: companyData?.yuki_email,
+        isCreditNote: true
       };
+      
+      console.log("Sending credit note email with data:", {
+        to: clientData.email,
+        creditNoteNumber: creditNoteData.credit_note_number,
+        hasAttachment: !!pdfBase64 || !!pdfUrl,
+        yukiCopy: !!companyData?.yuki_email
+      });
       
       const { data: emailResult, error: emailError } = await supabase
         .functions
@@ -1020,7 +1088,7 @@ export function useCreditNoteForm() {
     } finally {
       setIsSendingEmail(false);
     }
-  }, [user, selectedClientId, creditNoteId, toast]);
+  }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
   
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
