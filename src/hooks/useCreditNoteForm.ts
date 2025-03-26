@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -65,6 +66,24 @@ interface CompanySettings {
   invoice_prefix?: string;
   credit_note_prefix?: string;
   [key: string]: any;
+}
+
+// Define a more complete CreditNote interface that includes the pdf_url field
+interface CreditNote {
+  id: string;
+  client_id: string;
+  user_id: string;
+  credit_note_number: string;
+  issue_date: string;
+  status: CreditNoteStatus;
+  amount: number;
+  tax_rate?: number;
+  tax_amount?: number;
+  total_amount: number;
+  notes?: string;
+  pdf_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 type CreditNoteStatus = 'draft' | 'pending' | 'paid';
@@ -218,16 +237,19 @@ export function useCreditNoteForm() {
         if (itemsError) throw itemsError;
         
         if (creditNoteData) {
-          setCreditNoteId(creditNoteData.id);
-          setCreditNoteNumber(creditNoteData.credit_note_number);
-          setIssueDate(creditNoteData.issue_date);
-          setSelectedClientId(creditNoteData.client_id);
-          const fetchedStatus = creditNoteData.status as string;
-          setStatus(fetchedStatus === 'overdue' ? 'pending' : fetchedStatus as CreditNoteStatus);
-          setNotes(creditNoteData.notes || '');
+          // Safely cast the data to our interface
+          const typedCreditNoteData = creditNoteData as CreditNote;
           
-          if (creditNoteData.pdf_url) {
-            setPdfUrl(creditNoteData.pdf_url);
+          setCreditNoteId(typedCreditNoteData.id);
+          setCreditNoteNumber(typedCreditNoteData.credit_note_number);
+          setIssueDate(typedCreditNoteData.issue_date);
+          setSelectedClientId(typedCreditNoteData.client_id);
+          const fetchedStatus = typedCreditNoteData.status as string;
+          setStatus(fetchedStatus === 'overdue' ? 'pending' : fetchedStatus as CreditNoteStatus);
+          setNotes(typedCreditNoteData.notes || '');
+          
+          if (typedCreditNoteData.pdf_url) {
+            setPdfUrl(typedCreditNoteData.pdf_url);
             setPdfGenerated(true);
           }
           
@@ -641,16 +663,20 @@ export function useCreditNoteForm() {
         throw new Error("Failed to generate PDF: No data returned");
       }
 
+      // Fetch the updated credit note to get the PDF URL
       const { data: updatedCreditNote, error: fetchUrlError } = await supabase
         .from('credit_notes')
-        .select('pdf_url')
+        .select('*')
         .eq('id', creditNoteId)
         .single();
         
       if (fetchUrlError) throw fetchUrlError;
       
-      if (updatedCreditNote && updatedCreditNote.pdf_url) {
-        setPdfUrl(updatedCreditNote.pdf_url);
+      // Safely cast to our CreditNote interface
+      const typedUpdatedCreditNote = updatedCreditNote as CreditNote;
+      
+      if (typedUpdatedCreditNote && typedUpdatedCreditNote.pdf_url) {
+        setPdfUrl(typedUpdatedCreditNote.pdf_url);
       }
 
       if (shouldUpdateStatus) {
@@ -791,8 +817,7 @@ export function useCreditNoteForm() {
         amount: subtotal,
         tax_amount: vatTotal,
         total_amount: totalAmount,
-        notes: notes,
-        pdf_stored: false
+        notes: notes
       };
       
       let savedCreditNoteId = creditNoteId;
@@ -853,7 +878,6 @@ export function useCreditNoteForm() {
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update({
-            pdf_stored: true,
             status: 'pending'
           })
           .eq('id', savedCreditNoteId);
