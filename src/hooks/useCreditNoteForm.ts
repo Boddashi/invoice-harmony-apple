@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -994,4 +995,89 @@ export function useCreditNoteForm() {
         ...(newClient.postcode && { postcode: newClient.postcode }),
         ...(newClient.city && { city: newClient.city }),
         ...(newClient.country && { country: newClient.country }),
-        ...(newClient.vat_number && { vat_number
+        ...(newClient.vat_number && { vat_number: newClient.vat_number })
+      };
+      
+      const { data, error } = await supabase
+        .from('clients')
+        .insert(clientData)
+        .select();
+        
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        setClients(prevClients => [...prevClients, data[0]]);
+        setSelectedClientId(data[0].id);
+        
+        toast({
+          title: 'Success',
+          description: 'Client added successfully.',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error adding client:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to add client.',
+      });
+    }
+  }, [user, toast, setClients, setSelectedClientId]);
+  
+  const handleDownloadPDF = useCallback(() => {
+    if (!pdfUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No PDF available for download.',
+      });
+      return;
+    }
+    
+    window.open(pdfUrl, '_blank');
+  }, [pdfUrl, toast]);
+  
+  return {
+    isEditMode,
+    isLoading,
+    isSubmitting,
+    isGeneratingPDF,
+    isSendingEmail,
+    isSubmittingToStorecove,
+    isAddClientModalOpen,
+    creditNoteNumber,
+    selectedClientId,
+    issueDate,
+    status,
+    notes,
+    items,
+    total,
+    clients,
+    availableItems,
+    vats,
+    pdfUrl,
+    currencySymbol,
+    user,
+    companySettings,
+    
+    setIsAddClientModalOpen,
+    setCreditNoteNumber,
+    setSelectedClientId,
+    setIssueDate,
+    setNotes,
+    handleAddClient,
+    handleItemDescriptionChange,
+    handleItemQuantityChange,
+    handleItemUnitPriceChange,
+    handleItemVatChange,
+    handleAddItem,
+    handleRemoveItem,
+    handleDownloadPDF,
+    handleSendEmail,
+    handleSaveAsDraft,
+    handleCreateAndSend,
+    handleSubmit,
+    getVatGroups,
+    fetchAvailableItems
+  };
+}
