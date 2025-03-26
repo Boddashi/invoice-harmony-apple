@@ -36,14 +36,18 @@ interface CreditNoteData {
     vat_number?: string;
     phone?: string;
   };
-  items?: {
-    id: string;
-    title: string;
-    price: number;
+  items?: Array<{
+    credit_note_id: string;
+    item_id: string;
     quantity: number;
     total_amount: number;
-    vat: string;
-  }[];
+    item: {
+      id: string;
+      title: string;
+      price: number;
+      vat: string;
+    };
+  }>;
 }
 
 interface VatGroup {
@@ -96,19 +100,18 @@ const ViewCreditNote = () => {
 
         if (itemsError) throw itemsError;
 
-        // Format the items
+        // Format the items for internal use
         const items = creditNoteItems.map((item) => ({
-          id: item.id,
-          title: item.item.title,
-          price: item.item.price,
+          credit_note_id: item.credit_note_id,
+          item_id: item.item_id,
           quantity: item.quantity,
           total_amount: item.total_amount,
-          vat: item.item.vat,
+          item: item.item
         }));
 
         // Format items for the CreditNoteItems component
         const formattedItemsForComponent = creditNoteItems.map((item) => ({
-          id: item.id,
+          id: item.item_id, // Use item_id as the identifier
           description: item.item_id,
           quantity: item.quantity,
           unit_price: Math.abs(item.total_amount) / item.quantity,
