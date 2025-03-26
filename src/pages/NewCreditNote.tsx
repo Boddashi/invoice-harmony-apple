@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { useCreditNoteForm } from '@/hooks/useCreditNoteForm';
@@ -21,7 +21,6 @@ const NewCreditNote = () => {
     isGeneratingPDF,
     isSendingEmail,
     isSubmittingToStorecove,
-    isSendingToYuki,
     isAddClientModalOpen,
     creditNoteNumber,
     selectedClientId,
@@ -56,29 +55,10 @@ const NewCreditNote = () => {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
-    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems
   } = useCreditNoteForm();
-  
-  // Local state to ensure client selection is preserved
-  const [localClientId, setLocalClientId] = useState(selectedClientId);
-  
-  // Update local state when selectedClientId changes
-  useEffect(() => {
-    if (selectedClientId) {
-      setLocalClientId(selectedClientId);
-    }
-  }, [selectedClientId]);
-  
-  // Update the form state when local state changes
-  useEffect(() => {
-    if (localClientId && localClientId !== selectedClientId) {
-      console.log("Updating selected client ID from local state:", localClientId);
-      setSelectedClientId(localClientId);
-    }
-  }, [localClientId, selectedClientId, setSelectedClientId]);
   
   const refreshItems = useCallback(() => {
     fetchAvailableItems();
@@ -86,11 +66,6 @@ const NewCreditNote = () => {
 
   // For debugging - using the direct Supabase URL for function URLs
   useEffect(() => {
-    // Log auth status for debugging the issue
-    console.log('User authenticated:', !!user);
-    console.log('Selected client ID:', selectedClientId);
-    console.log('Local client ID:', localClientId);
-    
     // Log the function URLs using the constant instead of supabase.supabaseUrl
     console.log('Supabase function URL:', 
       `${SUPABASE_URL}/functions/v1/submit-credit-note-document`);
@@ -98,7 +73,7 @@ const NewCreditNote = () => {
     // Also log generate-pdf function URL
     console.log('Generate PDF function URL:', 
       `${SUPABASE_URL}/functions/v1/generate-pdf`);
-  }, [user, selectedClientId, localClientId]);
+  }, []);
 
   if (isLoading && isEditMode) {
     return (
@@ -109,22 +84,6 @@ const NewCreditNote = () => {
       </MainLayout>
     );
   }
-
-  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Log form state before submission
-    console.log('Form submitted with client ID:', selectedClientId);
-    console.log('Form submitted with local client ID:', localClientId);
-    console.log('Form submitted with credit note number:', creditNoteNumber);
-    
-    // Use the local client ID for submission if it exists
-    if (localClientId && !selectedClientId) {
-      setSelectedClientId(localClientId);
-      setTimeout(() => handleSubmit(), 0);
-    } else {
-      handleSubmit();
-    }
-  };
 
   return (
     <MainLayout>
@@ -138,28 +97,26 @@ const NewCreditNote = () => {
           isGeneratingPDF={isGeneratingPDF}
           isSendingEmail={isSendingEmail}
           isSubmittingToStorecove={isSubmittingToStorecove}
-          isSendingToYuki={isSendingToYuki}
           status={status}
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
-          handleSendEmail={handleSendEmail}
-          handleCreateAndSendYuki={companySettings?.yuki_email ? handleCreateAndSendYuki : undefined}
+          handleSendEmail={pdfGenerated ? handleSendEmail : undefined}
         />
         
-        <form id="creditnote-form" onSubmit={onFormSubmit} className="space-y-6">
+        <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CreditNoteBasicInfo 
               creditNoteNumber={creditNoteNumber}
               issueDate={issueDate}
               setCreditNoteNumber={setCreditNoteNumber}
-              setIssueDate={(value) => setIssueDate(value)}
+              setIssueDate={setIssueDate}
             />
             
             <ClientSelection 
               clients={clients}
-              selectedClientId={localClientId || selectedClientId}
-              setSelectedClientId={setLocalClientId}
+              selectedClientId={selectedClientId}
+              setSelectedClientId={setSelectedClientId}
               setIsAddClientModalOpen={setIsAddClientModalOpen}
             />
             

@@ -1,13 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { useNavigate, useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCurrency } from '@/contexts/CurrencyContext';
-import { useToast } from '@/hooks/use-toast';
-import { generateCreditNotePDF } from '@/utils/creditNotePdfGenerator';
+import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '../contexts/CurrencyContext';
+import { useToast } from './use-toast';
+import { generateCreditNotePDF, saveCreditNotePDF } from '@/utils/creditNotePdfGenerator';
 
-export interface CreditNoteItem {
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  legal_entity_id?: number | null;
+  type: string;
+  [key: string]: any;
+}
+
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  vat: string;
+}
+
+interface CreditNoteItem {
   id: string;
   description: string;
   quantity: number;
@@ -16,30 +32,56 @@ export interface CreditNoteItem {
   vat_rate: string;
 }
 
-export interface Client {
-  id: string;
-  name: string;
-  type?: string;
-  email?: string;
-  [key: string]: any;
-}
-
-export interface Item {
-  id: string;
-  title: string;
-  price: number;
-  vat: string;
-}
-
-export interface Vat {
+interface Vat {
   title: string;
   amount: number | null;
 }
 
-export interface VatGroup {
+interface VatGroup {
   rate: string;
   value: number;
   amount: number;
+}
+
+interface CompanySettings {
+  company_name?: string;
+  company_email?: string;
+  company_phone?: string;
+  company_website?: string;
+  street?: string;
+  number?: string;
+  bus?: string;
+  postal_code?: string;
+  city?: string;
+  country?: string;
+  vat_number?: string;
+  iban?: string;
+  swift?: string;
+  bank_name?: string;
+  logo_url?: string;
+  legal_entity_id?: number | null;
+  terms_and_conditions_url?: string;
+  yuki_email?: string;
+  invoice_prefix?: string;
+  credit_note_prefix?: string;
+  [key: string]: any;
+}
+
+interface CreditNote {
+  id: string;
+  client_id: string;
+  user_id: string;
+  credit_note_number: string;
+  issue_date: string;
+  status: CreditNoteStatus;
+  amount: number;
+  tax_rate?: number;
+  tax_amount?: number;
+  total_amount: number;
+  notes?: string;
+  pdf_url?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 type CreditNoteStatus = 'draft' | 'pending' | 'paid';
@@ -58,14 +100,13 @@ export function useCreditNoteForm() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSubmittingToStorecove, setIsSubmittingToStorecove] = useState(false);
-  const [isSendingToYuki, setIsSendingToYuki] = useState(false);
   
   const [pdfGenerated, setPdfGenerated] = useState(false);
   const [creditNoteId, setCreditNoteId] = useState<string>('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [creditNoteNumber, setCreditNoteNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
-  const [issueDate, setIssueDate] = useState<string>(() => {
+  const [issueDate, setIssueDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
@@ -84,74 +125,409 @@ export function useCreditNoteForm() {
   
   const [clients, setClients] = useState<Client[]>([]);
   const [availableItems, setAvailableItems] = useState<Item[]>([]);
-  const [vats, setVats] = useState<Vat[]>([
-    { title: '0%', amount: null },
-    { title: '9%', amount: null },
-    { title: '21%', amount: null },
-    { title: 'Exempt', amount: null },
-  ]);
-  const [companySettings, setCompanySettings] = useState<any | null>(null);
+  const [vats, setVats] = useState<Vat[]>([]);
+  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
   const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
 
+  const generatePDF = useCallback(async (creditNoteId: string, shouldUpdateStatus = true) => {
+    if (!user) return null;
+
+    try {
+      setIsGeneratingPDF(true);
+
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select(`
+          *,
+          client:clients(*),
+          items:credit_note_items(*, item:items(*))
+        `)
+        .eq('id', creditNoteId)
+        .single();
+
+      if (creditNoteError) throw creditNoteError;
+
+      console.log("Retrieved credit note data for PDF generation:", {
+        id: creditNoteData.id,
+        number: creditNoteData.credit_note_number,
+        clientName: creditNoteData.client.name,
+        itemCount: creditNoteData.items.length
+      });
+
+      const formattedItems = creditNoteData.items.map(item => ({
+        description: item.item ? item.item.title : 'Unknown Item',
+        quantity: item.quantity,
+        unit_price: Math.abs(item.total_amount) / item.quantity,
+        vat_rate: item.item?.vat || '0%',
+        amount: item.total_amount
+      }));
+
+      const clientAddress = [
+        creditNoteData.client.street ? `${creditNoteData.client.street} ${creditNoteData.client.number || ''}${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}` : '',
+        `${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}`
+      ].filter(Boolean).join('\n');
+
+      const pdfData = {
+        id: creditNoteData.id,
+        credit_note_number: creditNoteData.credit_note_number,
+        issue_date: creditNoteData.issue_date,
+        client_name: creditNoteData.client.name,
+        client_address: clientAddress,
+        client_vat: creditNoteData.client.vat_number,
+        user_email: user.email || '',
+        items: formattedItems,
+        subTotal: creditNoteData.amount,
+        taxAmount: creditNoteData.tax_amount || 0,
+        total: creditNoteData.total_amount,
+        notes: creditNoteData.notes,
+        currencySymbol: currencySymbol
+      };
+
+      console.log("Calling generateCreditNotePDF with data:", {
+        id: pdfData.id,
+        number: pdfData.credit_note_number,
+        itemCount: pdfData.items.length
+      });
+
+      const pdfResult = await generateCreditNotePDF(pdfData);
+      
+      if (!pdfResult || !pdfResult.base64) {
+        throw new Error("Failed to generate PDF: No data returned");
+      }
+      
+      if (shouldUpdateStatus) {
+        const { error: updateStatusError } = await supabase
+          .from('credit_notes')
+          .update({ status: 'pending' })
+          .eq('id', creditNoteId);
+          
+        if (updateStatusError) {
+          console.error("Error updating credit note status:", updateStatusError);
+        }
+        
+        setStatus('pending');
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+      
+      if (urlData && urlData.publicUrl) {
+        setPdfUrl(urlData.publicUrl);
+      }
+
+      setPdfGenerated(true);
+      return pdfResult;
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to generate credit note PDF.',
+      });
+      return null;
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  }, [user, currencySymbol, toast]);
+
+  const handleSendEmail = useCallback(async () => {
+    if (!user || !selectedClientId || !creditNoteId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Cannot send email without credit note ID or client.',
+      });
+      return;
+    }
+    
+    try {
+      setIsSendingEmail(true);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', selectedClientId)
+        .single();
+        
+      if (clientError) throw clientError;
+      
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select('*')
+        .eq('id', creditNoteId)
+        .single();
+        
+      if (creditNoteError) throw creditNoteError;
+      
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      
+      let pdfBase64 = null;
+      let pdfUrl = null;
+      
+      if (!pdfGenerated) {
+        const pdfResult = await generatePDF(creditNoteId, false);
+        if (pdfResult) {
+          pdfBase64 = pdfResult.base64;
+        } else {
+          throw new Error("Failed to generate PDF for credit note");
+        }
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+      if (urlData && urlData.publicUrl) {
+        pdfUrl = urlData.publicUrl;
+      }
+      
+      if (!pdfUrl && !pdfBase64) {
+        throw new Error("Unable to get PDF for credit note");
+      }
+      
+      const emailData = {
+        clientName: clientData.name,
+        clientEmail: clientData.email,
+        invoiceNumber: creditNoteData.credit_note_number,
+        pdfUrl: pdfUrl,
+        termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
+        companyName: companyData?.company_name || "PowerPeppol",
+        includeAttachments: true,
+        pdfBase64: pdfBase64,
+        yukiEmail: companyData?.yuki_email,
+        isCreditNote: true
+      };
+      
+      console.log("Sending credit note email with data:", {
+        to: clientData.email,
+        creditNoteNumber: creditNoteData.credit_note_number,
+        hasAttachment: !!pdfBase64 || !!pdfUrl,
+        yukiCopy: !!companyData?.yuki_email
+      });
+      
+      const { data: emailResult, error: emailError } = await supabase
+        .functions
+        .invoke('send-invoice-email', {
+          body: emailData
+        });
+        
+      if (emailError) throw emailError;
+      
+      toast({
+        title: 'Success',
+        description: 'Credit note email sent successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error sending credit note email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send credit note email.',
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
+        setClients(data || []);
+      } catch (error: any) {
+        console.error('Error fetching clients:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to fetch clients.',
+        });
+      }
+    };
+    
+    fetchClients();
+  }, [user, toast]);
+  
+  useEffect(() => {
+    const fetchVats = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('vats')
+          .select('*');
+          
+        if (error) throw error;
+        setVats(data || []);
+      } catch (error: any) {
+        console.error('Error fetching vats:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to fetch VAT rates.',
+        });
+      }
+    };
+    
+    fetchVats();
+  }, [toast]);
+  
   useEffect(() => {
     const fetchCompanySettings = async () => {
-      if (!user?.id) return;
+      if (!user) return;
+      
       try {
         const { data, error } = await supabase
           .from('company_settings')
           .select('*')
           .eq('user_id', user.id)
           .single();
-
-        if (error) {
-          console.error("Error fetching company settings:", error);
-        }
-
-        if (data) {
-          setCompanySettings(data);
-        }
-      } catch (error) {
-        console.error("Unexpected error fetching company settings:", error);
-      }
-    };
-
-    fetchCompanySettings();
-  }, [user?.id]);
-
-  useEffect(() => {
-    const fetchClients = async () => {
-      if (!user) return;
-      try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('id, name')
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        console.log('Fetched clients:', data);
-        setClients(data || []);
-        
-        if (data && data.length > 0 && !selectedClientId) {
-          console.log('Auto-selecting first client on load:', data[0].id);
-          setSelectedClientId(data[0].id);
-        }
+          
+        if (error && error.code !== 'PGRST116') throw error;
+        setCompanySettings(data || null);
       } catch (error: any) {
-        console.error('Error fetching clients:', error);
+        console.error('Error fetching company settings:', error);
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: error.message || 'Failed to load clients',
+          description: error.message || 'Failed to fetch company settings.',
         });
-      } finally {
+      }
+    };
+    
+    fetchCompanySettings();
+  }, [user, toast]);
+
+  useEffect(() => {
+    const fetchCreditNote = async () => {
+      if (!user || !id) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        
+        const { data: creditNoteData, error: creditNoteError } = await supabase
+          .from('credit_notes')
+          .select('*')
+          .eq('id', id)
+          .eq('user_id', user.id)
+          .single();
+          
+        if (creditNoteError) throw creditNoteError;
+        
+        const { data: creditNoteItemsData, error: itemsError } = await supabase
+          .from('credit_note_items')
+          .select(`
+            *,
+            item:items(*)
+          `)
+          .eq('credit_note_id', id);
+          
+        if (itemsError) throw itemsError;
+        
+        if (creditNoteData) {
+          const typedCreditNoteData = creditNoteData as CreditNote;
+          
+          setCreditNoteId(typedCreditNoteData.id);
+          setCreditNoteNumber(typedCreditNoteData.credit_note_number);
+          setIssueDate(typedCreditNoteData.issue_date);
+          setSelectedClientId(typedCreditNoteData.client_id);
+          const fetchedStatus = typedCreditNoteData.status as string;
+          setStatus(fetchedStatus === 'overdue' ? 'pending' : fetchedStatus as CreditNoteStatus);
+          setNotes(typedCreditNoteData.notes || '');
+          
+          if (typedCreditNoteData.pdf_url) {
+            setPdfUrl(typedCreditNoteData.pdf_url);
+            setPdfGenerated(true);
+          }
+          
+          if (creditNoteItemsData && creditNoteItemsData.length > 0) {
+            const formattedItems = creditNoteItemsData.map((item: any) => ({
+              id: uuidv4(),
+              description: item.item_id,
+              quantity: item.quantity,
+              unit_price: item.total_amount / item.quantity,
+              amount: item.total_amount,
+              vat_rate: item.item?.vat || '21%',
+            }));
+            
+            setItems(formattedItems);
+          }
+        }
+        
+        setIsLoading(false);
+      } catch (error: any) {
+        console.error('Error fetching credit note data:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to fetch credit note data.',
+        });
         setIsLoading(false);
       }
     };
+    
+    fetchCreditNote();
+  }, [user, id, toast]);
+  
+  useEffect(() => {
+    if (!isEditMode && companySettings && !creditNoteNumber) {
+      generateCreditNoteNumber();
+    }
+  }, [isEditMode, companySettings, creditNoteNumber]);
 
-    fetchClients();
-  }, [user, toast]);
+  const generateCreditNoteNumber = async () => {
+    if (!user || !companySettings) return;
+    
+    try {
+      const prefix = companySettings.credit_note_prefix || 'CN';
+      
+      const { data, error } = await supabase
+        .from('credit_notes')
+        .select('credit_note_number')
+        .eq('user_id', user.id)
+        .ilike('credit_note_number', `${prefix}-%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      
+      let nextNumber = 1;
+      
+      if (data && data.length > 0) {
+        const lastCreditNoteNumber = data[0].credit_note_number;
+        const lastNumberStr = lastCreditNoteNumber.split('-')[1];
+        
+        if (lastNumberStr && !isNaN(parseInt(lastNumberStr))) {
+          nextNumber = parseInt(lastNumberStr) + 1;
+        }
+      }
+      
+      const formattedNumber = String(nextNumber).padStart(5, '0');
+      setCreditNoteNumber(`${prefix}-${formattedNumber}`);
+      
+    } catch (error: any) {
+      console.error('Error generating credit note number:', error);
+      const prefix = companySettings.credit_note_prefix || 'CN';
+      setCreditNoteNumber(`${prefix}-00001`);
+    }
+  };
 
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
@@ -325,321 +701,88 @@ export function useCreditNoteForm() {
   
   const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
-    await handleSubmit('draft');
-  }, []);
-
-  const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await handleSubmit('pending');
-  }, []);
-  
-  const handleCreateAndSendYuki = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await handleSubmit('pending', true);
-  }, []);
-
-  const generateCreditNoteNumber = async () => {
-    const prefix = 'CN';
-    const randomNumber = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}-${randomNumber}`;
-  };
-
-  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
-    if (!user) return;
     
-    try {
-      const { error } = await supabase.functions.invoke('submit-credit-note-document', {
-        body: {
-          creditNoteId: creditNoteId,
-        }
-      });
-
-      if (error) {
-        console.error('Storecove submission error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Storecove Submission Failed',
-          description: error.message || 'Failed to submit credit note to Storecove.',
-        });
-      } else {
-        toast({
-          title: 'Success',
-          description: 'Credit note submitted to Storecove successfully!',
-        });
-      }
-    } catch (error: any) {
-      console.error('Error submitting to Storecove:', error);
+    if (!user || !selectedClientId) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to submit credit note to Storecove.',
-      });
-    }
-  }, [user, toast]);
-
-  const handleDownloadPDF = useCallback(async () => {
-    if (!creditNoteId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Credit note ID is missing.',
+        description: 'Please select a client before saving.',
       });
       return;
     }
-
+    
     try {
-      setIsGeneratingPDF(true);
+      setIsSubmitting(true);
       
-      const { data } = supabase.storage
-        .from('credit_notes')
-        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-        
-      if (data && data.publicUrl) {
-        window.open(data.publicUrl, '_blank');
-      } else {
-        throw new Error('PDF URL not found.');
-      }
-    } catch (error: any) {
-      console.error('Error downloading PDF:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to download PDF.',
-      });
-    } finally {
-      setIsGeneratingPDF(false);
-    }
-  }, [creditNoteId, toast]);
-
-  const handleSendEmail = useCallback(async () => {
-    console.log("handleSendEmail called with user:", user?.id);
-    console.log("handleSendEmail called with selectedClientId:", selectedClientId);
-    console.log("handleSendEmail called with creditNoteId:", creditNoteId);
-    
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please log in to send emails.',
-      });
-      return;
-    }
-    
-    const clientIdToUse = selectedClientId;
-    if (!clientIdToUse) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a client for this credit note.',
-      });
-      return;
-    }
-    
-    if (!creditNoteId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please save the credit note before sending an email.',
-      });
-      return;
-    }
-    
-    setIsSendingEmail(true);
-    
-    try {
-      const { error } = await supabase.functions.invoke('send-email', {
-        body: {
-          creditNoteId: creditNoteId,
-          clientId: clientIdToUse
-        }
-      });
-
-      if (error) {
-        console.error('Email sending error:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Email Sending Failed',
-          description: error.message || 'Failed to send email.',
-        });
-      } else {
-        toast({
-          title: 'Success',
-          description: 'Email sent successfully!',
-        });
-      }
-    } catch (error: any) {
-      console.error('Error sending email:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to send email.',
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
-  }, [user, selectedClientId, creditNoteId, toast]);
-
-  const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
-    console.log('Submit called with user:', user?.id);
-    console.log('Selected client ID:', selectedClientId);
-    
-    if (!user) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please log in to continue.',
-      });
-      return;
-    }
-    
-    const clientIdToUse = selectedClientId;
-    
-    if (!clientIdToUse) {
-      console.error('No client selected when submitting');
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a client for this credit note.',
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const statusToUse: CreditNoteStatus = newStatus || status;
-      
-      let creditNoteNumberToUse = creditNoteNumber;
-      if (!creditNoteNumberToUse) {
-        creditNoteNumberToUse = await generateCreditNoteNumber();
-        setCreditNoteNumber(creditNoteNumberToUse);
-      }
+      const vatGroups = getVatGroups();
+      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+      const totalAmount = subtotal + vatTotal;
       
       const creditNoteData = {
-        credit_note_number: creditNoteNumberToUse,
-        client_id: clientIdToUse,
-        issue_date: issueDate,
-        status: statusToUse,
-        notes: notes,
-        amount: total,
-        total_amount: total,
         user_id: user.id,
+        client_id: selectedClientId,
+        credit_note_number: creditNoteNumber,
+        issue_date: issueDate,
+        status: 'draft' as CreditNoteStatus,
+        amount: subtotal,
+        tax_amount: vatTotal,
+        total_amount: totalAmount,
+        notes: notes
       };
-
-      console.log('Submitting credit note data:', creditNoteData);
-      let creditNoteIdToUse = creditNoteId;
-
-      if (creditNoteId) {
-        const { error } = await supabase
+      
+      let savedCreditNoteId = creditNoteId;
+      
+      if (isEditMode && id) {
+        const { error: updateError } = await supabase
           .from('credit_notes')
           .update(creditNoteData)
-          .eq('id', creditNoteId);
-
-        if (error) throw error;
+          .eq('id', id);
+          
+        if (updateError) throw updateError;
+        
+        savedCreditNoteId = id;
+        
+        const { error: deleteItemsError } = await supabase
+          .from('credit_note_items')
+          .delete()
+          .eq('credit_note_id', id);
+          
+        if (deleteItemsError) throw deleteItemsError;
       } else {
         const { data, error } = await supabase
           .from('credit_notes')
-          .insert([creditNoteData])
-          .select('id');
-
+          .insert(creditNoteData)
+          .select();
+          
         if (error) throw error;
-
-        creditNoteIdToUse = data[0].id;
-        setCreditNoteId(creditNoteIdToUse);
+        
+        if (data && data.length > 0) {
+          savedCreditNoteId = data[0].id;
+          setCreditNoteId(savedCreditNoteId);
+        }
       }
-
-      const creditNoteItemsData = items.map(item => ({
-        credit_note_id: creditNoteIdToUse,
-        item_id: item.id,
-        quantity: item.quantity,
-        total_amount: item.quantity * item.unit_price,
-      }));
-
-      if (creditNoteId) {
-        const { error: deleteError } = await supabase
+      
+      const itemsToInsert = items
+        .filter(item => item.description)
+        .map(item => ({
+          credit_note_id: savedCreditNoteId,
+          item_id: item.description,
+          quantity: item.quantity,
+          total_amount: item.amount
+        }));
+      
+      if (itemsToInsert.length > 0) {
+        const { error: insertItemsError } = await supabase
           .from('credit_note_items')
-          .delete()
-          .eq('credit_note_id', creditNoteId);
-
-        if (deleteError) throw deleteError;
+          .insert(itemsToInsert);
+          
+        if (insertItemsError) throw insertItemsError;
       }
-
-      const { error: insertItemsError } = await supabase
-        .from('credit_note_items')
-        .insert(creditNoteItemsData);
-
-      if (insertItemsError) throw insertItemsError;
-
-      setIsGeneratingPDF(true);
-      const { error: generatePdfError } = await supabase.functions.invoke('generate-pdf', {
-        body: {
-          creditNoteId: creditNoteIdToUse,
-          type: 'credit_note'
-        }
-      });
-
-      if (generatePdfError) throw generatePdfError;
-      setPdfGenerated(true);
-
-      const { data: urlData } = supabase.storage
-        .from('credit_notes')
-        .getPublicUrl(`${creditNoteIdToUse}/credit-note.pdf`);
-
-      if (urlData && urlData.publicUrl) {
-        setPdfUrl(urlData.publicUrl);
-      }
-
-      if (statusToUse === 'pending' || status === 'pending') {
-        setIsSubmittingToStorecove(true);
-
-        const { error: submitError } = await supabase.functions.invoke('submit-credit-note-document', {
-          body: {
-            creditNoteId: creditNoteIdToUse,
-          }
-        });
-
-        if (submitError) {
-          console.error('Storecove submission error:', submitError);
-          toast({
-            variant: 'destructive',
-            title: 'Storecove Submission Failed',
-            description: submitError.message || 'Failed to submit credit note to Storecove.',
-          });
-        } else {
-          toast({
-            title: 'Success',
-            description: 'Credit note submitted to Storecove successfully!',
-          });
-        }
-      }
-
-      if (sendToYuki) {
-        setIsSendingToYuki(true);
-
-        const { error: yukiError } = await supabase.functions.invoke('send-yuki', {
-          body: {
-            creditNoteId: creditNoteIdToUse,
-            type: 'credit_note'
-          }
-        });
-
-        if (yukiError) {
-          console.error('Yuki submission error:', yukiError);
-          toast({
-            variant: 'destructive',
-            title: 'Yuki Submission Failed',
-            description: yukiError.message || 'Failed to submit credit note to Yuki.',
-          });
-        } else {
-          toast({
-            title: 'Success',
-            description: 'Credit note submitted to Yuki successfully!',
-          });
-        }
-      }
-
+      
       toast({
         title: 'Success',
-        description: 'Credit note saved successfully!',
+        description: `Credit note saved as draft.`,
       });
       
       navigate('/creditnotes');
@@ -652,44 +795,341 @@ export function useCreditNoteForm() {
       });
     } finally {
       setIsSubmitting(false);
-      setIsGeneratingPDF(false);
-      setIsSubmittingToStorecove(false);
-      setIsSendingToYuki(false);
     }
-  }, [user, selectedClientId, status, creditNoteNumber, issueDate, notes, total, creditNoteId, items, toast, navigate]);
-
-  const handleAddClient = useCallback(async (clientData: any) => {
-    if (!user) return null;
+  }, [
+    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
+    creditNoteId, isEditMode, id, navigate, getVatGroups, toast
+  ]);
+  
+  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
+    if (!user || !selectedClientId) return null;
     
     try {
-      const newClient = {
-        ...clientData,
+      setIsSubmittingToStorecove(true);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', selectedClientId)
+        .single();
+        
+      if (clientError) throw clientError;
+      
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select(`
+          *,
+          items:credit_note_items(
+            item_id,
+            quantity,
+            total_amount,
+            item:items(*)
+          )
+        `)
+        .eq('id', creditNoteId)
+        .single();
+        
+      if (creditNoteError) throw creditNoteError;
+      
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      
+      let pdfUrl = pdfData.url;
+      if (!pdfUrl) {
+        const { data: urlData } = supabase.storage
+          .from('credit_notes')
+          .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+          
+        if (urlData && urlData.publicUrl) {
+          pdfUrl = urlData.publicUrl;
+        }
+      }
+      
+      const formattedItems = creditNoteData.items.map((item: any) => ({
+        description: item.item ? item.item.title : 'Unknown Item',
+        quantity: item.quantity,
+        unit_price: Math.abs(item.total_amount) / item.quantity,
+        amount: -Math.abs(item.total_amount),
+        vat_rate: item.item?.vat || '21%'
+      }));
+      
+      console.log('Submitting credit note to edge function with data:', {
+        creditNoteId: creditNoteData.id,
+        creditNoteNumber: creditNoteData.credit_note_number,
+        clientId: clientData.id,
+        clientName: clientData.name,
+        itemCount: formattedItems.length,
+        hasPdfBase64: !!pdfData.base64,
+        hasPdfUrl: !!pdfUrl
+      });
+      
+      const { data: submissionResult, error: submissionError } = await supabase
+        .functions
+        .invoke('submit-credit-note-document', {
+          body: {
+            creditNote: creditNoteData,
+            client: clientData,
+            items: formattedItems,
+            companySettings: companyData,
+            pdfBase64: pdfData.base64,
+            pdfUrl: pdfUrl
+          }
+        });
+        
+      if (submissionError) {
+        console.error('Error from edge function:', submissionError);
+        throw submissionError;
+      }
+      
+      console.log('Edge function response:', submissionResult);
+      return submissionResult;
+    } catch (error: any) {
+      console.error('Error submitting to Storecove:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to submit credit note to Storecove.',
+      });
+      return null;
+    } finally {
+      setIsSubmittingToStorecove(false);
+    }
+  }, [user, selectedClientId, supabase, toast]);
+  
+  const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!user || !selectedClientId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a client before sending.',
+      });
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      const vatGroups = getVatGroups();
+      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+      const totalAmount = subtotal + vatTotal;
+      
+      const creditNoteData = {
         user_id: user.id,
-        name: clientData.name || 'New Client',
-        email: clientData.email || '',
-        type: clientData.type || 'business'
+        client_id: selectedClientId,
+        credit_note_number: creditNoteNumber,
+        issue_date: issueDate,
+        status: 'pending' as CreditNoteStatus,
+        amount: subtotal,
+        tax_amount: vatTotal,
+        total_amount: totalAmount,
+        notes: notes
+      };
+      
+      let savedCreditNoteId = creditNoteId;
+      
+      if (isEditMode && id) {
+        const { error: updateError } = await supabase
+          .from('credit_notes')
+          .update(creditNoteData)
+          .eq('id', id);
+          
+        if (updateError) throw updateError;
+        
+        savedCreditNoteId = id;
+        
+        const { error: deleteItemsError } = await supabase
+          .from('credit_note_items')
+          .delete()
+          .eq('credit_note_id', id);
+          
+        if (deleteItemsError) throw deleteItemsError;
+      } else {
+        const { data, error } = await supabase
+          .from('credit_notes')
+          .insert(creditNoteData)
+          .select();
+          
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          savedCreditNoteId = data[0].id;
+          setCreditNoteId(savedCreditNoteId);
+        }
+      }
+      
+      const itemsToInsert = items
+        .filter(item => item.description)
+        .map(item => ({
+          credit_note_id: savedCreditNoteId,
+          item_id: item.description,
+          quantity: item.quantity,
+          total_amount: item.amount
+        }));
+      
+      if (itemsToInsert.length > 0) {
+        const { error: insertItemsError } = await supabase
+          .from('credit_note_items')
+          .insert(itemsToInsert);
+          
+        if (insertItemsError) throw insertItemsError;
+      }
+
+      console.log('Generating PDF for credit note ID:', savedCreditNoteId);
+      const pdfData = await generatePDF(savedCreditNoteId, false);
+      
+      if (pdfData) {
+        console.log('PDF generated successfully');
+        
+        const { error: updateError } = await supabase
+          .from('credit_notes')
+          .update({
+            status: 'pending'
+          })
+          .eq('id', savedCreditNoteId);
+          
+        if (updateError) throw updateError;
+        
+        setStatus('pending');
+        setPdfGenerated(true);
+        
+        console.log('Calling submitToStorecove with credit note ID:', savedCreditNoteId);
+        const storecoveResult = await submitToStorecove(savedCreditNoteId, pdfData);
+        
+        if (storecoveResult) {
+          console.log('Storecove submission successful:', storecoveResult);
+          
+          const savedId = savedCreditNoteId;
+          setCreditNoteId(savedId);
+          
+          if (!storecoveResult.emailSent) {
+            console.log('Email not sent by edge function, sending directly...');
+            const tempSelectedClientId = selectedClientId;
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
+            
+            const sendEmailAfterCreation = async () => {
+              setSelectedClientId(tempSelectedClientId);
+              setCreditNoteId(savedId);
+              
+              try {
+                await handleSendEmail();
+                console.log('Email sent successfully after credit note creation');
+              } catch (emailError) {
+                console.error('Failed to send email after credit note creation:', emailError);
+              }
+            };
+            
+            await sendEmailAfterCreation();
+          }
+          
+          toast({
+            title: 'Success',
+            description: `Credit note created and sent.${storecoveResult.emailSent ? ' Email sent successfully.' : ''}`,
+          });
+        } else {
+          console.warn('Storecove submission returned null result');
+          
+          console.log('Attempting to send email directly after failed Storecove submission');
+          const tempSelectedClientId = selectedClientId;
+          const savedId = savedCreditNoteId;
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
+          
+          const sendEmailAfterCreation = async () => {
+            setSelectedClientId(tempSelectedClientId);
+            setCreditNoteId(savedId);
+            
+            try {
+              await handleSendEmail();
+              console.log('Email sent successfully after credit note creation');
+            } catch (emailError) {
+              console.error('Failed to send email after credit note creation:', emailError);
+            }
+          };
+          
+          await sendEmailAfterCreation();
+          
+          toast({
+            title: 'Partial Success',
+            description: 'Credit note created and email sent, but not sent to Storecove.',
+          });
+        }
+      } else {
+        console.error('PDF generation failed');
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to generate PDF for credit note.',
+        });
+      }
+      
+      navigate('/creditnotes');
+    } catch (error: any) {
+      console.error('Error creating and sending credit note:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to create and send credit note.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
+    creditNoteId, isEditMode, id, navigate, getVatGroups, toast, generatePDF, submitToStorecove,
+    handleSendEmail, setCreditNoteId, setSelectedClientId
+  ]);
+  
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    handleCreateAndSend(e as unknown as React.MouseEvent);
+  }, [handleCreateAndSend]);
+  
+  const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
+    if (!user) return;
+    
+    try {
+      if (!newClient.email || !newClient.name || !newClient.type) {
+        throw new Error('Client requires email, name, and type fields');
+      }
+
+      const clientData = {
+        email: newClient.email,
+        name: newClient.name,
+        type: newClient.type,
+        user_id: user.id,
+        ...(newClient.phone && { phone: newClient.phone }),
+        ...(newClient.street && { street: newClient.street }),
+        ...(newClient.number && { number: newClient.number }),
+        ...(newClient.bus && { bus: newClient.bus }),
+        ...(newClient.postcode && { postcode: newClient.postcode }),
+        ...(newClient.city && { city: newClient.city }),
+        ...(newClient.country && { country: newClient.country }),
+        ...(newClient.vat_number && { vat_number: newClient.vat_number })
       };
       
       const { data, error } = await supabase
         .from('clients')
-        .insert(newClient)
+        .insert(clientData)
         .select();
         
       if (error) throw error;
       
       if (data && data.length > 0) {
-        setSelectedClientId(data[0].id);
         setClients(prevClients => [...prevClients, data[0]]);
+        setSelectedClientId(data[0].id);
         
         toast({
           title: 'Success',
           description: 'Client added successfully.',
         });
-        
-        return data[0];
       }
-      
-      return null;
     } catch (error: any) {
       console.error('Error adding client:', error);
       toast({
@@ -697,9 +1137,30 @@ export function useCreditNoteForm() {
         title: 'Error',
         description: error.message || 'Failed to add client.',
       });
-      return null;
     }
-  }, [user, toast]);
+  }, [user, toast, setClients, setSelectedClientId]);
+  
+  const handleDownloadPDF = useCallback(async () => {
+    if (!pdfUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'No PDF URL available for download.',
+      });
+      return;
+    }
+    
+    try {
+      window.open(pdfUrl, '_blank');
+    } catch (error: any) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to download PDF.',
+      });
+    }
+  }, [pdfUrl, toast]);
   
   return {
     isEditMode,
@@ -708,7 +1169,6 @@ export function useCreditNoteForm() {
     isGeneratingPDF,
     isSendingEmail,
     isSubmittingToStorecove,
-    isSendingToYuki,
     isAddClientModalOpen,
     creditNoteNumber,
     selectedClientId,
@@ -743,7 +1203,6 @@ export function useCreditNoteForm() {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
-    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems

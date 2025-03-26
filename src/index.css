@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -120,20 +119,7 @@
   }
   
   /* Credit note page gradient */
-  body.credit-note-page,
   .credit-note-page {
-    background: linear-gradient(
-      135deg,
-      rgb(var(--credit-note-gradient-start)) 0%,
-      rgb(var(--credit-note-gradient-end)) 100%
-    );
-    background-attachment: fixed;
-  }
-  
-  /* Handle the sidebar, header and dialog content in credit note pages */
-  .credit-note-page.bg-gradient-sidebar,
-  .credit-note-page.bg-gradient-header,
-  .credit-note-page .bg-gradient-sidebar {
     background: linear-gradient(
       135deg,
       rgb(var(--credit-note-gradient-start)) 0%,

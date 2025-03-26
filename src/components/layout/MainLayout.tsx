@@ -35,23 +35,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
-  // Check if on credit note pages
-  const isCreditNotePage = location.pathname.includes('/creditnotes');
-  
-  // Add class to body when on credit note pages
-  useEffect(() => {
-    if (isCreditNotePage) {
-      document.body.classList.add('credit-note-page');
-    } else {
-      document.body.classList.remove('credit-note-page');
-    }
-    
-    // Cleanup function to remove class when component unmounts
-    return () => {
-      document.body.classList.remove('credit-note-page');
-    };
-  }, [isCreditNotePage]);
-
   useEffect(() => {
     if (!user) {
       toast.error("Please log in to access this page");
@@ -107,11 +90,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <div className={cn("min-h-screen flex flex-col w-full", isCreditNotePage && "credit-note-page")}>
+    <div className="min-h-screen flex flex-col w-full">
       <Header />
 
       <div className="flex flex-1 w-full">
-        <nav className={cn("hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 backdrop-blur-sm bg-gradient-sidebar", isCreditNotePage && "credit-note-page")}>
+        <nav className="hidden md:block w-64 border-r border-border/40 h-[calc(100vh-4rem)] sticky top-16 flex-shrink-0 backdrop-blur-sm bg-gradient-sidebar">
           <div className="flex flex-col h-full justify-between">
             <div className="flex flex-col p-4 gap-2">
               {navItems.map((item) => {
@@ -185,7 +168,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
       {/* Bottom navigation - hidden when more menu is open */}
       {!moreMenuOpen && (
-        <div className={cn("fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar", isCreditNotePage && "credit-note-page")}>
+        <div className="fixed bottom-0 left-0 right-0 h-20 backdrop-blur-apple border-t border-sidebar-border flex md:hidden z-30 bg-gradient-sidebar">
           <Link
             to="/settings"
             className={cn(
@@ -224,10 +207,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
       <Dialog open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
         <DialogContent
-          className={cn("md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 data-[state=open]:animate-slide-in-up data-[state=closed]:animate-slide-out-down", isCreditNotePage && "credit-note-page")}
+          className="md:hidden p-0 border-none max-w-full h-[100vh] rounded-t-xl rounded-b-none bottom-0 top-auto translate-y-0 data-[state=open]:animate-slide-in-up data-[state=closed]:animate-slide-out-down"
           hideCloseButton={true}
         >
-          <div className="flex flex-col h-full bg-gradient-sidebar">
+          <div className="flex flex-col h-full bg-gradient-sidebar ">
             <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse">
               {moreNavItems.map((item, index) => {
                 const Icon = item.icon;
