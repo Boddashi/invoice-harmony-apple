@@ -901,8 +901,8 @@ export function useCreditNoteForm() {
         if (storecoveResult) {
           console.log('Storecove submission successful:', storecoveResult);
           
-          const creditNoteIdForEmail = savedCreditNoteId;
-          setCreditNoteId(creditNoteIdForEmail);
+          const savedId = savedCreditNoteId;
+          setCreditNoteId(savedId);
           
           if (!storecoveResult.emailSent) {
             console.log('Email not sent by edge function, sending directly...');
@@ -911,7 +911,7 @@ export function useCreditNoteForm() {
             
             const sendEmailAfterCreation = async () => {
               setSelectedClientId(tempSelectedClientId);
-              setCreditNoteId(creditNoteIdForEmail);
+              setCreditNoteId(savedId);
               
               try {
                 await handleSendEmail();
@@ -933,11 +933,12 @@ export function useCreditNoteForm() {
           
           console.log('Attempting to send email directly after failed Storecove submission');
           const tempSelectedClientId = selectedClientId;
+          const savedId = savedCreditNoteId;
           await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
           
           const sendEmailAfterCreation = async () => {
             setSelectedClientId(tempSelectedClientId);
-            setCreditNoteId(creditNoteIdForEmail);
+            setCreditNoteId(savedId);
             
             try {
               await handleSendEmail();
@@ -1089,7 +1090,7 @@ export function useCreditNoteForm() {
       setIsSendingEmail(false);
     }
   }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
-  
+
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
     
