@@ -2,14 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
-import CustomCard from "../components/ui/CustomCard";
-import { ArrowLeft, Download, Mail, Printer } from "lucide-react";
+import { ArrowLeft, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { generateCreditNotePDF } from "@/utils/creditNotePdfGenerator";
-import CreditNoteHeader from "@/components/creditnotes/CreditNoteHeader";
 import CreditNoteBasicInfo from "@/components/creditnotes/CreditNoteBasicInfo";
 import CreditNoteFrom from "@/components/creditnotes/CreditNoteFrom";
 import CreditNoteItems from "@/components/creditnotes/CreditNoteItems";
@@ -65,6 +62,7 @@ const ViewCreditNote = () => {
   const [creditNoteData, setCreditNoteData] = useState<CreditNoteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [formattedItems, setFormattedItems] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCreditNoteData = async () => {
@@ -99,8 +97,8 @@ const ViewCreditNote = () => {
         if (itemsError) throw itemsError;
 
         // Format the items
-        const formattedItems = creditNoteItems.map((item) => ({
-          id: item.item.id,
+        const items = creditNoteItems.map((item) => ({
+          id: item.id,
           title: item.item.title,
           price: item.item.price,
           quantity: item.quantity,
@@ -108,22 +106,29 @@ const ViewCreditNote = () => {
           vat: item.item.vat,
         }));
 
+        // Format items for the CreditNoteItems component
+        const formattedItemsForComponent = creditNoteItems.map((item) => ({
+          id: item.id,
+          description: item.item_id,
+          quantity: item.quantity,
+          unit_price: Math.abs(item.total_amount) / item.quantity,
+          amount: item.total_amount,
+          vat_rate: item.item.vat,
+        }));
+
+        setFormattedItems(formattedItemsForComponent);
         setCreditNoteData({
           ...creditNoteData,
-          items: formattedItems,
+          items,
         });
 
-        // Check if PDF exists and get URL
-        if (creditNoteData.pdf_url) {
-          setPdfUrl(creditNoteData.pdf_url);
-        } else {
-          const { data: urlData } = supabase.storage
-            .from('credit_notes')
-            .getPublicUrl(`${id}/credit-note.pdf`);
-            
-          if (urlData && urlData.publicUrl) {
-            setPdfUrl(urlData.publicUrl);
-          }
+        // Check for PDF URL in storage
+        const { data: urlData } = supabase.storage
+          .from('credit_notes')
+          .getPublicUrl(`${id}/credit-note.pdf`);
+          
+        if (urlData && urlData.publicUrl) {
+          setPdfUrl(urlData.publicUrl);
         }
       } catch (error: any) {
         console.error("Error fetching credit note data:", error);
@@ -146,100 +151,36 @@ const ViewCreditNote = () => {
   };
 
   const handleDownloadPDF = async () => {
-    if (!creditNoteData || !user) return;
-
-    if (pdfUrl) {
-      // If PDF URL exists, open it in a new tab
-      window.open(pdfUrl, '_blank');
+    if (!creditNoteData || !pdfUrl) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "PDF not available for download",
+      });
       return;
     }
 
     try {
-      toast({
-        title: "Generating PDF",
-        description: "Please wait...",
-      });
-
-      // Prepare data for PDF generation
-      const clientAddress = formatAddress(creditNoteData.client);
-      
-      const pdfData = {
-        id: creditNoteData.id,
-        credit_note_number: creditNoteData.credit_note_number,
-        issue_date: creditNoteData.issue_date,
-        client_name: creditNoteData.client?.name || "",
-        client_address: clientAddress,
-        client_vat: creditNoteData.client?.vat_number,
-        user_email: user.email || "",
-        items: formatItems(creditNoteData.items || []),
-        subTotal: creditNoteData.amount,
-        taxAmount: creditNoteData.tax_amount || 0,
-        total: creditNoteData.total_amount,
-        notes: creditNoteData.notes,
-        currencySymbol: currencySymbol
-      };
-
-      const pdfBlob = await generateCreditNotePDF(pdfData);
-      
-      // Convert the base64 data to a Blob
-      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
-      const blob = await base64Response.blob();
-      
-      // Create a URL for the blob
-      const pdfObjectUrl = URL.createObjectURL(blob);
-      
-      // Open the PDF in a new tab
-      window.open(pdfObjectUrl, '_blank');
-      
-      toast({
-        title: "Success",
-        description: "PDF generated successfully",
-      });
+      window.open(pdfUrl, '_blank');
     } catch (error: any) {
-      console.error("Error generating PDF:", error);
+      console.error("Error downloading PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to generate PDF",
+        description: error.message || "Failed to download PDF",
       });
     }
   };
 
-  // Helper function to format address
-  const formatAddress = (client?: CreditNoteData['client']) => {
-    if (!client) return "";
-    
-    const parts = [
-      client.street && client.number ? `${client.street} ${client.number}${client.bus ? `, ${client.bus}` : ''}` : undefined,
-      client.postcode && client.city ? `${client.postcode} ${client.city}` : undefined,
-      client.country
-    ].filter(Boolean);
-    
-    return parts.length > 0 ? parts.join(', ') : "";
-  };
-
-  // Helper function to format items for PDF generation
-  const formatItems = (items: CreditNoteData['items']) => {
-    if (!items || !items.length) return [];
-    
-    return items.map(item => ({
-      description: item.title,
-      quantity: item.quantity,
-      unit_price: item.price,
-      vat_rate: item.vat,
-      amount: item.total_amount
-    }));
-  };
-
-  // Calculate VAT groups
+  // Calculate VAT groups for the summary
   const getVatGroups = (): VatGroup[] => {
-    if (!creditNoteData || !creditNoteData.items) return [];
+    if (!creditNoteData || !formattedItems || !formattedItems.length) return [];
     
     const groups = new Map<string, VatGroup>();
     
-    creditNoteData.items.forEach(item => {
-      const vatRate = item.vat;
-      const amount = item.total_amount;
+    formattedItems.forEach(item => {
+      const vatRate = item.vat_rate;
+      const amount = item.amount;
       
       if (amount === 0) return;
       
@@ -268,20 +209,6 @@ const ViewCreditNote = () => {
     return Array.from(groups.values());
   };
 
-  // Format credit note items for CreditNoteItems component
-  const formatCreditNoteItems = () => {
-    if (!creditNoteData || !creditNoteData.items) return [];
-    
-    return creditNoteData.items.map(item => ({
-      id: item.id,
-      description: item.id,
-      quantity: item.quantity,
-      unit_price: item.price,
-      amount: item.total_amount,
-      vat_rate: item.vat
-    }));
-  };
-
   const renderStatus = () => {
     if (!creditNoteData) return null;
     
@@ -290,11 +217,11 @@ const ViewCreditNote = () => {
         case 'draft':
           return 'bg-gray-100 text-gray-600 border-gray-200';
         case 'pending':
-          return 'bg-apple-orange/10 text-apple-orange border-apple-orange/20';
+          return 'bg-amber-100 text-amber-600 border-amber-200';
         case 'paid':
-          return 'bg-apple-green/10 text-apple-green border-apple-green/20';
+          return 'bg-green-100 text-green-600 border-green-200';
         case 'overdue':
-          return 'bg-apple-red/10 text-apple-red border-apple-red/20';
+          return 'bg-red-100 text-red-600 border-red-200';
         default:
           return 'bg-gray-100 text-gray-600 border-gray-200';
       }
@@ -371,6 +298,7 @@ const ViewCreditNote = () => {
             <button 
               onClick={handleDownloadPDF} 
               className="flex items-center gap-2 apple-button rounded-full"
+              disabled={!pdfUrl}
             >
               <Download size={18} />
               <span>Download PDF</span>
@@ -378,19 +306,11 @@ const ViewCreditNote = () => {
           </div>
           
           {/* Credit Note Form */}
-          <form className="space-y-6">
+          <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <CreditNoteBasicInfo
                 creditNoteNumber={creditNoteData.credit_note_number}
                 issueDate={creditNoteData.issue_date}
-                selectedClientId={creditNoteData.client_id}
-                clients={[]}
-                setSelectedClientId={() => {}}
-                setIssueDate={() => {}}
-                setCreditNoteNumber={() => {}}
-                isAddClientModalOpen={false}
-                setIsAddClientModalOpen={() => {}}
-                isEditMode={false}
                 readOnly={true}
               />
               
@@ -401,17 +321,10 @@ const ViewCreditNote = () => {
             </div>
             
             <CreditNoteItems
-              items={formatCreditNoteItems()}
+              items={formattedItems}
               availableItems={[]}
-              setItems={() => {}}
-              handleItemDescriptionChange={() => {}}
-              handleItemQuantityChange={() => {}}
-              handleItemUnitPriceChange={() => {}}
-              handleItemVatChange={() => {}}
-              handleAddItem={() => {}}
-              handleRemoveItem={() => {}}
-              currencySymbol={currencySymbol}
               vats={[]}
+              currencySymbol={currencySymbol}
               readOnly={true}
             />
             
@@ -419,20 +332,18 @@ const ViewCreditNote = () => {
               {creditNoteData.notes && (
                 <CreditNoteNotes
                   notes={creditNoteData.notes}
-                  setNotes={() => {}}
                   readOnly={true}
                 />
               )}
               
               <CreditNoteSummary
-                items={formatCreditNoteItems()}
+                vatGroups={getVatGroups()}
                 total={creditNoteData.total_amount}
                 currencySymbol={currencySymbol}
-                getVatGroups={() => getVatGroups()}
                 readOnly={true}
               />
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </MainLayout>

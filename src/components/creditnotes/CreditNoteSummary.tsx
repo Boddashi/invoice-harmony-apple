@@ -9,15 +9,17 @@ interface VatGroup {
 }
 
 interface CreditNoteSummaryProps {
-  vatGroups: VatGroup[];
+  vatGroups?: VatGroup[];
   total: number;
   currencySymbol: string;
+  readOnly?: boolean;
 }
 
 const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
-  vatGroups,
+  vatGroups = [],
   total,
   currencySymbol,
+  readOnly = false,
 }) => {
   const subtotal = vatGroups.reduce((acc, group) => acc + group.value, 0);
   const vatTotal = vatGroups.reduce((acc, group) => acc + group.amount, 0);
@@ -50,7 +52,7 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
         
         <div className="border-t border-border pt-4 flex justify-between">
           <span className="font-medium">Total</span>
-          <span className="font-bold text-lg">{currencySymbol}{formatAmount(calculatedTotal)}</span>
+          <span className="font-bold text-lg">{currencySymbol}{formatAmount(calculatedTotal || total)}</span>
         </div>
       </div>
     </CustomCard>
