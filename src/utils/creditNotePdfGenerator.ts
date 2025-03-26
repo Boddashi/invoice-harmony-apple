@@ -1,6 +1,6 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings } from '@/models/CompanySettings';
+import { toast } from 'sonner';
 
 // Get the Supabase URL from the environment or use the hardcoded value
 const SUPABASE_URL = "https://sjwqxbjxjlsdngbldhcq.supabase.co";
@@ -185,43 +185,52 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
       </html>
     `;
 
-    console.log("Calling generate-pdf function...");
+    console.log("Calling generate-pdf function with size:", html.length, "characters");
     
     // Use the constant SUPABASE_URL instead of accessing the protected property
     if (!SUPABASE_URL) {
       console.error("Failed to get Supabase URL");
       throw new Error("Missing Supabase URL configuration");
     }
-    
-    // Call the Supabase edge function to generate the PDF using supabase.functions.invoke
-    const response = await supabase.functions.invoke("generate-pdf", {
-      body: { 
-        html, 
-        filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
+
+    try {
+      // Call the Supabase edge function to generate the PDF using supabase.functions.invoke
+      const response = await supabase.functions.invoke("generate-pdf", {
+        body: { 
+          html, 
+          filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
+        }
+      });
+
+      if (!response.data || response.error) {
+        console.error("Error response from generate-pdf function:", response.error);
+        toast.error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
+        throw new Error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
       }
-    });
 
-    if (!response.data || response.error) {
-      console.error("Error response from generate-pdf function:", response.error);
-      throw new Error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
+      const pdfResult = response.data;
+
+      if (!pdfResult?.url || !pdfResult?.base64) {
+        console.error("Missing PDF data in response:", pdfResult);
+        toast.error('Failed to generate PDF: No URL or base64 data returned');
+        throw new Error('Failed to generate PDF: No URL or base64 data returned');
+      }
+
+      console.log("PDF generated successfully with URL:", pdfResult.url);
+      
+      // After generating the PDF, we'll save it to the credit_notes bucket
+      const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
+      
+      // Return both the temporary URL and the base64 data
+      return { url: pdfUrl, base64: pdfResult.base64 };
+    } catch (error: any) {
+      console.error('Error calling generate-pdf function:', error);
+      toast.error(`PDF generation failed: ${error.message || 'Unknown error'}`);
+      throw error;
     }
-
-    const pdfResult = response.data;
-
-    if (!pdfResult?.url || !pdfResult?.base64) {
-      console.error("Missing PDF data in response:", pdfResult);
-      throw new Error('Failed to generate PDF: No URL or base64 data returned');
-    }
-
-    console.log("PDF generated successfully with URL:", pdfResult.url);
-    
-    // After generating the PDF, we'll save it to the credit_notes bucket
-    const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
-    
-    // Return both the temporary URL and the base64 data
-    return { url: pdfUrl, base64: pdfResult.base64 };
   } catch (error: any) {
     console.error('Error generating credit note PDF:', error);
+    toast.error(`PDF generation failed: ${error.message || 'Unknown error'}`);
     throw error;
   }
 };
