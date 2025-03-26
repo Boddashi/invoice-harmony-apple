@@ -1091,13 +1091,6 @@ export function useCreditNoteForm() {
     }
   }, [pdfUrl]);
   
-  const handleSendEmail = useCallback(() => {
-    toast({
-      title: "Info",
-      description: "Email functionality will be implemented soon.",
-    });
-  }, [toast]);
-
   return {
     isEditMode,
     isLoading,
@@ -1142,4 +1135,3 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
-
