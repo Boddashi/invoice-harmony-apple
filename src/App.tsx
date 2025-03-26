@@ -13,6 +13,7 @@ import Invoices from './pages/Invoices';
 import NewInvoice from './pages/NewInvoice';
 import CreditNotes from './pages/CreditNotes';
 import NewCreditNote from './pages/NewCreditNote';
+import ViewCreditNote from './pages/ViewCreditNote';
 import Settings from './pages/Settings';
 import Reports from './pages/Reports';
 import NotFound from './pages/NotFound';
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/creditnotes" element={<CreditNotes />} />
                 <Route path="/creditnotes/new" element={<NewCreditNote />} />
                 <Route path="/creditnotes/edit/:id" element={<NewCreditNote />} />
+                <Route path="/creditnotes/view/:id" element={<ViewCreditNote />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="*" element={<NotFound />} />
