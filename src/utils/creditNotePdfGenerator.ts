@@ -350,11 +350,22 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
 
     console.log("PDF uploaded successfully:", data);
 
-    // Update the credit note record with the PDF reference
-    // Use the status field since pdf_stored doesn't exist in the table schema
+    // Get the public URL for the uploaded PDF
+    const { data: urlData } = supabase.storage
+      .from('credit_notes')
+      .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+    if (!urlData || !urlData.publicUrl) {
+      throw new Error("Failed to get public URL for the PDF");
+    }
+    
+    // Update the credit note record with the PDF URL
     const { error: updateError } = await supabase
       .from('credit_notes')
-      .update({ status: 'pending' })
+      .update({ 
+        pdf_url: urlData.publicUrl,
+        status: 'pending' 
+      })
       .eq('id', creditNoteId);
 
     if (updateError) {
@@ -362,7 +373,7 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
       throw updateError;
     }
 
-    console.log("Credit note record updated with PDF reference");
+    console.log("Credit note record updated with PDF URL:", urlData.publicUrl);
   } catch (error: any) {
     console.error('Error saving credit note PDF:', error);
     throw error;
