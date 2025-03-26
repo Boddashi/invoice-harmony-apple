@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 
 interface CreditNoteHeaderProps {
   isEditMode: boolean;
@@ -61,7 +61,11 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
         ) : (
           <>
             {pdfUrl && (
-              <button onClick={handleDownloadPDF} className="secondary-button">
+              <button 
+                onClick={handleDownloadPDF} 
+                className="secondary-button flex items-center gap-2"
+              >
+                <Download size={16} />
                 Download PDF
               </button>
             )}

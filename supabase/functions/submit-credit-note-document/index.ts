@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -68,6 +67,44 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
+    }
+
+    // Store PDF in the credit_notes storage bucket if pdfBase64 is provided
+    if (pdfBase64) {
+      try {
+        console.log("Storing PDF in credit_notes bucket...");
+        
+        // Convert base64 to blob
+        const base64Data = pdfBase64.split(',')[1];
+        const binaryString = atob(base64Data);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const formData = new FormData();
+        formData.append('file', blob, `credit-note-${creditNote.credit_note_number}.pdf`);
+        
+        // Use Supabase Storage API to store the file
+        const storageUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/credit_notes/${creditNote.id}/credit-note.pdf`;
+        const storageResponse = await fetch(storageUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+          },
+          body: formData,
+        });
+        
+        if (!storageResponse.ok) {
+          console.error("Storage API error:", await storageResponse.text());
+        } else {
+          console.log("PDF stored successfully in credit_notes bucket");
+        }
+      } catch (storageError) {
+        console.error("Error storing PDF:", storageError);
+        // Continue execution even if PDF storage fails
+      }
     }
 
     // Validate PDF data for email attachment

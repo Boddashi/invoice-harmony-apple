@@ -5,6 +5,7 @@ import { supabase } from '../integrations/supabase/client';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { useToast } from './use-toast';
+import { generateCreditNotePDF, saveCreditNotePDF } from '@/utils/creditNotePdfGenerator';
 
 interface Client {
   id: string;
@@ -586,159 +587,70 @@ export function useCreditNoteForm() {
 
       if (creditNoteError) throw creditNoteError;
 
-      const { data: companyData, error: companyError } = await supabase
-        .from('company_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      console.log("Retrieved credit note data for PDF generation:", {
+        id: creditNoteData.id,
+        number: creditNoteData.credit_note_number,
+        clientName: creditNoteData.client.name,
+        itemCount: creditNoteData.items.length
+      });
 
-      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      const formattedItems = creditNoteData.items.map(item => ({
+        description: item.item ? item.item.title : 'Unknown Item',
+        quantity: item.quantity,
+        unit_price: Math.abs(item.total_amount) / item.quantity,
+        vat_rate: item.item?.vat || '0%',
+        amount: item.total_amount
+      }));
 
-      const html = `
-        <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-              .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-              .logo { max-width: 200px; max-height: 80px; }
-              .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; color: #FF3B30; }
-              .info-section { margin-bottom: 20px; }
-              .label { font-weight: bold; margin-bottom: 3px; color: #666; }
-              .value { margin-bottom: 10px; }
-              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-              th { background-color: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
-              td { padding: 10px; border-bottom: 1px solid #ddd; }
-              .amount { text-align: right; }
-              .total { font-weight: bold; }
-              .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
-              .credit-note-label { color: #FF3B30; font-weight: bold; }
-              .negative-amount { color: #FF3B30; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div>
-                ${companyData?.logo_url ? `<img src="${companyData.logo_url}" class="logo" alt="Company Logo">` : ''}
-                <div style="margin-top: 10px;">
-                  <div><strong>${companyData?.company_name || 'Your Company'}</strong></div>
-                  <div>${companyData?.street || ''} ${companyData?.number || ''} ${companyData?.bus ? ', ' + companyData.bus : ''}</div>
-                  <div>${companyData?.postal_code || ''} ${companyData?.city || ''} ${companyData?.country ? ', ' + companyData.country : ''}</div>
-                  ${companyData?.vat_number ? `<div>VAT: ${companyData.vat_number}</div>` : ''}
-                </div>
-              </div>
-              <div style="text-align: right;">
-                <div class="title">CREDIT NOTE</div>
-                <div><strong>Number:</strong> ${creditNoteData.credit_note_number}</div>
-                <div><strong>Date:</strong> ${new Date(creditNoteData.issue_date).toLocaleDateString()}</div>
-              </div>
-            </div>
-            
-            <div style="display: flex; justify-content: space-between;">
-              <div class="info-section" style="flex: 1;">
-                <div class="label">Bill To:</div>
-                <div class="value"><strong>${creditNoteData.client.name}</strong></div>
-                <div class="value">${creditNoteData.client.street || ''} ${creditNoteData.client.number || ''} ${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}</div>
-                <div class="value">${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}</div>
-                ${creditNoteData.client.vat_number ? `<div class="value">VAT: ${creditNoteData.client.vat_number}</div>` : ''}
-              </div>
-              
-              <div class="info-section" style="flex: 1; text-align: right;">
-                <div class="label">Status:</div>
-                <div class="value">${creditNoteData.status.toUpperCase()}</div>
-                ${companyData?.iban ? `
-                <div class="label" style="margin-top: 15px;">Bank Account:</div>
-                <div class="value">${companyData.iban}</div>
-                ${companyData?.bank_name ? `<div class="value">${companyData.bank_name}</div>` : ''}
-                ${companyData?.swift ? `<div class="value">BIC/SWIFT: ${companyData.swift}</div>` : ''}
-                ` : ''}
-              </div>
-            </div>
-            
-            <table>
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Quantity</th>
-                  <th>Unit Price</th>
-                  <th>VAT</th>
-                  <th class="amount">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${creditNoteData.items.map(item => `
-                  <tr>
-                    <td>${item.item ? item.item.title : 'Unknown Item'}</td>
-                    <td>${item.quantity}</td>
-                    <td>${currencySymbol}${(item.total_amount / item.quantity).toFixed(2)}</td>
-                    <td>${item.item?.vat || '0%'}</td>
-                    <td class="amount negative-amount">-${currencySymbol}${Math.abs(item.total_amount).toFixed(2)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            
-            <div style="margin-left: auto; width: 300px; margin-top: 20px;">
-              <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                <div>Subtotal:</div>
-                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.amount).toFixed(2)}</div>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                <div>Tax:</div>
-                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.tax_amount || 0).toFixed(2)}</div>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #ddd; font-weight: bold;">
-                <div>Total:</div>
-                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.total_amount).toFixed(2)}</div>
-              </div>
-            </div>
-            
-            ${creditNoteData.notes ? `
-            <div style="margin-top: 30px;">
-              <div class="label">Notes:</div>
-              <div class="value">${creditNoteData.notes}</div>
-            </div>
-            ` : ''}
-            
-            <div class="footer">
-              <p>This is a credit note for services or goods previously invoiced.</p>
-              ${companyData?.terms_and_conditions_url ? `
-              <p><a href="${companyData.terms_and_conditions_url}" target="_blank">View our Terms and Conditions</a></p>
-              ` : ''}
-              <p>${companyData?.company_name || 'Your Company'} - ${companyData?.company_email || ''} ${companyData?.company_phone ? '- ' + companyData.company_phone : ''}</p>
-            </div>
-          </body>
-        </html>
-      `;
+      const clientAddress = [
+        creditNoteData.client.street ? `${creditNoteData.client.street} ${creditNoteData.client.number || ''}${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}` : '',
+        `${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}`
+      ].filter(Boolean).join('\n');
 
-      const { data: pdfResult, error: pdfError } = await supabase
-        .functions
-        .invoke('generate-pdf', {
-          body: { html, filename: `credit-note-${creditNoteData.credit_note_number}.pdf` }
-        });
+      const pdfData = {
+        id: creditNoteData.id,
+        credit_note_number: creditNoteData.credit_note_number,
+        issue_date: creditNoteData.issue_date,
+        client_name: creditNoteData.client.name,
+        client_address: clientAddress,
+        client_vat: creditNoteData.client.vat_number,
+        user_email: user.email || '',
+        items: formattedItems,
+        subTotal: creditNoteData.amount,
+        taxAmount: creditNoteData.tax_amount || 0,
+        total: creditNoteData.total_amount,
+        notes: creditNoteData.notes,
+        currencySymbol: currencySymbol
+      };
 
-      if (pdfError) throw pdfError;
+      console.log("Calling generateCreditNotePDF with data:", {
+        id: pdfData.id,
+        number: pdfData.credit_note_number,
+        itemCount: pdfData.items.length
+      });
 
-      if (pdfResult?.url) {
-        setPdfUrl(pdfResult.url);
-
-        if (shouldUpdateStatus) {
-          const { error: updateError } = await supabase
-            .from('credit_notes')
-            .update({
-              pdf_url: pdfResult.url,
-              status: 'pending'
-            })
-            .eq('id', creditNoteId);
-
-          if (updateError) throw updateError;
-          
-          setStatus('pending');
-        }
-
-        return { url: pdfResult.url, base64: pdfResult.base64 };
+      const pdfResult = await generateCreditNotePDF(pdfData);
+      
+      if (!pdfResult || !pdfResult.url) {
+        throw new Error("Failed to generate PDF: No URL returned");
       }
 
-      throw new Error('Failed to generate PDF: No URL returned');
+      if (shouldUpdateStatus) {
+        const { error: updateError } = await supabase
+          .from('credit_notes')
+          .update({
+            pdf_url: pdfResult.url,
+            status: 'pending'
+          })
+          .eq('id', creditNoteId);
+
+        if (updateError) throw updateError;
+        
+        setStatus('pending');
+      }
+
+      setPdfUrl(pdfResult.url);
+      return pdfResult;
     } catch (error: any) {
       console.error('Error generating PDF:', error);
       toast({
@@ -1162,3 +1074,4 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
+
