@@ -8,12 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import CreditNoteHeader from "@/components/creditnotes/CreditNoteHeader";
-import CreditNoteFrom from "@/components/creditnotes/CreditNoteFrom";
-import CreditNoteBasicInfo from "@/components/creditnotes/CreditNoteBasicInfo";
-import CreditNoteItems from "@/components/creditnotes/CreditNoteItems";
-import CreditNoteNotes from "@/components/creditnotes/CreditNoteNotes";
-import CreditNoteSummary from "@/components/creditnotes/CreditNoteSummary";
 import { generateCreditNotePDF } from "@/utils/creditNotePdfGenerator";
 
 interface CreditNoteData {
@@ -47,6 +41,12 @@ interface CreditNoteData {
     total_amount: number;
     vat: string;
   }[];
+}
+
+interface VatGroup {
+  rate: string;
+  value: number;
+  amount: number;
 }
 
 const ViewCreditNote = () => {
@@ -149,7 +149,7 @@ const ViewCreditNote = () => {
       const pdfBlob = await generateCreditNotePDF(pdfData);
       
       // Convert the base64 data to a Blob
-      const base64Response = await fetch(pdfBlob.base64);
+      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
       const blob = await base64Response.blob();
       
       const pdfUrl = URL.createObjectURL(blob);
@@ -195,7 +195,7 @@ const ViewCreditNote = () => {
       const pdfBlob = await generateCreditNotePDF(pdfData);
       
       // Convert the base64 data to a Blob
-      const base64Response = await fetch(pdfBlob.base64);
+      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
       const blob = await base64Response.blob();
       
       const pdfUrl = URL.createObjectURL(blob);
@@ -253,15 +253,12 @@ const ViewCreditNote = () => {
       // Generate PDF
       const pdfBlob = await generateCreditNotePDF(pdfData);
       
-      // Get base64 data
-      const base64data = pdfBlob.base64;
-      
       // Send email with PDF attachment
       const { error } = await supabase.functions.invoke("send-invoice-email", {
         body: {
           to: creditNoteData.client?.email,
           subject: `Credit Note ${creditNoteData.credit_note_number}`,
-          pdfBase64: base64data,
+          pdfBase64: pdfBlob.base64,
           fileName: `credit-note-${creditNoteData.credit_note_number}.pdf`,
           creditNote: true,
         },
@@ -329,18 +326,23 @@ const ViewCreditNote = () => {
     );
   }
 
-  // Format items for the CreditNoteItems component
-  const formattedItems = creditNoteData.items?.map(item => ({
-    id: item.id,
-    description: item.title,
-    quantity: item.quantity,
-    unit_price: item.price,
-    amount: item.total_amount,
-    vat_rate: item.vat
-  })) || [];
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return 'bg-gray-100 text-gray-600 border-gray-200';
+      case 'pending':
+        return 'bg-apple-orange/10 text-apple-orange border-apple-orange/20';
+      case 'paid':
+        return 'bg-apple-green/10 text-apple-green border-apple-green/20';
+      case 'overdue':
+        return 'bg-apple-red/10 text-apple-red border-apple-red/20';
+      default:
+        return 'bg-gray-100 text-gray-600 border-gray-200';
+    }
+  };
 
   // Calculate VAT groups for the summary component
-  const vatGroups = creditNoteData.items?.reduce((groups, item) => {
+  const vatGroups = creditNoteData.items?.reduce((groups: VatGroup[], item) => {
     const vatRate = item.vat;
     const amount = item.total_amount;
     
@@ -364,122 +366,181 @@ const ViewCreditNote = () => {
     });
     
     return groups;
-  }, [] as Array<{rate: string, value: number, amount: number}>);
+  }, [] as VatGroup[]) || [];
 
   return (
     <MainLayout>
-      <div className="w-full max-w-5xl mx-auto px-4 space-y-8 animate-fade-in">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-4">
-          <button
-            onClick={handleGoBack}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft size={18} />
-            <span>Back to Credit Notes</span>
-          </button>
-
+      <div className="max-w-5xl mx-auto space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrint}
-              className="apple-button-secondary flex items-center gap-2 w-full sm:w-auto py-2 px-3"
+            <button 
+              onClick={handleGoBack}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
             >
-              <Printer size={18} />
-              <span className="hidden sm:inline">Print</span>
+              <ArrowLeft size={20} />
             </button>
-            <button
-              onClick={handleDownload}
-              className="apple-button-secondary flex items-center gap-2 w-full sm:w-auto py-2 px-3"
-            >
-              <Download size={18} />
-              <span className="hidden sm:inline">Download</span>
-            </button>
-            <button
-              onClick={handleSendEmail}
-              className="apple-button flex items-center gap-2 w-full sm:w-auto py-2 px-3"
-            >
-              <Mail size={18} />
-              <span className="hidden sm:inline">Email</span>
-            </button>
+            <h2 className="text-xl font-semibold">View Credit Note</h2>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1 text-sm font-medium border rounded-full ${getStatusBadgeColor(creditNoteData.status)}`}>
+              {creditNoteData.status.charAt(0).toUpperCase() + creditNoteData.status.slice(1)}
+            </span>
+            
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-secondary transition-colors"
+              >
+                <Printer size={16} />
+                <span className="hidden sm:inline">Print</span>
+              </button>
+              <button
+                onClick={handleDownload}
+                className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-secondary transition-colors"
+              >
+                <Download size={16} />
+                <span className="hidden sm:inline">Download</span>
+              </button>
+              <button
+                onClick={handleSendEmail}
+                className="flex items-center gap-2 apple-button rounded-full px-4 py-2"
+              >
+                <Mail size={16} />
+                <span className="hidden sm:inline">Email</span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <CustomCard className="p-6 md:p-8 shadow-md">
-          <div className="space-y-8">
-            <h1 className="text-2xl font-semibold">Credit Note {creditNoteData.credit_note_number}</h1>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <CreditNoteFrom 
-                userEmail={user?.email} 
-              />
-              <div className="space-y-4">
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Credit Note Number</p>
-                  <p className="font-medium">{creditNoteData.credit_note_number}</p>
-                </div>
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Issue Date</p>
-                  <p className="font-medium">{new Date(creditNoteData.issue_date).toLocaleDateString()}</p>
-                </div>
-                <div className="text-sm">
-                  <p className="text-muted-foreground">Client</p>
-                  <p className="font-medium">{creditNoteData.client?.name}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-2 text-left">Item</th>
-                    <th className="px-4 py-2 text-right">Quantity</th>
-                    <th className="px-4 py-2 text-right">Unit Price</th>
-                    <th className="px-4 py-2 text-right">VAT</th>
-                    <th className="px-4 py-2 text-right">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {formattedItems.map((item) => (
-                    <tr key={item.id} className="border-b border-border/30">
-                      <td className="px-4 py-3">{item.description}</td>
-                      <td className="px-4 py-3 text-right">{item.quantity}</td>
-                      <td className="px-4 py-3 text-right">{currencySymbol}{item.unit_price.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-right">{item.vat_rate}</td>
-                      <td className="px-4 py-3 text-right font-medium">{currencySymbol}{item.amount.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {creditNoteData.notes && (
-                <div className="space-y-2">
-                  <h3 className="text-lg font-medium">Notes</h3>
-                  <p className="text-sm text-muted-foreground">{creditNoteData.notes}</p>
-                </div>
-              )}
-              <div className="space-y-4 md:ml-auto md:w-64">
-                {vatGroups?.map((group, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal ({group.rate})</span>
-                      <span>{currencySymbol}{group.value.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">VAT {group.rate}</span>
-                      <span>{currencySymbol}{group.amount.toFixed(2)}</span>
+        
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading credit note...</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <CustomCard>
+                  <div className="p-4 space-y-4">
+                    <h3 className="text-lg font-medium mb-2">Credit Note Info</h3>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2">
+                        <p className="text-muted-foreground">Credit Note Number:</p>
+                        <p className="font-medium">{creditNoteData.credit_note_number}</p>
+                      </div>
+                      <div className="grid grid-cols-2">
+                        <p className="text-muted-foreground">Issue Date:</p>
+                        <p>{new Date(creditNoteData.issue_date).toLocaleDateString()}</p>
+                      </div>
                     </div>
                   </div>
-                ))}
-                <div className="border-t border-border pt-2 flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>{currencySymbol}{creditNoteData.total_amount.toFixed(2)}</span>
-                </div>
+                </CustomCard>
               </div>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CustomCard>
+                <div className="p-4 space-y-4">
+                  <h3 className="text-lg font-medium mb-2">Client</h3>
+                  {creditNoteData.client && (
+                    <div className="space-y-1">
+                      <p className="font-medium">{creditNoteData.client.name}</p>
+                      {creditNoteData.client.email && <p>{creditNoteData.client.email}</p>}
+                      {creditNoteData.client.phone && <p>{creditNoteData.client.phone}</p>}
+                      {creditNoteData.client.street && (
+                        <p>
+                          {creditNoteData.client.street} {creditNoteData.client.number && `${creditNoteData.client.number}`}
+                          {creditNoteData.client.bus && `, ${creditNoteData.client.bus}`}
+                        </p>
+                      )}
+                      {(creditNoteData.client.city || creditNoteData.client.country) && (
+                        <p>
+                          {creditNoteData.client.postcode && `${creditNoteData.client.postcode} `}
+                          {creditNoteData.client.city} 
+                          {creditNoteData.client.country && `, ${creditNoteData.client.country}`}
+                        </p>
+                      )}
+                      {creditNoteData.client.vat_number && <p>VAT: {creditNoteData.client.vat_number}</p>}
+                    </div>
+                  )}
+                </div>
+              </CustomCard>
+              
+              <CustomCard>
+                <div className="p-4 space-y-4">
+                  <h3 className="text-lg font-medium mb-2">From</h3>
+                  <p>{user?.email}</p>
+                </div>
+              </CustomCard>
+            </div>
+            
+            <CustomCard>
+              <div className="p-4 space-y-4">
+                <h3 className="text-lg font-medium mb-2">Items</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="px-4 py-2 text-left">Item</th>
+                        <th className="px-4 py-2 text-right">Quantity</th>
+                        <th className="px-4 py-2 text-right">Unit Price</th>
+                        <th className="px-4 py-2 text-right">VAT</th>
+                        <th className="px-4 py-2 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {creditNoteData.items?.map((item) => (
+                        <tr key={item.id} className="border-b border-border/30">
+                          <td className="px-4 py-3">{item.title}</td>
+                          <td className="px-4 py-3 text-right">{item.quantity}</td>
+                          <td className="px-4 py-3 text-right">{currencySymbol}{item.price.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-right">{item.vat}</td>
+                          <td className="px-4 py-3 text-right font-medium">{currencySymbol}{item.total_amount.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </CustomCard>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {creditNoteData.notes && (
+                <CustomCard>
+                  <div className="p-4 space-y-4">
+                    <h3 className="text-lg font-medium mb-2">Notes</h3>
+                    <p className="text-sm text-muted-foreground">{creditNoteData.notes}</p>
+                  </div>
+                </CustomCard>
+              )}
+              
+              <CustomCard>
+                <div className="p-4 space-y-4">
+                  <h3 className="text-lg font-medium mb-2">Summary</h3>
+                  <div className="space-y-4">
+                    {vatGroups.map((group, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Subtotal ({group.rate})</span>
+                          <span>{currencySymbol}{group.value.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">VAT {group.rate}</span>
+                          <span>{currencySymbol}{group.amount.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t border-border pt-2 flex justify-between font-bold">
+                      <span>Total</span>
+                      <span>{currencySymbol}{creditNoteData.total_amount.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CustomCard>
+            </div>
           </div>
-        </CustomCard>
+        )}
       </div>
     </MainLayout>
   );
