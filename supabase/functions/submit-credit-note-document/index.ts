@@ -13,8 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log("Credit note document submission function called");
-    
     const STORECOVE_API_KEY = Deno.env.get('STORECOVE_API_KEY');
     
     if (!STORECOVE_API_KEY) {
@@ -28,21 +26,11 @@ serve(async (req) => {
       );
     }
 
+    console.log("Credit note document submission function called");
+    
     // Get the request body
-    let requestData;
-    try {
-      requestData = await req.json();
-      console.log("Request body parsed successfully");
-    } catch (parseError) {
-      console.error("Failed to parse request body:", parseError);
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, "Content-Type": "application/json" } 
-        }
-      );
-    }
+    const requestData = await req.json();
+    console.log("Request body parsed successfully");
     
     const { 
       creditNote, 
@@ -58,7 +46,7 @@ serve(async (req) => {
       clientName: client?.name,
       hasPdfData: !!pdfBase64,
       pdfUrl: pdfUrl || 'Not provided',
-      itemsCount: items?.length || 0
+      itemsCount: items?.length
     });
 
     if (!creditNote || !client || !items || items.length === 0 || !companySettings) {
@@ -69,13 +57,6 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
-    }
-
-    // We no longer need to store the PDF here since it's already saved in the storage bucket
-
-    // Validate PDF data for email attachment
-    if (!pdfBase64) {
-      console.warn("PDF Base64 data not provided, email might be sent without attachment");
     }
 
     let storecoveSubmissionResult = null;
@@ -138,17 +119,20 @@ serve(async (req) => {
         return "standard";
       };
 
-      // Create invoice lines and tax subtotals (using same naming conventions as invoices)
+      // Create invoice lines and tax subtotals - with negative amounts for credit notes
       const invoiceLines = items.map(item => {
-        const vatRateStr = item.vat_rate || item.vat;  // Support both formats
+        const vatRateStr = item.vat_rate;
         const vatPercentage = parseFloat(vatRateStr) || 0;
         const taxCategory = getTaxCategory(vatRateStr);
         
         console.log(`Processing line item with VAT rate: ${vatRateStr}, category: ${taxCategory}`);
         
+        // Make sure amount is negative for credit notes
+        const amount = Math.abs(parseFloat(item.amount.toFixed(2))) * -1;
+        
         return {
-          description: item.description || item.title,  // Support both formats
-          amountExcludingVat: parseFloat((item.amount || item.unit_price || 0).toFixed(2)),
+          description: item.description,
+          amountExcludingVat: amount,
           tax: {
             percentage: vatPercentage,
             category: taxCategory,
@@ -157,12 +141,12 @@ serve(async (req) => {
         };
       });
 
-      // Create tax subtotals grouped by percentage with precise calculations
+      // Create tax subtotals grouped by percentage with precise calculations and negative amounts
       const taxSubtotals = [];
       const vatGroups = new Map();
       
       items.forEach(item => {
-        const vatRateStr = item.vat_rate || item.vat;  // Support both formats
+        const vatRateStr = item.vat_rate;
         const vatPercentage = parseFloat(vatRateStr) || 0;
         const taxCategory = getTaxCategory(vatRateStr);
         const key = `${vatPercentage}-${taxCategory}-${client.country || "BE"}`;
@@ -178,11 +162,12 @@ serve(async (req) => {
         }
         
         const group = vatGroups.get(key);
-        const itemAmount = parseFloat((item.amount || item.unit_price || 0).toFixed(2));
+        // Make sure we have a negative amount for credit notes
+        const itemAmount = Math.abs(parseFloat(item.amount.toFixed(2))) * -1;
         group.taxableAmount += itemAmount;
         
-        // Calculate tax amount with precision
-        const itemTaxAmount = (itemAmount * vatPercentage) / 100;
+        // Calculate tax amount with precision (also negative)
+        const itemTaxAmount = (Math.abs(itemAmount) * vatPercentage) / 100 * -1;
         group.taxAmount += parseFloat(itemTaxAmount.toFixed(2));
       });
       
@@ -193,7 +178,7 @@ serve(async (req) => {
         taxSubtotals.push(group);
       });
 
-      // Calculate precise total amount from tax subtotals
+      // Calculate precise total amount from tax subtotals - should be negative for credit notes
       const totalTaxableAmount = parseFloat(taxSubtotals.reduce((sum, tax) => sum + tax.taxableAmount, 0).toFixed(2));
       const totalTaxAmount = parseFloat(taxSubtotals.reduce((sum, tax) => sum + tax.taxAmount, 0).toFixed(2));
       const preciseAmountIncludingVat = parseFloat((totalTaxableAmount + totalTaxAmount).toFixed(2));
@@ -233,13 +218,13 @@ serve(async (req) => {
         ];
       }
 
-      // Format data for Storecove API - using the invoice structure with credit note data
+      // Format data for Storecove API - IMPORTANT: Use "invoice" as documentType even for credit notes
       const documentSubmission = {
         legalEntityId: companySettings.legal_entity_id,
         receiverLegalEntityId: client.legal_entity_id,
         routing: routingConfig,
         document: {
-          documentType: "creditnote",
+          documentType: "invoice", // Always use "invoice" as the documentType, even for credit notes
           invoice: {
             invoiceNumber: creditNote.credit_note_number,
             issueDate: creditNote.issue_date,
@@ -259,14 +244,16 @@ serve(async (req) => {
             invoiceLines: invoiceLines,
             taxSubtotals: taxSubtotals,
             paymentMeansArray: paymentMeansArray.length > 0 ? paymentMeansArray : undefined,
-            amountIncludingVat: preciseAmountIncludingVat // Use the accurately calculated total
+            amountIncludingVat: preciseAmountIncludingVat // Use the accurately calculated total (negative)
           }
         }
       };
 
-      // Add note to credit note if it exists
+      // Add note to invoice if it exists
       if (creditNote.notes && creditNote.notes.trim()) {
-        documentSubmission.document.invoice.note = creditNote.notes.trim();
+        documentSubmission.document.invoice.note = `CREDIT NOTE: ${creditNote.notes.trim()}`;
+      } else {
+        documentSubmission.document.invoice.note = "CREDIT NOTE";
       }
 
       // Add publicIdentifiers to accountingCustomerParty using the same identifiers retrieved from Storecove
@@ -302,17 +289,7 @@ serve(async (req) => {
         body: JSON.stringify(documentSubmission)
       });
 
-      let responseData;
-      const responseText = await response.text();
-      
-      try {
-        // Try to parse the response as JSON
-        responseData = JSON.parse(responseText);
-      } catch (parseError) {
-        // If parsing fails, use the raw text response
-        console.error("Failed to parse Storecove API response as JSON:", responseText);
-        responseData = { error: "Invalid JSON response", rawResponse: responseText };
-      }
+      const responseData = await response.json();
       
       // Check if the request was successful
       if (!response.ok) {
@@ -361,17 +338,17 @@ serve(async (req) => {
       const emailData = {
         clientName: client.name,
         clientEmail: client.email,
-        invoiceNumber: creditNote.credit_note_number,
-        isCredit: true,
+        invoiceNumber: creditNote.credit_note_number, // Use credit note number
         pdfUrl: pdfUrl,
         termsAndConditionsUrl: termsAndConditionsUrl,
         companyName: companySettings?.company_name || "PowerPeppol",
         includeAttachments: true,
         pdfBase64: pdfBase64,
-        yukiEmail: yukiEmail
+        yukiEmail: yukiEmail,
+        isCreditNote: true // Flag to indicate this is a credit note
       };
       
-      console.log("Preparing to send credit note email with data:", {
+      console.log("Preparing to send email with data:", {
         to: client.email,
         creditNoteNumber: creditNote.credit_note_number,
         yukiCopy: !!yukiEmail,
@@ -388,28 +365,18 @@ serve(async (req) => {
         body: JSON.stringify(emailData)
       });
 
-      const emailResponseText = await emailResponse.text();
-      let emailResponseData;
-      
-      try {
-        // Try to parse the response as JSON
-        emailResponseData = JSON.parse(emailResponseText);
-      } catch (parseError) {
-        // If parsing fails, use the raw text
-        console.error("Failed to parse email response as JSON:", emailResponseText);
-        emailResponseData = { error: "Invalid JSON response", rawResponse: emailResponseText };
-      }
-
       if (!emailResponse.ok) {
-        console.error("Email sending error:", JSON.stringify(emailResponseData));
-        emailError = emailResponseData.error || "Unknown email error";
+        const emailErrorData = await emailResponse.json();
+        console.error("Email sending error:", JSON.stringify(emailErrorData));
+        emailError = emailErrorData.error || "Unknown email error";
         throw new Error(`Email sending failed: ${emailError}`);
       } else {
-        console.log("Email sent successfully:", JSON.stringify(emailResponseData));
+        const emailResult = await emailResponse.json();
+        console.log("Email sent successfully:", JSON.stringify(emailResult));
         emailSent = true;
       }
-    } catch (emailError) {
-      console.error("Error sending credit note email:", emailError);
+    } catch (emailErr) {
+      console.error("Error sending credit note email:", emailErr);
       // We don't fail the whole operation if email fails, just log the error
     }
     
