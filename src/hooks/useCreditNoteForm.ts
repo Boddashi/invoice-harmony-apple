@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -131,6 +132,112 @@ export function useCreditNoteForm() {
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
   
   const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
+
+  // Define handleSendEmail first, before it's used in other functions
+  const handleSendEmail = useCallback(async () => {
+    if (!user || !selectedClientId || !creditNoteId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Cannot send email without credit note ID or client.',
+      });
+      return;
+    }
+    
+    try {
+      setIsSendingEmail(true);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', selectedClientId)
+        .single();
+        
+      if (clientError) throw clientError;
+      
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select('*')
+        .eq('id', creditNoteId)
+        .single();
+        
+      if (creditNoteError) throw creditNoteError;
+      
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      
+      let pdfBase64 = null;
+      let pdfUrl = null;
+      
+      if (!pdfGenerated) {
+        const pdfResult = await generatePDF(creditNoteId, false);
+        if (pdfResult) {
+          pdfBase64 = pdfResult.base64;
+        } else {
+          throw new Error("Failed to generate PDF for credit note");
+        }
+      }
+      
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+
+      if (urlData && urlData.publicUrl) {
+        pdfUrl = urlData.publicUrl;
+      }
+      
+      if (!pdfUrl && !pdfBase64) {
+        throw new Error("Unable to get PDF for credit note");
+      }
+      
+      const emailData = {
+        clientName: clientData.name,
+        clientEmail: clientData.email,
+        invoiceNumber: creditNoteData.credit_note_number,
+        pdfUrl: pdfUrl,
+        termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
+        companyName: companyData?.company_name || "PowerPeppol",
+        includeAttachments: true,
+        pdfBase64: pdfBase64,
+        yukiEmail: companyData?.yuki_email,
+        isCreditNote: true
+      };
+      
+      console.log("Sending credit note email with data:", {
+        to: clientData.email,
+        creditNoteNumber: creditNoteData.credit_note_number,
+        hasAttachment: !!pdfBase64 || !!pdfUrl,
+        yukiCopy: !!companyData?.yuki_email
+      });
+      
+      const { data: emailResult, error: emailError } = await supabase
+        .functions
+        .invoke('send-invoice-email', {
+          body: emailData
+        });
+        
+      if (emailError) throw emailError;
+      
+      toast({
+        title: 'Success',
+        description: 'Credit note email sent successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error sending credit note email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send credit note email.',
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -985,111 +1092,6 @@ export function useCreditNoteForm() {
     e.preventDefault();
     handleCreateAndSend(e as unknown as React.MouseEvent);
   }, [handleCreateAndSend]);
-  
-  const handleSendEmail = useCallback(async () => {
-    if (!user || !selectedClientId || !creditNoteId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Cannot send email without credit note ID or client.',
-      });
-      return;
-    }
-    
-    try {
-      setIsSendingEmail(true);
-      
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', selectedClientId)
-        .single();
-        
-      if (clientError) throw clientError;
-      
-      const { data: creditNoteData, error: creditNoteError } = await supabase
-        .from('credit_notes')
-        .select('*')
-        .eq('id', creditNoteId)
-        .single();
-        
-      if (creditNoteError) throw creditNoteError;
-      
-      const { data: companyData, error: companyError } = await supabase
-        .from('company_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (companyError && companyError.code !== 'PGRST116') throw companyError;
-      
-      let pdfBase64 = null;
-      let pdfUrl = null;
-      
-      if (!pdfGenerated) {
-        const pdfResult = await generatePDF(creditNoteId, false);
-        if (pdfResult) {
-          pdfBase64 = pdfResult.base64;
-        } else {
-          throw new Error("Failed to generate PDF for credit note");
-        }
-      }
-      
-      const { data: urlData } = supabase.storage
-        .from('credit_notes')
-        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-
-      if (urlData && urlData.publicUrl) {
-        pdfUrl = urlData.publicUrl;
-      }
-      
-      if (!pdfUrl && !pdfBase64) {
-        throw new Error("Unable to get PDF for credit note");
-      }
-      
-      const emailData = {
-        clientName: clientData.name,
-        clientEmail: clientData.email,
-        invoiceNumber: creditNoteData.credit_note_number,
-        pdfUrl: pdfUrl,
-        termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
-        companyName: companyData?.company_name || "PowerPeppol",
-        includeAttachments: true,
-        pdfBase64: pdfBase64,
-        yukiEmail: companyData?.yuki_email,
-        isCreditNote: true
-      };
-      
-      console.log("Sending credit note email with data:", {
-        to: clientData.email,
-        creditNoteNumber: creditNoteData.credit_note_number,
-        hasAttachment: !!pdfBase64 || !!pdfUrl,
-        yukiCopy: !!companyData?.yuki_email
-      });
-      
-      const { data: emailResult, error: emailError } = await supabase
-        .functions
-        .invoke('send-invoice-email', {
-          body: emailData
-        });
-        
-      if (emailError) throw emailError;
-      
-      toast({
-        title: 'Success',
-        description: 'Credit note email sent successfully.',
-      });
-    } catch (error: any) {
-      console.error('Error sending credit note email:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to send credit note email.',
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
-  }, [user, selectedClientId, creditNoteId, toast, pdfGenerated, generatePDF]);
   
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
