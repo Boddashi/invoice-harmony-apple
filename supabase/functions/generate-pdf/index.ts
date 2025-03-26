@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import chromium from "https://deno.land/x/puppeteer_plus@0.14.1/vendor/puppeteer-core/puppeteer/node/chromium.js";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,14 +25,13 @@ serve(async (req) => {
     
     console.log(`Starting PDF generation for: ${filename || 'unnamed document'}`);
     
-    // Use a simple HTML to PDF conversion approach compatible with edge functions
-    // Since we can't use Puppeteer directly in this environment, we'll use a more
-    // basic approach to convert HTML to PDF data
+    // Use PDFShift API for HTML to PDF conversion
+    // This is a reliable third-party service that works well in edge function environments
     const pdfResponse = await fetch('https://api.pdfshift.io/v3/convert/pdf', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Basic ' + btoa('api:free')  // Using PDFShift's free tier for basic conversion
+        'Authorization': 'Basic ' + btoa('api:free') // Using PDFShift's free tier for basic conversion
       },
       body: JSON.stringify({
         source: html,
