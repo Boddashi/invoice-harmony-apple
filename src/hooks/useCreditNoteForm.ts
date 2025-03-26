@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -68,7 +67,6 @@ interface CompanySettings {
   [key: string]: any;
 }
 
-// Define a more complete CreditNote interface that includes the pdf_url field
 interface CreditNote {
   id: string;
   client_id: string;
@@ -237,7 +235,6 @@ export function useCreditNoteForm() {
         if (itemsError) throw itemsError;
         
         if (creditNoteData) {
-          // Safely cast the data to our interface
           const typedCreditNoteData = creditNoteData as CreditNote;
           
           setCreditNoteId(typedCreditNoteData.id);
@@ -662,25 +659,26 @@ export function useCreditNoteForm() {
       if (!pdfResult || !pdfResult.base64) {
         throw new Error("Failed to generate PDF: No data returned");
       }
-
-      // Fetch the updated credit note to get the PDF URL
-      const { data: updatedCreditNote, error: fetchUrlError } = await supabase
-        .from('credit_notes')
-        .select('*')
-        .eq('id', creditNoteId)
-        .single();
+      
+      if (shouldUpdateStatus) {
+        const { error: updateStatusError } = await supabase
+          .from('credit_notes')
+          .update({ status: 'pending' })
+          .eq('id', creditNoteId);
+          
+        if (updateStatusError) {
+          console.error("Error updating credit note status:", updateStatusError);
+        }
         
-      if (fetchUrlError) throw fetchUrlError;
-      
-      // Safely cast to our CreditNote interface
-      const typedUpdatedCreditNote = updatedCreditNote as CreditNote;
-      
-      if (typedUpdatedCreditNote && typedUpdatedCreditNote.pdf_url) {
-        setPdfUrl(typedUpdatedCreditNote.pdf_url);
+        setStatus('pending');
       }
 
-      if (shouldUpdateStatus) {
-        setStatus('pending');
+      const { data: urlData } = supabase.storage
+        .from('credit_notes')
+        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+      
+      if (urlData && urlData.publicUrl) {
+        setPdfUrl(urlData.publicUrl);
       }
 
       setPdfGenerated(true);
@@ -698,7 +696,7 @@ export function useCreditNoteForm() {
     }
   }, [user, currencySymbol, toast]);
   
-  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string }) => {
+  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
     if (!user || !selectedClientId) return null;
     
     try {
@@ -717,7 +715,6 @@ export function useCreditNoteForm() {
         .select(`
           *,
           items:credit_note_items(
-            id,
             item_id,
             quantity,
             total_amount,
@@ -737,11 +734,21 @@ export function useCreditNoteForm() {
         
       if (companyError && companyError.code !== 'PGRST116') throw companyError;
       
+      let pdfUrl = pdfData.url;
+      if (!pdfUrl) {
+        const { data: urlData } = supabase.storage
+          .from('credit_notes')
+          .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+          
+        if (urlData && urlData.publicUrl) {
+          pdfUrl = urlData.publicUrl;
+        }
+      }
+      
       const formattedItems = creditNoteData.items.map((item: any) => ({
-        id: item.id,
-        description: item.item_id,
+        description: item.item ? item.item.title : 'Unknown Item',
         quantity: item.quantity,
-        unit_price: item.total_amount / item.quantity,
+        unit_price: Math.abs(item.total_amount) / item.quantity,
         amount: -Math.abs(item.total_amount),
         vat_rate: item.item?.vat || '21%'
       }));
@@ -752,7 +759,8 @@ export function useCreditNoteForm() {
         clientId: clientData.id,
         clientName: clientData.name,
         itemCount: formattedItems.length,
-        hasPdfBase64: !!pdfData.base64
+        hasPdfBase64: !!pdfData.base64,
+        hasPdfUrl: !!pdfUrl
       });
       
       const { data: submissionResult, error: submissionError } = await supabase
@@ -764,7 +772,7 @@ export function useCreditNoteForm() {
             items: formattedItems,
             companySettings: companyData,
             pdfBase64: pdfData.base64,
-            creditNoteId: creditNoteId
+            pdfUrl: pdfUrl
           }
         });
         
