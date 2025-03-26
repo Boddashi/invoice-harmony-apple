@@ -203,8 +203,8 @@ export type Database = {
           amount: number
           client_id: string
           created_at: string
+          credit_note_number: string
           id: string
-          invoice_number: string
           issue_date: string
           notes: string | null
           status: string
@@ -218,8 +218,8 @@ export type Database = {
           amount?: number
           client_id: string
           created_at?: string
+          credit_note_number: string
           id?: string
-          invoice_number: string
           issue_date?: string
           notes?: string | null
           status: string
@@ -233,8 +233,8 @@ export type Database = {
           amount?: number
           client_id?: string
           created_at?: string
+          credit_note_number?: string
           id?: string
-          invoice_number?: string
           issue_date?: string
           notes?: string | null
           status?: string

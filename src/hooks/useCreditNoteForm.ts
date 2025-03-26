@@ -217,7 +217,7 @@ export function useCreditNoteForm() {
         
         if (creditNoteData) {
           setCreditNoteId(creditNoteData.id);
-          setCreditNoteNumber(creditNoteData.invoice_number);
+          setCreditNoteNumber(creditNoteData.credit_note_number);
           setIssueDate(creditNoteData.issue_date);
           setSelectedClientId(creditNoteData.client_id);
           const fetchedStatus = creditNoteData.status as string;
@@ -267,9 +267,9 @@ export function useCreditNoteForm() {
       
       const { data, error } = await supabase
         .from('credit_notes')
-        .select('invoice_number')
+        .select('credit_note_number')
         .eq('user_id', user.id)
-        .ilike('invoice_number', `${prefix}-%`)
+        .ilike('credit_note_number', `${prefix}-%`)
         .order('created_at', { ascending: false })
         .limit(1);
       
@@ -278,8 +278,8 @@ export function useCreditNoteForm() {
       let nextNumber = 1;
       
       if (data && data.length > 0) {
-        const lastInvoiceNumber = data[0].invoice_number;
-        const lastNumberStr = lastInvoiceNumber.split('-')[1];
+        const lastCreditNoteNumber = data[0].credit_note_number;
+        const lastNumberStr = lastCreditNoteNumber.split('-')[1];
         
         if (lastNumberStr && !isNaN(parseInt(lastNumberStr))) {
           nextNumber = parseInt(lastNumberStr) + 1;
@@ -489,7 +489,7 @@ export function useCreditNoteForm() {
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
-        invoice_number: creditNoteNumber,
+        credit_note_number: creditNoteNumber,
         issue_date: issueDate,
         status: 'draft' as CreditNoteStatus,
         amount: subtotal,
@@ -591,7 +591,7 @@ export function useCreditNoteForm() {
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
-        invoice_number: creditNoteNumber,
+        credit_note_number: creditNoteNumber,
         issue_date: issueDate,
         status: 'pending' as CreditNoteStatus,
         amount: subtotal,

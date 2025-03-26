@@ -1,5 +1,6 @@
 
 import React from "react";
+import { Input } from "../ui/input";
 import CustomCard from "../ui/CustomCard";
 
 interface CreditNoteBasicInfoProps {
@@ -20,22 +21,22 @@ const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="space-y-1">
           <label className="block text-sm font-medium text-muted-foreground">Credit Note Number</label>
-          <input 
+          <Input 
             type="text" 
             value={creditNoteNumber} 
             onChange={e => setCreditNoteNumber(e.target.value)} 
-            className="input-field w-full" 
+            className="w-full" 
             required 
           />
         </div>
         
         <div className="space-y-1">
           <label className="block text-sm font-medium text-muted-foreground">Issue Date</label>
-          <input 
+          <Input 
             type="date" 
             value={issueDate} 
             onChange={e => setIssueDate(e.target.value)} 
-            className="input-field w-full" 
+            className="w-full" 
             required 
           />
         </div>
