@@ -109,7 +109,7 @@ const NewCreditNote = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
-          handleSendEmail={pdfGenerated ? handleSendEmail : undefined}
+          handleSendEmail={handleSendEmail}
           handleCreateAndSendYuki={companySettings?.yuki_email ? handleCreateAndSendYuki : undefined}
         />
         

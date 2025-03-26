@@ -404,7 +404,34 @@ export function useCreditNoteForm() {
   }, [creditNoteId, toast]);
 
   const handleSendEmail = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please log in to send emails.',
+      });
+      return;
+    }
+    
+    if (!selectedClientId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a client for this credit note.',
+      });
+      return;
+    }
+    
+    if (!creditNoteId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please save the credit note before sending an email.',
+      });
+      return;
+    }
+    
+    setIsSendingEmail(true);
     
     try {
       const { error } = await supabase.functions.invoke('send-email', {
@@ -433,8 +460,10 @@ export function useCreditNoteForm() {
         title: 'Error',
         description: error.message || 'Failed to send email.',
       });
+    } finally {
+      setIsSendingEmail(false);
     }
-  }, [user, creditNoteId, toast]);
+  }, [user, selectedClientId, creditNoteId, toast]);
 
   const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
     if (!user || !selectedClientId) {
