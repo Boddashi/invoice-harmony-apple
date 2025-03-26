@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -90,12 +91,20 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
     
     setIsSending(true);
     try {
+      // Check if the invoice has any items before sending
       const { data: invoiceItems, error: itemsError } = await supabase
         .from('invoice_items')
-        .select('id')
+        .select('quantity')
         .eq('invoice_id', invoiceId);
       
-      if (itemsError) throw itemsError;
+      // Handle database errors with user-friendly messages
+      if (itemsError) {
+        // Check for specific database errors and provide friendly messages
+        if (itemsError.message?.includes('column invoice_items.id does not exist')) {
+          throw new Error("We're experiencing a technical issue with the invoice system. Our team has been notified.");
+        }
+        throw itemsError;
+      }
       
       if (!invoiceItems || invoiceItems.length === 0) {
         toast({
@@ -271,10 +280,24 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
       
     } catch (error: any) {
       console.error('Error sending invoice:', error);
+      
+      // Provide a user-friendly error message based on the error type
+      let errorMessage = "Failed to send invoice";
+      
+      if (error.message?.includes('column invoice_items.id does not exist')) {
+        errorMessage = "We're experiencing a technical issue with the invoice system. Our team has been notified.";
+      } else if (error.message?.includes('database')) {
+        errorMessage = "We're having trouble connecting to our database. Please try again later.";
+      } else if (error.message?.includes('permission denied')) {
+        errorMessage = "You don't have permission to perform this action. Please contact support.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send invoice"
+        description: errorMessage
       });
     } finally {
       setIsSending(false);
