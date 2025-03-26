@@ -32,33 +32,25 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   return (
     <CustomCard>
       <h3 className="text-lg font-medium mb-4">Summary</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between">
-          <span className="text-muted-foreground">Subtotal:</span>
-          <span>
-            {currencySymbol}
-            {formatAmount(subtotal)}
-          </span>
-        </div>
-
+      
+      <div className="space-y-4">
         {vatGroups.map((group, index) => (
-          <div key={index} className="flex justify-between">
-            <span className="text-muted-foreground">
-              VAT {group.rate}:
-            </span>
-            <span>
-              {currencySymbol}
-              {formatAmount(group.amount)}
-            </span>
+          <div key={index} className="space-y-1">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal ({group.rate})</span>
+              <span className="font-medium">{currencySymbol}{formatAmount(group.value)}</span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-muted-foreground pl-0">VAT {group.rate}</span>
+              <span className="font-medium">{currencySymbol}{formatAmount(group.amount)}</span>
+            </div>
           </div>
         ))}
-
-        <div className="border-t border-border pt-3 flex justify-between font-bold">
-          <span>Total:</span>
-          <span>
-            {currencySymbol}
-            {formatAmount(calculatedTotal)}
-          </span>
+        
+        <div className="border-t border-border pt-4 flex justify-between">
+          <span className="font-medium">Total</span>
+          <span className="font-bold text-lg">{currencySymbol}{formatAmount(calculatedTotal)}</span>
         </div>
       </div>
     </CustomCard>
