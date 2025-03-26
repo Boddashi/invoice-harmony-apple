@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
@@ -12,6 +11,7 @@ import CreditNoteFrom from "@/components/creditnotes/CreditNoteFrom";
 import CreditNoteItems from "@/components/creditnotes/CreditNoteItems";
 import CreditNoteNotes from "@/components/creditnotes/CreditNoteNotes";
 import CreditNoteSummary from "@/components/creditnotes/CreditNoteSummary";
+import CreditNoteClient from "@/components/creditnotes/CreditNoteClient";
 
 interface CreditNoteItem {
   credit_note_id: string;
@@ -86,7 +86,6 @@ const ViewCreditNote = () => {
       try {
         setIsLoading(true);
 
-        // Fetch credit note data
         const { data: creditNoteData, error: creditNoteError } = await supabase
           .from("credit_notes")
           .select(`
@@ -100,7 +99,6 @@ const ViewCreditNote = () => {
         if (creditNoteError) throw creditNoteError;
         if (!creditNoteData) throw new Error("Credit note not found");
 
-        // Fetch credit note items
         const { data: creditNoteItems, error: itemsError } = await supabase
           .from("credit_note_items")
           .select(`
@@ -111,9 +109,8 @@ const ViewCreditNote = () => {
 
         if (itemsError) throw itemsError;
 
-        // Format items for internal use
         const formattedItemsForComponent = creditNoteItems.map((item) => ({
-          id: item.item_id, // Use item_id as the identifier
+          id: item.item_id,
           description: item.item.title || item.item_id,
           quantity: item.quantity,
           unit_price: Math.abs(item.total_amount) / item.quantity,
@@ -127,7 +124,6 @@ const ViewCreditNote = () => {
           items: creditNoteItems,
         });
 
-        // Check for PDF URL in storage
         const { data: urlData } = supabase.storage
           .from('credit_notes')
           .getPublicUrl(`${id}/credit-note.pdf`);
@@ -177,7 +173,6 @@ const ViewCreditNote = () => {
     }
   };
 
-  // Calculate VAT groups for the summary
   const getVatGroups = (): VatGroup[] => {
     if (!formattedItems || !formattedItems.length) return [];
     
@@ -295,7 +290,6 @@ const ViewCreditNote = () => {
         </div>
         
         <div className="space-y-6">
-          {/* Header with status and download button */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-2">
               {renderStatus()}
@@ -310,17 +304,21 @@ const ViewCreditNote = () => {
             </button>
           </div>
           
-          {/* Credit Note Form */}
           <div className="space-y-6">
+            <CreditNoteBasicInfo
+              creditNoteNumber={creditNoteData.credit_note_number}
+              issueDate={creditNoteData.issue_date}
+              readOnly={true}
+            />
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CreditNoteBasicInfo
-                creditNoteNumber={creditNoteData.credit_note_number}
-                issueDate={creditNoteData.issue_date}
+              <CreditNoteFrom
+                userEmail={user?.email || ""}
                 readOnly={true}
               />
               
-              <CreditNoteFrom
-                userEmail={user?.email || ""}
+              <CreditNoteClient
+                client={creditNoteData.client}
                 readOnly={true}
               />
             </div>
@@ -334,12 +332,10 @@ const ViewCreditNote = () => {
             />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {creditNoteData.notes && (
-                <CreditNoteNotes
-                  notes={creditNoteData.notes}
-                  readOnly={true}
-                />
-              )}
+              <CreditNoteNotes
+                notes={creditNoteData.notes || ""}
+                readOnly={true}
+              />
               
               <CreditNoteSummary
                 vatGroups={getVatGroups()}
