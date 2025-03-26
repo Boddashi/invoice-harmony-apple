@@ -466,11 +466,23 @@ export function useCreditNoteForm() {
   }, [user, selectedClientId, creditNoteId, toast]);
 
   const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
-    if (!user || !selectedClientId) {
+    console.log('Submit called with user:', user?.id);
+    console.log('Selected client ID:', selectedClientId);
+    
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please log in and select a client.',
+        description: 'Please log in to continue.',
+      });
+      return;
+    }
+    
+    if (!selectedClientId) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Please select a client for this credit note.',
       });
       return;
     }
@@ -617,7 +629,7 @@ export function useCreditNoteForm() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, selectedClientId, status, toast, navigate]);
+  }, [user, selectedClientId, status, creditNoteNumber, issueDate, notes, total, creditNoteId, items, toast, navigate]);
 
   const handleAddClient = useCallback(async (clientData: any) => {
     if (!user) return null;

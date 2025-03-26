@@ -68,6 +68,10 @@ const NewCreditNote = () => {
 
   // For debugging - using the direct Supabase URL for function URLs
   useEffect(() => {
+    // Log auth status for debugging the issue
+    console.log('User authenticated:', !!user);
+    console.log('Selected client ID:', selectedClientId);
+    
     // Log the function URLs using the constant instead of supabase.supabaseUrl
     console.log('Supabase function URL:', 
       `${SUPABASE_URL}/functions/v1/submit-credit-note-document`);
@@ -75,7 +79,7 @@ const NewCreditNote = () => {
     // Also log generate-pdf function URL
     console.log('Generate PDF function URL:', 
       `${SUPABASE_URL}/functions/v1/generate-pdf`);
-  }, []);
+  }, [user, selectedClientId]);
 
   if (isLoading && isEditMode) {
     return (
@@ -89,6 +93,10 @@ const NewCreditNote = () => {
 
   const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Log form state before submission
+    console.log('Form submitted with client ID:', selectedClientId);
+    console.log('Form submitted with credit note number:', creditNoteNumber);
+    
     handleSubmit();
   };
 
