@@ -5,7 +5,6 @@ import { CompanySettings } from "@/models/CompanySettings";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface BillingTabProps {
   companySettings: CompanySettings;
@@ -30,21 +29,15 @@ const BillingTab = ({
     }));
   };
 
-  const handleSelectChange = (value: string, name: string) => {
-    if (name === "invoice_number_type") {
-      const validValue =
-        value === "date" || value === "incremental" ? value : "date";
+  // When component mounts, ensure invoice_number_type is set to 'incremental'
+  React.useEffect(() => {
+    if (companySettings.invoice_number_type !== 'incremental') {
       setCompanySettings((prev) => ({
         ...prev,
-        [name]: validValue,
-      }));
-    } else {
-      setCompanySettings((prev) => ({
-        ...prev,
-        [name]: value,
+        invoice_number_type: 'incremental',
       }));
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -85,44 +78,11 @@ const BillingTab = ({
                     -
                   </span>
                   <div className="bg-secondary text-muted-foreground px-3 py-2 rounded border border-input">
-                    {companySettings.invoice_number_type === "date"
-                      ? "YYYYMMDD"
-                      : "00001"}
+                    00001
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Example: {companySettings.invoice_prefix || "INV"}
-                  -
-                  {companySettings.invoice_number_type === "date"
-                    ? "20240701"
-                    : "00001"}
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="invoice_number_type">
-                  Numbering Type
-                </Label>
-                <Select
-                  value={companySettings.invoice_number_type}
-                  onValueChange={(value) =>
-                    handleSelectChange(value, "invoice_number_type")
-                  }
-                >
-                  <SelectTrigger className="w-full mt-1">
-                    <SelectValue placeholder="Select numbering type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">
-                      Date-based (YYYYMMDD)
-                    </SelectItem>
-                    <SelectItem value="incremental">
-                      Incremental (00001, 00002...)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Choose how invoice numbers will be generated
+                  Example: {companySettings.invoice_prefix || "INV"}-00001
                 </p>
               </div>
             </div>
