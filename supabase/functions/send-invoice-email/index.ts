@@ -19,6 +19,7 @@ interface SendInvoiceEmailRequest {
   includeAttachments: boolean;
   pdfBase64?: string;
   yukiEmail?: string;
+  isCredit?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -27,7 +28,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("Received request to send invoice email");
+    console.log("Received request to send invoice/credit note email");
     const requestData = await req.json();
     
     const { 
@@ -39,7 +40,8 @@ const handler = async (req: Request): Promise<Response> => {
       companyName,
       includeAttachments = true,
       pdfBase64,
-      yukiEmail
+      yukiEmail,
+      isCredit = false
     }: SendInvoiceEmailRequest = requestData;
 
     // Log request data without potentially large PDF base64
@@ -54,6 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
       hasPdfData: !!pdfBase64,
       pdfDataLength: pdfBase64 ? pdfBase64.length : 0,
       yukiEmail,
+      isCredit
     }));
 
     if (!clientEmail) {
@@ -61,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Client email is required");
     }
 
-    console.log(`Sending invoice email to ${clientEmail}`);
+    console.log(`Sending ${isCredit ? 'credit note' : 'invoice'} email to ${clientEmail}`);
     if (yukiEmail) {
       console.log(`Also sending copy to Yuki email: ${yukiEmail}`);
     }
@@ -89,7 +92,7 @@ const handler = async (req: Request): Promise<Response> => {
             
             // Add the PDF as an attachment
             attachments.push({
-              filename: `invoice-${invoiceNumber}.pdf`,
+              filename: isCredit ? `credit-note-${invoiceNumber}.pdf` : `invoice-${invoiceNumber}.pdf`,
               content: base64Data,
             });
             
@@ -115,7 +118,7 @@ const handler = async (req: Request): Promise<Response> => {
               );
               
               attachments.push({
-                filename: `invoice-${invoiceNumber}.pdf`,
+                filename: isCredit ? `credit-note-${invoiceNumber}.pdf` : `invoice-${invoiceNumber}.pdf`,
                 content: pdfBase64,
               });
               
@@ -169,17 +172,20 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Ready to send email with ${attachments.length} attachments`);
     
+    // Prepare the document type for the email (credit note or invoice)
+    const documentType = isCredit ? "Credit Note" : "Invoice";
+    
     // Prepare the email HTML content
     const emailHtml = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Invoice #${invoiceNumber}</h2>
+        <h2>${documentType} #${invoiceNumber}</h2>
         <p>Dear ${clientName},</p>
-        <p>Your invoice #${invoiceNumber} is now available.</p>
+        <p>Your ${documentType.toLowerCase()} #${invoiceNumber} is now available.</p>
         ${attachments.length > 0 
-          ? `<p>Please find the attached invoice PDF for your records.</p>` 
-          : `<p>Your invoice is available for viewing at <a href="${pdfUrl}" target="_blank">this link</a>.</p>`
+          ? `<p>Please find the attached ${documentType.toLowerCase()} PDF for your records.</p>` 
+          : `<p>Your ${documentType.toLowerCase()} is available for viewing at <a href="${pdfUrl}" target="_blank">this link</a>.</p>`
         }
-        <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+        <p>If you have any questions regarding this ${documentType.toLowerCase()}, please don't hesitate to contact us.</p>
         <p>Best regards,<br>${companyName || "PowerPeppol"}</p>
       </div>
     `;
@@ -194,7 +200,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailConfig = {
       from: `${companyName || "PowerPeppol"} <info@powerpeppol.com>`,
       to: recipients,
-      subject: `Invoice #${invoiceNumber}`,
+      subject: `${documentType} #${invoiceNumber}`,
       html: emailHtml,
       attachments: attachments.length > 0 ? attachments : undefined
     };

@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -56,7 +57,8 @@ serve(async (req) => {
       creditNoteId: creditNote?.id,
       clientName: client?.name,
       hasPdfData: !!pdfBase64,
-      pdfUrl: pdfUrl || 'Not provided'
+      pdfUrl: pdfUrl || 'Not provided',
+      itemsCount: items?.length || 0
     });
 
     if (!creditNote || !client || !items || items.length === 0 || !companySettings) {
@@ -138,15 +140,15 @@ serve(async (req) => {
 
       // Create invoice lines and tax subtotals (using same naming conventions as invoices)
       const invoiceLines = items.map(item => {
-        const vatRateStr = item.vat_rate;
+        const vatRateStr = item.vat_rate || item.vat;  // Support both formats
         const vatPercentage = parseFloat(vatRateStr) || 0;
         const taxCategory = getTaxCategory(vatRateStr);
         
         console.log(`Processing line item with VAT rate: ${vatRateStr}, category: ${taxCategory}`);
         
         return {
-          description: item.description,
-          amountExcludingVat: parseFloat(item.amount.toFixed(2)),
+          description: item.description || item.title,  // Support both formats
+          amountExcludingVat: parseFloat((item.amount || item.unit_price || 0).toFixed(2)),
           tax: {
             percentage: vatPercentage,
             category: taxCategory,
@@ -160,7 +162,7 @@ serve(async (req) => {
       const vatGroups = new Map();
       
       items.forEach(item => {
-        const vatRateStr = item.vat_rate;
+        const vatRateStr = item.vat_rate || item.vat;  // Support both formats
         const vatPercentage = parseFloat(vatRateStr) || 0;
         const taxCategory = getTaxCategory(vatRateStr);
         const key = `${vatPercentage}-${taxCategory}-${client.country || "BE"}`;
@@ -176,7 +178,7 @@ serve(async (req) => {
         }
         
         const group = vatGroups.get(key);
-        const itemAmount = parseFloat(item.amount.toFixed(2));
+        const itemAmount = parseFloat((item.amount || item.unit_price || 0).toFixed(2));
         group.taxableAmount += itemAmount;
         
         // Calculate tax amount with precision
