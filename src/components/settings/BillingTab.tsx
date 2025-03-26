@@ -58,7 +58,7 @@ const BillingTab = ({
     <CustomCard>
       <h2 className="text-xl font-semibold mb-6">Billing Settings</h2>
       <p className="text-muted-foreground mb-6">
-        Configure your invoice settings and payment methods.
+        Configure your invoice settings.
       </p>
 
       <form onSubmit={handleSaveCompany}>
@@ -124,65 +124,6 @@ const BillingTab = ({
                 <p className="text-xs text-muted-foreground mt-1">
                   Choose how invoice numbers will be generated
                 </p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-base font-medium mb-4">
-              Payment Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  name="bank_name"
-                  className="input-field w-full"
-                  value={companySettings.bank_name}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  name="account_number"
-                  className="input-field w-full"
-                  value={companySettings.account_number}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  SWIFT / BIC
-                </label>
-                <input
-                  type="text"
-                  name="swift"
-                  className="input-field w-full"
-                  value={companySettings.swift}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-foreground mb-1">
-                  IBAN
-                </label>
-                <input
-                  type="text"
-                  name="iban"
-                  className="input-field w-full"
-                  value={companySettings.iban}
-                  onChange={handleInputChange}
-                />
               </div>
             </div>
           </div>
