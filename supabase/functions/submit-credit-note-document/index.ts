@@ -215,7 +215,6 @@ serve(async (req) => {
       }
 
       // Format data for Storecove API - using the invoice structure with credit note data
-      // and the document type set to "creditnote"
       const documentSubmission = {
         legalEntityId: companySettings.legal_entity_id,
         receiverLegalEntityId: client.legal_entity_id,
@@ -284,7 +283,17 @@ serve(async (req) => {
         body: JSON.stringify(documentSubmission)
       });
 
-      const responseData = await response.json();
+      let responseData;
+      const responseText = await response.text();
+      
+      try {
+        // Try to parse the response as JSON
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        // If parsing fails, use the raw text response
+        console.error("Failed to parse Storecove API response as JSON:", responseText);
+        responseData = { error: "Invalid JSON response", rawResponse: responseText };
+      }
       
       // Check if the request was successful
       if (!response.ok) {
@@ -360,14 +369,24 @@ serve(async (req) => {
         body: JSON.stringify(emailData)
       });
 
+      const emailResponseText = await emailResponse.text();
+      let emailResponseData;
+      
+      try {
+        // Try to parse the response as JSON
+        emailResponseData = JSON.parse(emailResponseText);
+      } catch (parseError) {
+        // If parsing fails, use the raw text
+        console.error("Failed to parse email response as JSON:", emailResponseText);
+        emailResponseData = { error: "Invalid JSON response", rawResponse: emailResponseText };
+      }
+
       if (!emailResponse.ok) {
-        const emailErrorData = await emailResponse.json();
-        console.error("Email sending error:", JSON.stringify(emailErrorData));
-        emailError = emailErrorData.error || "Unknown email error";
+        console.error("Email sending error:", JSON.stringify(emailResponseData));
+        emailError = emailResponseData.error || "Unknown email error";
         throw new Error(`Email sending failed: ${emailError}`);
       } else {
-        const emailResult = await emailResponse.json();
-        console.log("Email sent successfully:", JSON.stringify(emailResult));
+        console.log("Email sent successfully:", JSON.stringify(emailResponseData));
         emailSent = true;
       }
     } catch (emailError) {
