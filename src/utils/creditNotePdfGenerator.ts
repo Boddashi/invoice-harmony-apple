@@ -219,7 +219,12 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
     }
 
     console.log("PDF generated successfully with URL:", pdfResult.url);
-    return { url: pdfResult.url, base64: pdfResult.base64 };
+    
+    // After generating the PDF, we'll save it to the credit_notes bucket
+    const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
+    
+    // Return both the temporary URL and the base64 data
+    return { url: pdfUrl, base64: pdfResult.base64 };
   } catch (error: any) {
     console.error('Error generating credit note PDF:', error);
     throw error;

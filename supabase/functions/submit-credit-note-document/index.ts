@@ -69,43 +69,7 @@ serve(async (req) => {
       );
     }
 
-    // Store PDF in the credit_notes storage bucket if pdfBase64 is provided
-    if (pdfBase64) {
-      try {
-        console.log("Storing PDF in credit_notes bucket...");
-        
-        // Convert base64 to blob
-        const base64Data = pdfBase64.split(',')[1];
-        const binaryString = atob(base64Data);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-        
-        const blob = new Blob([bytes], { type: 'application/pdf' });
-        const formData = new FormData();
-        formData.append('file', blob, `credit-note-${creditNote.credit_note_number}.pdf`);
-        
-        // Use Supabase Storage API to store the file
-        const storageUrl = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/credit_notes/${creditNote.id}/credit-note.pdf`;
-        const storageResponse = await fetch(storageUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
-          },
-          body: formData,
-        });
-        
-        if (!storageResponse.ok) {
-          console.error("Storage API error:", await storageResponse.text());
-        } else {
-          console.log("PDF stored successfully in credit_notes bucket");
-        }
-      } catch (storageError) {
-        console.error("Error storing PDF:", storageError);
-        // Continue execution even if PDF storage fails
-      }
-    }
+    // We no longer need to store the PDF here since it's already saved in the storage bucket
 
     // Validate PDF data for email attachment
     if (!pdfBase64) {

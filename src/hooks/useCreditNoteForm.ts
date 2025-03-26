@@ -664,6 +664,7 @@ export function useCreditNoteForm() {
     }
   }, [user, currencySymbol, toast]);
 
+  
   const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { url: string; base64: string }) => {
     if (!user || !selectedClientId) return null;
     
@@ -993,85 +994,4 @@ export function useCreditNoteForm() {
         ...(newClient.postcode && { postcode: newClient.postcode }),
         ...(newClient.city && { city: newClient.city }),
         ...(newClient.country && { country: newClient.country }),
-        ...(newClient.vat_number && { vat_number: newClient.vat_number }),
-        ...(newClient.legal_entity_id && { legal_entity_id: newClient.legal_entity_id })
-      };
-
-      const { data, error } = await supabase
-        .from('clients')
-        .insert(clientData)
-        .select();
-        
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setClients(prevClients => [...prevClients, data[0]]);
-        setSelectedClientId(data[0].id);
-        setIsAddClientModalOpen(false);
-        
-        toast({
-          title: 'Success',
-          description: 'Client added successfully.',
-        });
-      }
-    } catch (error: any) {
-      console.error('Error adding client:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to add client.',
-      });
-    }
-  }, [user, toast, setClients, setSelectedClientId, setIsAddClientModalOpen]);
-  
-  const handleDownloadPDF = useCallback(() => {
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-    }
-  }, [pdfUrl]);
-  
-  return {
-    isEditMode,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isSubmittingToStorecove,
-    isAddClientModalOpen,
-    creditNoteNumber,
-    selectedClientId,
-    issueDate,
-    status,
-    notes,
-    items,
-    total,
-    clients,
-    availableItems,
-    vats,
-    pdfUrl,
-    currencySymbol,
-    user,
-    companySettings,
-    
-    setIsAddClientModalOpen,
-    setCreditNoteNumber,
-    setSelectedClientId,
-    setIssueDate,
-    setNotes,
-    handleAddClient,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleDownloadPDF,
-    handleSendEmail,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleSubmit,
-    getVatGroups,
-    fetchAvailableItems
-  };
-}
-
+        ...(newClient.vat_number && { vat_number
