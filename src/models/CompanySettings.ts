@@ -24,7 +24,7 @@ export interface CompanySettings {
   // Invoice settings
   invoice_prefix: string;
   invoice_number_type: 'date' | 'incremental';
-  credit_note_prefix?: string;
+  credit_note_prefix: string;
   
   // Yuki integration
   yuki_email?: string;

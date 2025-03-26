@@ -78,6 +78,7 @@ export type Database = {
           company_website: string | null
           country: string | null
           created_at: string | null
+          credit_note_prefix: string | null
           default_currency: string | null
           iban: string | null
           id: string
@@ -107,6 +108,7 @@ export type Database = {
           company_website?: string | null
           country?: string | null
           created_at?: string | null
+          credit_note_prefix?: string | null
           default_currency?: string | null
           iban?: string | null
           id?: string
@@ -136,6 +138,7 @@ export type Database = {
           company_website?: string | null
           country?: string | null
           created_at?: string | null
+          credit_note_prefix?: string | null
           default_currency?: string | null
           iban?: string | null
           id?: string

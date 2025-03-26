@@ -95,7 +95,7 @@ const BillingTab = ({
                     id="credit_note_prefix"
                     name="credit_note_prefix"
                     placeholder="e.g. CN"
-                    value={companySettings.credit_note_prefix || ""}
+                    value={companySettings.credit_note_prefix || "CN"}
                     onChange={handleInputChange}
                     className="input-field w-full"
                   />
