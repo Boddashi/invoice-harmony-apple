@@ -85,6 +85,31 @@ const BillingTab = ({
                   Example: {companySettings.invoice_prefix || "INV"}-00001
                 </p>
               </div>
+              
+              <div>
+                <Label htmlFor="credit_note_prefix">
+                  Credit Note Prefix
+                </Label>
+                <div className="flex items-center mt-1">
+                  <Input
+                    id="credit_note_prefix"
+                    name="credit_note_prefix"
+                    placeholder="e.g. CN"
+                    value={companySettings.credit_note_prefix || ""}
+                    onChange={handleInputChange}
+                    className="input-field w-full"
+                  />
+                  <span className="mx-2 text-muted-foreground">
+                    -
+                  </span>
+                  <div className="bg-secondary text-muted-foreground px-3 py-2 rounded border border-input">
+                    00001
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Example: {companySettings.credit_note_prefix || "CN"}-00001
+                </p>
+              </div>
             </div>
           </div>
 

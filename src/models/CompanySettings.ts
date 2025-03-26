@@ -24,6 +24,7 @@ export interface CompanySettings {
   // Invoice settings
   invoice_prefix: string;
   invoice_number_type: 'date' | 'incremental';
+  credit_note_prefix?: string;
   
   // Yuki integration
   yuki_email?: string;
@@ -62,6 +63,7 @@ export const defaultCompanySettings: CompanySettings = {
   
   invoice_prefix: 'INV',
   invoice_number_type: 'date',
+  credit_note_prefix: 'CN',
   
   yuki_email: '',
   
