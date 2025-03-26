@@ -568,6 +568,267 @@ export function useCreditNoteForm() {
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
   
+  const generatePDF = useCallback(async (creditNoteId: string, shouldUpdateStatus = true) => {
+    if (!user) return null;
+
+    try {
+      setIsGeneratingPDF(true);
+
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select(`
+          *,
+          client:clients(*),
+          items:credit_note_items(*, item:items(*))
+        `)
+        .eq('id', creditNoteId)
+        .single();
+
+      if (creditNoteError) throw creditNoteError;
+
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
+              .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+              .logo { max-width: 200px; max-height: 80px; }
+              .title { font-size: 24px; font-weight: bold; margin-bottom: 5px; color: #FF3B30; }
+              .info-section { margin-bottom: 20px; }
+              .label { font-weight: bold; margin-bottom: 3px; color: #666; }
+              .value { margin-bottom: 10px; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th { background-color: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+              td { padding: 10px; border-bottom: 1px solid #ddd; }
+              .amount { text-align: right; }
+              .total { font-weight: bold; }
+              .footer { margin-top: 30px; font-size: 12px; color: #666; text-align: center; }
+              .credit-note-label { color: #FF3B30; font-weight: bold; }
+              .negative-amount { color: #FF3B30; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                ${companyData?.logo_url ? `<img src="${companyData.logo_url}" class="logo" alt="Company Logo">` : ''}
+                <div style="margin-top: 10px;">
+                  <div><strong>${companyData?.company_name || 'Your Company'}</strong></div>
+                  <div>${companyData?.street || ''} ${companyData?.number || ''} ${companyData?.bus ? ', ' + companyData.bus : ''}</div>
+                  <div>${companyData?.postal_code || ''} ${companyData?.city || ''} ${companyData?.country ? ', ' + companyData.country : ''}</div>
+                  ${companyData?.vat_number ? `<div>VAT: ${companyData.vat_number}</div>` : ''}
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div class="title">CREDIT NOTE</div>
+                <div><strong>Number:</strong> ${creditNoteData.credit_note_number}</div>
+                <div><strong>Date:</strong> ${new Date(creditNoteData.issue_date).toLocaleDateString()}</div>
+              </div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between;">
+              <div class="info-section" style="flex: 1;">
+                <div class="label">Bill To:</div>
+                <div class="value"><strong>${creditNoteData.client.name}</strong></div>
+                <div class="value">${creditNoteData.client.street || ''} ${creditNoteData.client.number || ''} ${creditNoteData.client.bus ? ', ' + creditNoteData.client.bus : ''}</div>
+                <div class="value">${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''} ${creditNoteData.client.country ? ', ' + creditNoteData.client.country : ''}</div>
+                ${creditNoteData.client.vat_number ? `<div class="value">VAT: ${creditNoteData.client.vat_number}</div>` : ''}
+              </div>
+              
+              <div class="info-section" style="flex: 1; text-align: right;">
+                <div class="label">Status:</div>
+                <div class="value">${creditNoteData.status.toUpperCase()}</div>
+                ${companyData?.iban ? `
+                <div class="label" style="margin-top: 15px;">Bank Account:</div>
+                <div class="value">${companyData.iban}</div>
+                ${companyData?.bank_name ? `<div class="value">${companyData.bank_name}</div>` : ''}
+                ${companyData?.swift ? `<div class="value">BIC/SWIFT: ${companyData.swift}</div>` : ''}
+                ` : ''}
+              </div>
+            </div>
+            
+            <table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>VAT</th>
+                  <th class="amount">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${creditNoteData.items.map(item => `
+                  <tr>
+                    <td>${item.item ? item.item.title : 'Unknown Item'}</td>
+                    <td>${item.quantity}</td>
+                    <td>${currencySymbol}${(item.total_amount / item.quantity).toFixed(2)}</td>
+                    <td>${item.item?.vat || '0%'}</td>
+                    <td class="amount negative-amount">-${currencySymbol}${Math.abs(item.total_amount).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div style="margin-left: auto; width: 300px; margin-top: 20px;">
+              <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                <div>Subtotal:</div>
+                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.amount).toFixed(2)}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                <div>Tax:</div>
+                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.tax_amount || 0).toFixed(2)}</div>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 2px solid #ddd; font-weight: bold;">
+                <div>Total:</div>
+                <div class="negative-amount">-${currencySymbol}${Math.abs(creditNoteData.total_amount).toFixed(2)}</div>
+              </div>
+            </div>
+            
+            ${creditNoteData.notes ? `
+            <div style="margin-top: 30px;">
+              <div class="label">Notes:</div>
+              <div class="value">${creditNoteData.notes}</div>
+            </div>
+            ` : ''}
+            
+            <div class="footer">
+              <p>This is a credit note for services or goods previously invoiced.</p>
+              ${companyData?.terms_and_conditions_url ? `
+              <p><a href="${companyData.terms_and_conditions_url}" target="_blank">View our Terms and Conditions</a></p>
+              ` : ''}
+              <p>${companyData?.company_name || 'Your Company'} - ${companyData?.company_email || ''} ${companyData?.company_phone ? '- ' + companyData.company_phone : ''}</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const { data: pdfResult, error: pdfError } = await supabase
+        .functions
+        .invoke('generate-pdf', {
+          body: { html, filename: `credit-note-${creditNoteData.credit_note_number}.pdf` }
+        });
+
+      if (pdfError) throw pdfError;
+
+      if (pdfResult?.url) {
+        setPdfUrl(pdfResult.url);
+
+        if (shouldUpdateStatus) {
+          const { error: updateError } = await supabase
+            .from('credit_notes')
+            .update({
+              pdf_url: pdfResult.url,
+              status: 'pending'
+            })
+            .eq('id', creditNoteId);
+
+          if (updateError) throw updateError;
+          
+          setStatus('pending');
+        }
+
+        return { url: pdfResult.url, base64: pdfResult.base64 };
+      }
+
+      throw new Error('Failed to generate PDF: No URL returned');
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to generate credit note PDF.',
+      });
+      return null;
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  }, [user, currencySymbol, toast]);
+
+  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { url: string; base64: string }) => {
+    if (!user || !selectedClientId) return null;
+    
+    try {
+      setIsSubmittingToStorecove(true);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', selectedClientId)
+        .single();
+        
+      if (clientError) throw clientError;
+      
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select(`
+          *,
+          items:credit_note_items(
+            id,
+            item_id,
+            quantity,
+            total_amount,
+            item:items(*)
+          )
+        `)
+        .eq('id', creditNoteId)
+        .single();
+        
+      if (creditNoteError) throw creditNoteError;
+      
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      
+      const formattedItems = creditNoteData.items.map((item: any) => ({
+        id: item.id,
+        description: item.item_id,
+        quantity: item.quantity,
+        unit_price: item.total_amount / item.quantity,
+        amount: -Math.abs(item.total_amount),
+        vat_rate: item.item?.vat || '21%'
+      }));
+      
+      const { data: submissionResult, error: submissionError } = await supabase
+        .functions
+        .invoke('submit-credit-note-document', {
+          body: {
+            creditNote: creditNoteData,
+            client: clientData,
+            items: formattedItems,
+            companySettings: companyData,
+            pdfBase64: pdfData.base64,
+            pdfUrl: pdfData.url
+          }
+        });
+        
+      if (submissionError) throw submissionError;
+      
+      return submissionResult;
+    } catch (error: any) {
+      console.error('Error submitting to Storecove:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to submit credit note to Storecove.',
+      });
+      return null;
+    } finally {
+      setIsSubmittingToStorecove(false);
+    }
+  }, [user, selectedClientId]);
+  
   const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -648,11 +909,36 @@ export function useCreditNoteForm() {
           
         if (insertItemsError) throw insertItemsError;
       }
+
+      const pdfData = await generatePDF(savedCreditNoteId, false);
       
-      toast({
-        title: 'Success',
-        description: `Credit note created and sent.`,
-      });
+      if (pdfData) {
+        const { error: updateError } = await supabase
+          .from('credit_notes')
+          .update({
+            pdf_url: pdfData.url,
+            status: 'pending'
+          })
+          .eq('id', savedCreditNoteId);
+          
+        if (updateError) throw updateError;
+        
+        setStatus('pending');
+        
+        const storecoveResult = await submitToStorecove(savedCreditNoteId, pdfData);
+        
+        if (storecoveResult) {
+          toast({
+            title: 'Success',
+            description: `Credit note created and sent.${storecoveResult.emailSent ? ' Email sent successfully.' : ''}`,
+          });
+        } else {
+          toast({
+            title: 'Partial Success',
+            description: 'Credit note created but not sent to Storecove.',
+          });
+        }
+      }
       
       navigate('/creditnotes');
     } catch (error: any) {
@@ -667,13 +953,86 @@ export function useCreditNoteForm() {
     }
   }, [
     user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
-    creditNoteId, isEditMode, id, navigate, getVatGroups, toast
+    creditNoteId, isEditMode, id, navigate, getVatGroups, toast, generatePDF, submitToStorecove
   ]);
   
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     handleCreateAndSend(e as unknown as React.MouseEvent);
   }, [handleCreateAndSend]);
+  
+  const handleSendEmail = useCallback(async () => {
+    if (!user || !selectedClientId || !pdfUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Cannot send email without PDF or client.',
+      });
+      return;
+    }
+    
+    try {
+      setIsSendingEmail(true);
+      
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .eq('id', selectedClientId)
+        .single();
+        
+      if (clientError) throw clientError;
+      
+      const { data: creditNoteData, error: creditNoteError } = await supabase
+        .from('credit_notes')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (creditNoteError) throw creditNoteError;
+      
+      const { data: companyData, error: companyError } = await supabase
+        .from('company_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+      
+      const emailData = {
+        clientName: clientData.name,
+        clientEmail: clientData.email,
+        invoiceNumber: creditNoteData.credit_note_number,
+        isCredit: true,
+        pdfUrl: pdfUrl,
+        termsAndConditionsUrl: companyData?.terms_and_conditions_url || null,
+        companyName: companyData?.company_name || "PowerPeppol",
+        includeAttachments: true,
+        yukiEmail: companyData?.yuki_email
+      };
+      
+      const { data: emailResult, error: emailError } = await supabase
+        .functions
+        .invoke('send-invoice-email', {
+          body: emailData
+        });
+        
+      if (emailError) throw emailError;
+      
+      toast({
+        title: 'Success',
+        description: 'Credit note email sent successfully.',
+      });
+    } catch (error: any) {
+      console.error('Error sending credit note email:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to send credit note email.',
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  }, [user, selectedClientId, id, pdfUrl, toast]);
   
   const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
     if (!user) return;
@@ -783,3 +1142,4 @@ export function useCreditNoteForm() {
     fetchAvailableItems
   };
 }
+

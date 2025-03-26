@@ -18,6 +18,7 @@ const NewCreditNote = () => {
     isSubmitting,
     isGeneratingPDF,
     isSendingEmail,
+    isSubmittingToStorecove,
     isAddClientModalOpen,
     creditNoteNumber,
     selectedClientId,
@@ -78,6 +79,7 @@ const NewCreditNote = () => {
           isSubmitting={isSubmitting}
           isGeneratingPDF={isGeneratingPDF}
           isSendingEmail={isSendingEmail}
+          isSubmittingToStorecove={isSubmittingToStorecove}
           status={status}
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}

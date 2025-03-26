@@ -6,15 +6,19 @@ import CustomCard from "../ui/CustomCard";
 interface CreditNoteBasicInfoProps {
   creditNoteNumber: string;
   issueDate: string;
+  reference?: string;
   setCreditNoteNumber: (value: string) => void;
   setIssueDate: (value: string) => void;
+  setReference?: (value: string) => void;
 }
 
 const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
   creditNoteNumber,
   issueDate,
+  reference = "",
   setCreditNoteNumber,
   setIssueDate,
+  setReference = () => {},
 }) => {
   return (
     <CustomCard className="col-span-1 md:col-span-2">
@@ -38,6 +42,17 @@ const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
             onChange={e => setIssueDate(e.target.value)} 
             className="w-full" 
             required 
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-muted-foreground">Reference (Optional)</label>
+          <Input 
+            type="text" 
+            value={reference} 
+            onChange={e => setReference(e.target.value)} 
+            className="w-full" 
+            placeholder="Invoice number or other reference" 
           />
         </div>
       </div>
