@@ -1,4 +1,3 @@
-
 import React, { useCallback } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
@@ -92,7 +91,6 @@ const NewCreditNote = () => {
               issueDate={issueDate}
               setInvoiceNumber={setInvoiceNumber}
               setIssueDate={setIssueDate}
-              prefix={companySettings?.credit_note_prefix}
             />
             
             <ClientSelection 
