@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Trash, Plus } from "lucide-react";
 import CustomCard from "../ui/CustomCard";
@@ -132,6 +131,7 @@ const CreditNoteItems: React.FC<CreditNoteItemsProps> = ({
                             <Button
                               variant="apple"
                               className="w-full justify-start select-button"
+                              type="button"
                             >
                               <Plus className="mr-2 h-4 w-4" />
                               Add New Item

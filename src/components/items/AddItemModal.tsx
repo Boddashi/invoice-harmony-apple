@@ -115,6 +115,7 @@ const AddItemModal = ({
 
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
     if (!title || !price || !vat) {
       toast.error("Please fill in all required fields");
@@ -163,7 +164,11 @@ const AddItemModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="apple" className={className}>
+          <Button 
+            variant="apple" 
+            className={className}
+            type="button"
+          >
             <Plus className="mr-2 h-4 w-4" /> Add Item
           </Button>
         )}
