@@ -10,6 +10,7 @@ import CreditNoteFrom from '@/components/creditnotes/CreditNoteFrom';
 import CreditNoteItems from '@/components/creditnotes/CreditNoteItems';
 import CreditNoteNotes from '@/components/creditnotes/CreditNoteNotes';
 import CreditNoteSummary from '@/components/creditnotes/CreditNoteSummary';
+import { supabase } from '@/integrations/supabase/client';
 
 const NewCreditNote = () => {
   const {
@@ -60,10 +61,10 @@ const NewCreditNote = () => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
 
-  // For debugging - removed environment variable dependency
+  // For debugging - using the supabase client for URL 
   useEffect(() => {
-    // Use hardcoded Supabase URL instead of environment variable
-    const supabaseUrl = 'https://sjwqxbjxjlsdngbldhcq.supabase.co';
+    // Use supabase client for consistent URL
+    const supabaseUrl = supabase.supabaseUrl;
     console.log('Supabase function URL:', 
       `${supabaseUrl}/functions/v1/submit-credit-note-document`);
     
