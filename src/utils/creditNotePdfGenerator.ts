@@ -2,6 +2,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings } from '@/models/CompanySettings';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Get the Supabase URL from the environment or use the hardcoded value
 const SUPABASE_URL = "https://sjwqxbjxjlsdngbldhcq.supabase.co";
@@ -186,48 +188,113 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
       </html>
     `;
 
-    console.log("Calling generate-pdf function with size:", html.length, "characters");
+    console.log("Generating PDF locally using html2canvas and jsPDF");
     
-    // Use the constant SUPABASE_URL instead of accessing the protected property
-    if (!SUPABASE_URL) {
-      console.error("Failed to get Supabase URL");
-      throw new Error("Missing Supabase URL configuration");
-    }
-
+    // Create a temporary DOM element to render the HTML
+    const element = document.createElement('div');
+    element.className = 'credit-note-pdf';
+    element.style.width = '210mm';
+    element.style.padding = '20mm';
+    element.style.backgroundColor = 'white';
+    element.style.position = 'fixed';
+    element.style.left = '-9999px';
+    element.style.top = '0';
+    element.innerHTML = html;
+    document.body.appendChild(element);
+    
     try {
-      // Call the Supabase edge function to generate the PDF using supabase.functions.invoke
-      const response = await supabase.functions.invoke("generate-pdf", {
-        body: { 
-          html, 
-          filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
-        }
+      // Render the HTML to canvas
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
       });
-
-      if (!response.data || response.error) {
-        console.error("Error response from generate-pdf function:", response.error);
-        toast.error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
-        throw new Error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
-      }
-
-      const pdfResult = response.data;
-
-      if (!pdfResult?.url || !pdfResult?.base64) {
-        console.error("Missing PDF data in response:", pdfResult);
-        toast.error('Failed to generate PDF: No URL or base64 data returned');
-        throw new Error('Failed to generate PDF: No URL or base64 data returned');
-      }
-
-      console.log("PDF generated successfully with URL:", pdfResult.url);
       
-      // After generating the PDF, we'll save it to the credit_notes bucket
-      const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
+      // Remove the element from the DOM
+      document.body.removeChild(element);
       
-      // Return both the temporary URL and the base64 data
-      return { url: pdfUrl, base64: pdfResult.base64 };
+      // Create a PDF from the canvas
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // Add more pages if content is too long
+      let heightLeft = imgHeight - pageHeight;
+      let position = -pageHeight;
+      
+      while (heightLeft > 0) {
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        position -= pageHeight;
+      }
+      
+      // Get the PDF as a base64 string
+      const pdfBase64 = pdf.output('datauristring');
+      
+      console.log("PDF generated successfully with size:", pdfBase64.length);
+      
+      // Save the PDF to storage
+      const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfBase64);
+      
+      return { url: pdfUrl, base64: pdfBase64 };
     } catch (error: any) {
-      console.error('Error calling generate-pdf function:', error);
-      toast.error(`PDF generation failed: ${error.message || 'Unknown error'}`);
-      throw error;
+      console.error("Error generating PDF with html2canvas:", error);
+      toast.error(`PDF generation failed locally: ${error.message}`);
+      
+      // Fallback to server-side PDF generation
+      console.log("Falling back to server-side PDF generation");
+      
+      if (!SUPABASE_URL) {
+        console.error("Failed to get Supabase URL");
+        throw new Error("Missing Supabase URL configuration");
+      }
+
+      try {
+        // Call the Supabase edge function to generate the PDF
+        const response = await supabase.functions.invoke("generate-pdf", {
+          body: { 
+            html, 
+            filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
+          }
+        });
+
+        if (!response.data || response.error) {
+          console.error("Error response from generate-pdf function:", response.error);
+          toast.error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
+          throw new Error(`Failed to generate PDF: ${response.error?.message || 'Unknown error'}`);
+        }
+
+        const pdfResult = response.data;
+
+        if (!pdfResult?.url || !pdfResult?.base64) {
+          console.error("Missing PDF data in response:", pdfResult);
+          toast.error('Failed to generate PDF: No URL or base64 data returned');
+          throw new Error('Failed to generate PDF: No URL or base64 data returned');
+        }
+
+        console.log("PDF generated successfully with URL:", pdfResult.url);
+        
+        // After generating the PDF, we'll save it to the credit_notes bucket
+        const pdfUrl = await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
+        
+        // Return both the temporary URL and the base64 data
+        return { url: pdfUrl, base64: pdfResult.base64 };
+      } catch (serverError: any) {
+        console.error('Error calling generate-pdf function:', serverError);
+        toast.error(`Server-side PDF generation failed: ${serverError.message || 'Unknown error'}`);
+        throw serverError;
+      }
     }
   } catch (error: any) {
     console.error('Error generating credit note PDF:', error);
