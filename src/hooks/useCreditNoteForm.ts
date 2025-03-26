@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -97,7 +96,6 @@ export function useCreditNoteForm() {
   
   const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
 
-  // Fetch company settings
   useEffect(() => {
     const fetchCompanySettings = async () => {
       if (!user?.id) return;
@@ -123,7 +121,6 @@ export function useCreditNoteForm() {
     fetchCompanySettings();
   }, [user?.id]);
 
-  // Fetch clients
   useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
@@ -137,7 +134,6 @@ export function useCreditNoteForm() {
         console.log('Fetched clients:', data);
         setClients(data || []);
         
-        // Select first client if none is selected and clients are available
         if (data && data.length > 0 && !selectedClientId) {
           console.log('Auto-selecting first client on load:', data[0].id);
           setSelectedClientId(data[0].id);
@@ -157,7 +153,6 @@ export function useCreditNoteForm() {
     fetchClients();
   }, [user, toast]);
 
-  // Fetch items
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
     
@@ -183,7 +178,6 @@ export function useCreditNoteForm() {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
   
-  // Update item amounts when quantity or unit_price changes
   useEffect(() => {
     const updatedItems = items.map(item => {
       const amount = Number(item.quantity) * Number(item.unit_price);
@@ -196,7 +190,6 @@ export function useCreditNoteForm() {
     setItems(updatedItems);
   }, [items.map(item => `${item.quantity}-${item.unit_price}`)]);
   
-  // Item handlers
   const handleItemDescriptionChange = useCallback((id: string, value: string) => {
     setItems(prevItems => {
       return prevItems.map(item => {
@@ -292,7 +285,6 @@ export function useCreditNoteForm() {
     });
   }, []);
   
-  // Calculate VAT groups
   const getVatGroups = useCallback((): VatGroup[] => {
     const groups = new Map<string, VatGroup>();
     
@@ -331,7 +323,6 @@ export function useCreditNoteForm() {
     }));
   }, [items]);
   
-  // Button handlers
   const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
     await handleSubmit('draft');
@@ -353,7 +344,6 @@ export function useCreditNoteForm() {
     return `${prefix}-${randomNumber}`;
   };
 
-  // Submit to Storecove
   const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
     if (!user) return;
     
@@ -387,7 +377,6 @@ export function useCreditNoteForm() {
     }
   }, [user, toast]);
 
-  // Handle PDF download
   const handleDownloadPDF = useCallback(async () => {
     if (!creditNoteId) {
       toast({
@@ -422,7 +411,6 @@ export function useCreditNoteForm() {
     }
   }, [creditNoteId, toast]);
 
-  // Handle email sending
   const handleSendEmail = useCallback(async () => {
     console.log("handleSendEmail called with user:", user?.id);
     console.log("handleSendEmail called with selectedClientId:", selectedClientId);
@@ -437,7 +425,8 @@ export function useCreditNoteForm() {
       return;
     }
     
-    if (!selectedClientId) {
+    const clientIdToUse = selectedClientId;
+    if (!clientIdToUse) {
       toast({
         variant: 'destructive',
         title: 'Error',
@@ -461,6 +450,7 @@ export function useCreditNoteForm() {
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
           creditNoteId: creditNoteId,
+          clientId: clientIdToUse
         }
       });
 
@@ -489,7 +479,6 @@ export function useCreditNoteForm() {
     }
   }, [user, selectedClientId, creditNoteId, toast]);
 
-  // Main submit function
   const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
     console.log('Submit called with user:', user?.id);
     console.log('Selected client ID:', selectedClientId);
@@ -503,7 +492,9 @@ export function useCreditNoteForm() {
       return;
     }
     
-    if (!selectedClientId) {
+    const clientIdToUse = selectedClientId;
+    
+    if (!clientIdToUse) {
       console.error('No client selected when submitting');
       toast({
         variant: 'destructive',
@@ -517,7 +508,6 @@ export function useCreditNoteForm() {
     try {
       const statusToUse: CreditNoteStatus = newStatus || status;
       
-      // Generate credit note number if not set
       let creditNoteNumberToUse = creditNoteNumber;
       if (!creditNoteNumberToUse) {
         creditNoteNumberToUse = await generateCreditNoteNumber();
@@ -526,7 +516,7 @@ export function useCreditNoteForm() {
       
       const creditNoteData = {
         credit_note_number: creditNoteNumberToUse,
-        client_id: selectedClientId,
+        client_id: clientIdToUse,
         issue_date: issueDate,
         status: statusToUse,
         notes: notes,
@@ -668,7 +658,6 @@ export function useCreditNoteForm() {
     }
   }, [user, selectedClientId, status, creditNoteNumber, issueDate, notes, total, creditNoteId, items, toast, navigate]);
 
-  // Add client handler
   const handleAddClient = useCallback(async (clientData: any) => {
     if (!user) return null;
     

@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { useCreditNoteForm } from '@/hooks/useCreditNoteForm';
@@ -62,6 +62,24 @@ const NewCreditNote = () => {
     fetchAvailableItems
   } = useCreditNoteForm();
   
+  // Local state to ensure client selection is preserved
+  const [localClientId, setLocalClientId] = useState(selectedClientId);
+  
+  // Update local state when selectedClientId changes
+  useEffect(() => {
+    if (selectedClientId) {
+      setLocalClientId(selectedClientId);
+    }
+  }, [selectedClientId]);
+  
+  // Update the form state when local state changes
+  useEffect(() => {
+    if (localClientId && localClientId !== selectedClientId) {
+      console.log("Updating selected client ID from local state:", localClientId);
+      setSelectedClientId(localClientId);
+    }
+  }, [localClientId, selectedClientId, setSelectedClientId]);
+  
   const refreshItems = useCallback(() => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
@@ -71,6 +89,7 @@ const NewCreditNote = () => {
     // Log auth status for debugging the issue
     console.log('User authenticated:', !!user);
     console.log('Selected client ID:', selectedClientId);
+    console.log('Local client ID:', localClientId);
     
     // Log the function URLs using the constant instead of supabase.supabaseUrl
     console.log('Supabase function URL:', 
@@ -79,7 +98,7 @@ const NewCreditNote = () => {
     // Also log generate-pdf function URL
     console.log('Generate PDF function URL:', 
       `${SUPABASE_URL}/functions/v1/generate-pdf`);
-  }, [user, selectedClientId]);
+  }, [user, selectedClientId, localClientId]);
 
   if (isLoading && isEditMode) {
     return (
@@ -95,9 +114,16 @@ const NewCreditNote = () => {
     e.preventDefault();
     // Log form state before submission
     console.log('Form submitted with client ID:', selectedClientId);
+    console.log('Form submitted with local client ID:', localClientId);
     console.log('Form submitted with credit note number:', creditNoteNumber);
     
-    handleSubmit();
+    // Use the local client ID for submission if it exists
+    if (localClientId && !selectedClientId) {
+      setSelectedClientId(localClientId);
+      setTimeout(() => handleSubmit(), 0);
+    } else {
+      handleSubmit();
+    }
   };
 
   return (
@@ -132,8 +158,8 @@ const NewCreditNote = () => {
             
             <ClientSelection 
               clients={clients}
-              selectedClientId={selectedClientId}
-              setSelectedClientId={setSelectedClientId}
+              selectedClientId={localClientId || selectedClientId}
+              setSelectedClientId={setLocalClientId}
               setIsAddClientModalOpen={setIsAddClientModalOpen}
             />
             

@@ -51,7 +51,7 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
           Select Client
         </Label>
         <Select
-          value={selectedClientId}
+          value={selectedClientId || ""}
           onValueChange={(value) => {
             console.log("Client selected:", value);
             setSelectedClientId(value);
