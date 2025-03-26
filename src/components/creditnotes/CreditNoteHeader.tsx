@@ -5,32 +5,37 @@ import { Loader2, Download } from "lucide-react";
 interface CreditNoteHeaderProps {
   isEditMode: boolean;
   pdfUrl: string | null;
-  pdfGenerated?: boolean; // Added this prop
-  creditNoteId?: string;  // Added this prop
+  pdfGenerated?: boolean;
+  creditNoteId?: string;
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
   isSubmittingToStorecove?: boolean;
+  isSendingToYuki?: boolean;
   status: "draft" | "pending" | "paid"; // Removed 'overdue' option
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
   handleSendEmail?: () => void;
+  handleCreateAndSendYuki?: (e: React.MouseEvent) => void;
 }
 
 const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
   isEditMode,
   pdfUrl,
   pdfGenerated,
+  creditNoteId,
   isSubmitting,
   isGeneratingPDF,
   isSendingEmail,
   isSubmittingToStorecove,
+  isSendingToYuki,
   status,
   handleDownloadPDF,
   handleSaveAsDraft,
   handleCreateAndSend,
   handleSendEmail,
+  handleCreateAndSendYuki,
 }) => {
   return (
     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 animate-fade-in">
@@ -57,6 +62,8 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
                   ? "Sending email..."
                   : isSubmittingToStorecove
                   ? "Submitting to Storecove..."
+                  : isSendingToYuki
+                  ? "Sending to Yuki..."
                   : "Saving..."}
               </span>
             </div>
@@ -90,6 +97,15 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
             >
               Create & Send
             </button>
+            {handleCreateAndSendYuki && (
+              <button 
+                onClick={handleCreateAndSendYuki} 
+                className="yuki-button"
+                type="button"
+              >
+                Create & Send & Yuki
+              </button>
+            )}
             {handleSendEmail && (pdfUrl || pdfGenerated) && (
               <button 
                 onClick={handleSendEmail}

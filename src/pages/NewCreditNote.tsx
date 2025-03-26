@@ -1,4 +1,3 @@
-
 import React, { useCallback, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
@@ -21,6 +20,7 @@ const NewCreditNote = () => {
     isGeneratingPDF,
     isSendingEmail,
     isSubmittingToStorecove,
+    isSendingToYuki,
     isAddClientModalOpen,
     creditNoteNumber,
     selectedClientId,
@@ -55,6 +55,7 @@ const NewCreditNote = () => {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
+    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems
@@ -97,11 +98,13 @@ const NewCreditNote = () => {
           isGeneratingPDF={isGeneratingPDF}
           isSendingEmail={isSendingEmail}
           isSubmittingToStorecove={isSubmittingToStorecove}
+          isSendingToYuki={isSendingToYuki}
           status={status}
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
           handleSendEmail={pdfGenerated ? handleSendEmail : undefined}
+          handleCreateAndSendYuki={companySettings?.yuki_email ? handleCreateAndSendYuki : undefined}
         />
         
         <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
