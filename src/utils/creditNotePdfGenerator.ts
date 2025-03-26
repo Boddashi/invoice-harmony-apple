@@ -2,6 +2,9 @@
 import { supabase } from '@/integrations/supabase/client';
 import { CompanySettings } from '@/models/CompanySettings';
 
+// Get the Supabase URL from the environment or use the hardcoded value
+const SUPABASE_URL = "https://sjwqxbjxjlsdngbldhcq.supabase.co";
+
 export interface CreditNoteData {
   id: string;
   credit_note_number: string;
@@ -184,15 +187,13 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
 
     console.log("Calling generate-pdf function...");
     
-    // Get Supabase URL directly from the client instead of environment variables
-    const supabaseUrl = supabase.supabaseUrl;
-    
-    if (!supabaseUrl) {
+    // Use the constant SUPABASE_URL instead of accessing the protected property
+    if (!SUPABASE_URL) {
       console.error("Failed to get Supabase URL");
       throw new Error("Missing Supabase URL configuration");
     }
     
-    // Call the Supabase edge function to generate the PDF using fetch directly
+    // Call the Supabase edge function to generate the PDF using supabase.functions.invoke
     const response = await supabase.functions.invoke("generate-pdf", {
       body: { 
         html, 

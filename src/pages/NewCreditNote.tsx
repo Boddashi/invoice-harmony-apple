@@ -10,7 +10,8 @@ import CreditNoteFrom from '@/components/creditnotes/CreditNoteFrom';
 import CreditNoteItems from '@/components/creditnotes/CreditNoteItems';
 import CreditNoteNotes from '@/components/creditnotes/CreditNoteNotes';
 import CreditNoteSummary from '@/components/creditnotes/CreditNoteSummary';
-import { supabase } from '@/integrations/supabase/client';
+
+const SUPABASE_URL = "https://sjwqxbjxjlsdngbldhcq.supabase.co";
 
 const NewCreditNote = () => {
   const {
@@ -61,16 +62,15 @@ const NewCreditNote = () => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
 
-  // For debugging - using the supabase client for URL 
+  // For debugging - using the direct Supabase URL for function URLs
   useEffect(() => {
-    // Use supabase client for consistent URL
-    const supabaseUrl = supabase.supabaseUrl;
+    // Log the function URLs using the constant instead of supabase.supabaseUrl
     console.log('Supabase function URL:', 
-      `${supabaseUrl}/functions/v1/submit-credit-note-document`);
+      `${SUPABASE_URL}/functions/v1/submit-credit-note-document`);
     
     // Also log generate-pdf function URL
     console.log('Generate PDF function URL:', 
-      `${supabaseUrl}/functions/v1/generate-pdf`);
+      `${SUPABASE_URL}/functions/v1/generate-pdf`);
   }, []);
 
   if (isLoading && isEditMode) {
