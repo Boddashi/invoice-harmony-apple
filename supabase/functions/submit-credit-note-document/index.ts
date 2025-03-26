@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Credit note document submission function called");
+    
     const STORECOVE_API_KEY = Deno.env.get('STORECOVE_API_KEY');
     
     if (!STORECOVE_API_KEY) {
@@ -27,7 +29,21 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const requestData = await req.json();
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log("Request body parsed successfully");
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, "Content-Type": "application/json" } 
+        }
+      );
+    }
+    
     const { 
       creditNote, 
       client, 

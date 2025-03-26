@@ -800,6 +800,15 @@ export function useCreditNoteForm() {
         vat_rate: item.item?.vat || '21%'
       }));
       
+      console.log('Submitting credit note to edge function with data:', {
+        creditNoteId: creditNoteData.id,
+        creditNoteNumber: creditNoteData.credit_note_number,
+        clientId: clientData.id,
+        clientName: clientData.name,
+        itemCount: formattedItems.length,
+        hasPdfBase64: !!pdfData.base64
+      });
+      
       const { data: submissionResult, error: submissionError } = await supabase
         .functions
         .invoke('submit-credit-note-document', {
@@ -813,8 +822,12 @@ export function useCreditNoteForm() {
           }
         });
         
-      if (submissionError) throw submissionError;
+      if (submissionError) {
+        console.error('Error from edge function:', submissionError);
+        throw submissionError;
+      }
       
+      console.log('Edge function response:', submissionResult);
       return submissionResult;
     } catch (error: any) {
       console.error('Error submitting to Storecove:', error);
@@ -827,7 +840,7 @@ export function useCreditNoteForm() {
     } finally {
       setIsSubmittingToStorecove(false);
     }
-  }, [user, selectedClientId]);
+  }, [user, selectedClientId, supabase, toast]);
   
   const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -910,9 +923,12 @@ export function useCreditNoteForm() {
         if (insertItemsError) throw insertItemsError;
       }
 
+      console.log('Generating PDF for credit note ID:', savedCreditNoteId);
       const pdfData = await generatePDF(savedCreditNoteId, false);
       
       if (pdfData) {
+        console.log('PDF generated successfully:', pdfData.url);
+        
         const { error: updateError } = await supabase
           .from('credit_notes')
           .update({
@@ -924,20 +940,31 @@ export function useCreditNoteForm() {
         if (updateError) throw updateError;
         
         setStatus('pending');
+        setPdfUrl(pdfData.url);
         
+        console.log('Calling submitToStorecove with credit note ID:', savedCreditNoteId);
         const storecoveResult = await submitToStorecove(savedCreditNoteId, pdfData);
         
         if (storecoveResult) {
+          console.log('Storecove submission successful:', storecoveResult);
           toast({
             title: 'Success',
             description: `Credit note created and sent.${storecoveResult.emailSent ? ' Email sent successfully.' : ''}`,
           });
         } else {
+          console.warn('Storecove submission returned null result');
           toast({
             title: 'Partial Success',
             description: 'Credit note created but not sent to Storecove.',
           });
         }
+      } else {
+        console.error('PDF generation failed');
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to generate PDF for credit note.',
+        });
       }
       
       navigate('/creditnotes');

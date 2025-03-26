@@ -1,5 +1,5 @@
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
 import { useCreditNoteForm } from '@/hooks/useCreditNoteForm';
@@ -59,6 +59,13 @@ const NewCreditNote = () => {
   const refreshItems = useCallback(() => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
+
+  // Add debugging for edge function URLs
+  useEffect(() => {
+    // Log the Supabase function URL to verify it's correct
+    console.log('Supabase function URL:', 
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-credit-note-document`);
+  }, []);
 
   if (isLoading && isEditMode) {
     return (
