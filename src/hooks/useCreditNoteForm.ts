@@ -85,7 +85,7 @@ export function useCreditNoteForm() {
   
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [creditNoteId, setCreditNoteId] = useState<string>('');
-  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [creditNoteNumber, setCreditNoteNumber] = useState('');
   const [selectedClientId, setSelectedClientId] = useState('');
   const [issueDate, setIssueDate] = useState(() => {
     const today = new Date();
@@ -217,7 +217,7 @@ export function useCreditNoteForm() {
         
         if (creditNoteData) {
           setCreditNoteId(creditNoteData.id);
-          setInvoiceNumber(creditNoteData.invoice_number);
+          setCreditNoteNumber(creditNoteData.invoice_number);
           setIssueDate(creditNoteData.issue_date);
           setSelectedClientId(creditNoteData.client_id);
           const fetchedStatus = creditNoteData.status as string;
@@ -254,10 +254,10 @@ export function useCreditNoteForm() {
   }, [user, id, toast]);
   
   useEffect(() => {
-    if (!isEditMode && companySettings && !invoiceNumber) {
+    if (!isEditMode && companySettings && !creditNoteNumber) {
       generateCreditNoteNumber();
     }
-  }, [isEditMode, companySettings, invoiceNumber]);
+  }, [isEditMode, companySettings, creditNoteNumber]);
 
   const generateCreditNoteNumber = async () => {
     if (!user || !companySettings) return;
@@ -287,12 +287,12 @@ export function useCreditNoteForm() {
       }
       
       const formattedNumber = String(nextNumber).padStart(5, '0');
-      setInvoiceNumber(`${prefix}-${formattedNumber}`);
+      setCreditNoteNumber(`${prefix}-${formattedNumber}`);
       
     } catch (error: any) {
       console.error('Error generating credit note number:', error);
       const prefix = companySettings.credit_note_prefix || 'CN';
-      setInvoiceNumber(`${prefix}-00001`);
+      setCreditNoteNumber(`${prefix}-00001`);
     }
   };
 
@@ -489,7 +489,7 @@ export function useCreditNoteForm() {
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
-        invoice_number: invoiceNumber,
+        invoice_number: creditNoteNumber,
         issue_date: issueDate,
         status: 'draft' as CreditNoteStatus,
         amount: subtotal,
@@ -564,7 +564,7 @@ export function useCreditNoteForm() {
       setIsSubmitting(false);
     }
   }, [
-    user, selectedClientId, invoiceNumber, issueDate, notes, items, 
+    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
   
@@ -591,7 +591,7 @@ export function useCreditNoteForm() {
       const creditNoteData = {
         user_id: user.id,
         client_id: selectedClientId,
-        invoice_number: invoiceNumber,
+        invoice_number: creditNoteNumber,
         issue_date: issueDate,
         status: 'pending' as CreditNoteStatus,
         amount: subtotal,
@@ -666,7 +666,7 @@ export function useCreditNoteForm() {
       setIsSubmitting(false);
     }
   }, [
-    user, selectedClientId, invoiceNumber, issueDate, notes, items, 
+    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
     creditNoteId, isEditMode, id, navigate, getVatGroups, toast
   ]);
   
@@ -747,7 +747,7 @@ export function useCreditNoteForm() {
     isSendingEmail,
     isSubmittingToStorecove,
     isAddClientModalOpen,
-    invoiceNumber,
+    creditNoteNumber,
     selectedClientId,
     issueDate,
     status,
@@ -763,7 +763,7 @@ export function useCreditNoteForm() {
     companySettings,
     
     setIsAddClientModalOpen,
-    setInvoiceNumber,
+    setCreditNoteNumber,
     setSelectedClientId,
     setIssueDate,
     setNotes,

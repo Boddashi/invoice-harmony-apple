@@ -3,16 +3,16 @@ import React from "react";
 import CustomCard from "../ui/CustomCard";
 
 interface CreditNoteBasicInfoProps {
-  invoiceNumber: string;
+  creditNoteNumber: string;
   issueDate: string;
-  setInvoiceNumber: (value: string) => void;
+  setCreditNoteNumber: (value: string) => void;
   setIssueDate: (value: string) => void;
 }
 
 const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
-  invoiceNumber,
+  creditNoteNumber,
   issueDate,
-  setInvoiceNumber,
+  setCreditNoteNumber,
   setIssueDate,
 }) => {
   return (
@@ -22,8 +22,8 @@ const CreditNoteBasicInfo: React.FC<CreditNoteBasicInfoProps> = ({
           <label className="block text-sm font-medium text-muted-foreground">Credit Note Number</label>
           <input 
             type="text" 
-            value={invoiceNumber} 
-            onChange={e => setInvoiceNumber(e.target.value)} 
+            value={creditNoteNumber} 
+            onChange={e => setCreditNoteNumber(e.target.value)} 
             className="input-field w-full" 
             required 
           />

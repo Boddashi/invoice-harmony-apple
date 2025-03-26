@@ -1,3 +1,4 @@
+
 import React, { useCallback } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
@@ -18,7 +19,7 @@ const NewCreditNote = () => {
     isGeneratingPDF,
     isSendingEmail,
     isAddClientModalOpen,
-    invoiceNumber,
+    creditNoteNumber,
     selectedClientId,
     issueDate,
     status,
@@ -34,7 +35,7 @@ const NewCreditNote = () => {
     companySettings,
     
     setIsAddClientModalOpen,
-    setInvoiceNumber,
+    setCreditNoteNumber,
     setSelectedClientId,
     setIssueDate,
     setNotes,
@@ -87,9 +88,9 @@ const NewCreditNote = () => {
         <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CreditNoteBasicInfo 
-              invoiceNumber={invoiceNumber}
+              creditNoteNumber={creditNoteNumber}
               issueDate={issueDate}
-              setInvoiceNumber={setInvoiceNumber}
+              setCreditNoteNumber={setCreditNoteNumber}
               setIssueDate={setIssueDate}
             />
             
