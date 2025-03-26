@@ -63,8 +63,13 @@ const NewCreditNote = () => {
   // Add debugging for edge function URLs
   useEffect(() => {
     // Log the Supabase function URL to verify it's correct
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
     console.log('Supabase function URL:', 
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/submit-credit-note-document`);
+      `${supabaseUrl}/functions/v1/submit-credit-note-document`);
+    
+    // Also log generate-pdf function URL
+    console.log('Generate PDF function URL:', 
+      `${supabaseUrl}/functions/v1/generate-pdf`);
   }, []);
 
   if (isLoading && isEditMode) {
@@ -91,7 +96,7 @@ const NewCreditNote = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
-          handleSendEmail={pdfUrl ? () => handleSendEmail() : undefined}
+          handleSendEmail={pdfUrl ? handleSendEmail : undefined}
         />
         
         <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">

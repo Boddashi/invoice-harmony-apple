@@ -64,21 +64,36 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
               <button 
                 onClick={handleDownloadPDF} 
                 className="secondary-button flex items-center gap-2"
+                type="button"
               >
                 <Download size={16} />
                 Download PDF
               </button>
             )}
-            {status === "draft" ? (
-              <button onClick={handleSaveAsDraft} className="secondary-button">
+            {status === "draft" && (
+              <button 
+                onClick={handleSaveAsDraft} 
+                className="secondary-button"
+                type="button"
+              >
                 Save as Draft
               </button>
-            ) : null}
-            <button onClick={handleCreateAndSend} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
+            )}
+            <button 
+              onClick={handleCreateAndSend} 
+              className="apple-button" 
+              style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
+              type="button"
+            >
               Create & Send
             </button>
-            {handleSendEmail && (
-              <button onClick={handleSendEmail} className="apple-button" style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}>
+            {handleSendEmail && pdfUrl && (
+              <button 
+                onClick={handleSendEmail}
+                className="apple-button" 
+                style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
+                type="button"
+              >
                 Send Email
               </button>
             )}

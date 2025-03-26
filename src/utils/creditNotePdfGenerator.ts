@@ -182,17 +182,37 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
       </html>
     `;
 
-    // Call the Supabase edge function to generate the PDF
-    const { data: pdfResult, error: pdfError } = await supabase
-      .functions
-      .invoke('generate-pdf', {
-        body: { html, filename: `credit-note-${creditNoteData.credit_note_number}.pdf` }
-      });
-
-    if (pdfError) {
-      console.error("Error from generate-pdf function:", pdfError);
-      throw pdfError;
+    console.log("Calling generate-pdf function...");
+    
+    // Get Supabase URL from environment
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    
+    if (!supabaseUrl) {
+      console.error("VITE_SUPABASE_URL is not defined in environment variables");
+      throw new Error("Missing Supabase URL configuration");
     }
+    
+    // Call the Supabase edge function to generate the PDF using fetch directly
+    // instead of supabase.functions.invoke() which might be having issues
+    const response = await fetch(`${supabaseUrl}/functions/v1/generate-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabase.auth.getSession().then(({ data }) => data.session?.access_token)}`
+      },
+      body: JSON.stringify({ 
+        html, 
+        filename: `credit-note-${creditNoteData.credit_note_number}.pdf` 
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Error response from generate-pdf function:", errorText);
+      throw new Error(`Failed to generate PDF: HTTP error ${response.status}`);
+    }
+
+    const pdfResult = await response.json();
 
     if (!pdfResult?.url || !pdfResult?.base64) {
       console.error("Missing PDF data in response:", pdfResult);
