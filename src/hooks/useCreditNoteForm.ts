@@ -1,71 +1,100 @@
 import { useState, useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useSearchParams, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useToast } from '@/hooks/use-toast';
+import { generateCreditNotePDF } from '@/utils/creditNotePdfGenerator';
 
-interface Item {
+export interface CreditNoteItem {
   id: string;
   description: string;
   quantity: number;
   unit_price: number;
+  amount: number;
   vat_rate: string;
 }
 
-interface Client {
+export interface Client {
   id: string;
   name: string;
+  type?: string;
+  email?: string;
+  [key: string]: any;
 }
 
-interface AvailableItem {
+export interface Item {
   id: string;
   title: string;
   price: number;
   vat: string;
 }
 
-interface Vat {
-  value: string;
-  label: string;
+export interface Vat {
+  title: string;
+  amount: number | null;
 }
 
+export interface VatGroup {
+  rate: string;
+  value: number;
+  amount: number;
+}
+
+type CreditNoteStatus = 'draft' | 'pending' | 'paid';
+
 export function useCreditNoteForm() {
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
+  const { toast } = useToast();
+  
+  const isEditMode = !!id;
+
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [isSubmittingToStorecove, setIsSubmittingToStorecove] = useState(false);
   const [isSendingToYuki, setIsSendingToYuki] = useState(false);
-  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
-  const [creditNoteNumber, setCreditNoteNumber] = useState('');
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [issueDate, setIssueDate] = useState<Date>(new Date());
-  const [status, setStatus] = useState<'draft' | 'pending' | 'paid'>('draft');
-  const [notes, setNotes] = useState('');
-  const [items, setItems] = useState<Item[]>([]);
-  const [total, setTotal] = useState(0);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [availableItems, setAvailableItems] = useState<AvailableItem[]>([]);
-  const [vats, setVats] = useState<Vat[]>([
-    { value: '0', label: '0%' },
-    { value: '9', label: '9%' },
-    { value: '21', label: '21%' },
-    { value: 'Exempt', label: 'Exempt' },
-  ]);
+  
   const [pdfGenerated, setPdfGenerated] = useState(false);
-  const [creditNoteId, setCreditNoteId] = useState<string | null>(null);
+  const [creditNoteId, setCreditNoteId] = useState<string>('');
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { currencySymbol } = useCurrency();
-  const [searchParams] = useSearchParams();
-	const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>();
-  const [companySettings, setCompanySettings] = useState<any>(null);
+  const [creditNoteNumber, setCreditNoteNumber] = useState('');
+  const [selectedClientId, setSelectedClientId] = useState('');
+  const [issueDate, setIssueDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [status, setStatus] = useState<CreditNoteStatus>('draft');
+  const [notes, setNotes] = useState('');
+  const [items, setItems] = useState<CreditNoteItem[]>([
+    {
+      id: uuidv4(),
+      description: '',
+      quantity: 1,
+      unit_price: 0,
+      amount: 0,
+      vat_rate: '21%',
+    },
+  ]);
+  
+  const [clients, setClients] = useState<Client[]>([]);
+  const [availableItems, setAvailableItems] = useState<Item[]>([]);
+  const [vats, setVats] = useState<Vat[]>([
+    { title: '0%', amount: null },
+    { title: '9%', amount: null },
+    { title: '21%', amount: null },
+    { title: 'Exempt', amount: null },
+  ]);
+  const [companySettings, setCompanySettings] = useState<any | null>(null);
+  
+  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+  
+  const total = -Math.abs(items.reduce((sum, item) => sum + item.amount, 0));
 
   useEffect(() => {
     const fetchCompanySettings = async () => {
@@ -93,86 +122,6 @@ export function useCreditNoteForm() {
   }, [user?.id, supabase]);
 
   useEffect(() => {
-		const edit = searchParams.get('edit');
-		if (edit === 'true') {
-			setIsEditMode(true);
-		}
-
-    if (id && user) {
-      fetchCreditNoteData(id, user.id);
-    } else {
-      setCreditNoteNumber(generateCreditNoteNumber());
-    }
-  }, [id, user, searchParams]);
-
-  const generateCreditNoteNumber = () => {
-    const prefix = 'CN';
-    const randomNumber = Math.floor(1000 + Math.random() * 9000);
-    return `${prefix}-${randomNumber}`;
-  };
-
-  const fetchCreditNoteData = async (creditNoteId: string, userId: string) => {
-    setIsLoading(true);
-    try {
-      const { data: creditNote, error: creditNoteError } = await supabase
-        .from('credit_notes')
-        .select('*')
-        .eq('id', creditNoteId)
-        .eq('user_id', userId)
-        .single();
-
-      if (creditNoteError) throw creditNoteError;
-
-      setCreditNoteNumber(creditNote.credit_note_number);
-      setSelectedClientId(creditNote.client_id);
-      setIssueDate(new Date(creditNote.issue_date));
-      setStatus(creditNote.status);
-      setNotes(creditNote.notes || '');
-      setTotal(creditNote.total_amount);
-      setCreditNoteId(creditNoteId);
-
-      const { data: creditNoteItems, error: itemsError } = await supabase
-        .from('credit_note_items')
-        .select(`
-          *,
-          item:items(*)
-        `)
-        .eq('credit_note_id', creditNoteId);
-
-      if (itemsError) throw itemsError;
-
-      const formattedItems = creditNoteItems.map(item => ({
-        id: item.item_id,
-        description: item.item.title || item.item_id,
-        quantity: item.quantity,
-        unit_price: Math.abs(item.total_amount) / item.quantity,
-        vat_rate: item.item.vat,
-      }));
-
-      setItems(formattedItems);
-
-      const { data: urlData } = supabase.storage
-        .from('credit_notes')
-        .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-        
-      if (urlData && urlData.publicUrl) {
-        setPdfUrl(urlData.publicUrl);
-        setPdfGenerated(true);
-      }
-
-    } catch (error: any) {
-      console.error('Error fetching credit note data:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to load credit note data',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
     const fetchClients = async () => {
       if (!user) return;
       try {
@@ -198,105 +147,244 @@ export function useCreditNoteForm() {
 
   const fetchAvailableItems = useCallback(async () => {
     if (!user) return;
+    
     try {
       const { data, error } = await supabase
         .from('items')
         .select('*')
         .eq('user_id', user.id);
-
+        
       if (error) throw error;
       setAvailableItems(data || []);
     } catch (error: any) {
-      console.error('Error fetching available items:', error);
+      console.error('Error fetching items:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to load items',
+        description: error.message || 'Failed to fetch items.',
       });
     }
   }, [user, toast]);
-
+  
   useEffect(() => {
     fetchAvailableItems();
   }, [fetchAvailableItems]);
-
-  const handleItemDescriptionChange = (id: string, description: string) => {
-    setItems(currentItems =>
-      currentItems.map(item =>
-        item.id === id ? { ...item, description } : item
-      )
-    );
-  };
-
-  const handleItemQuantityChange = (id: string, quantity: number) => {
-    setItems(currentItems =>
-      currentItems.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      )
-    );
-  };
-
-  const handleItemUnitPriceChange = (id: string, unit_price: number) => {
-    setItems(currentItems =>
-      currentItems.map(item =>
-        item.id === id ? { ...item, unit_price } : item
-      )
-    );
-  };
-
-  const handleItemVatChange = (id: string, vat_rate: string) => {
-    setItems(currentItems =>
-      currentItems.map(item =>
-        item.id === id ? { ...item, vat_rate } : item
-      )
-    );
-  };
-
-  const handleAddItem = () => {
-    setItems(currentItems => [
-      ...currentItems,
+  
+  useEffect(() => {
+    const updatedItems = items.map(item => {
+      const amount = Number(item.quantity) * Number(item.unit_price);
+      return {
+        ...item,
+        amount: amount
+      };
+    });
+    
+    setItems(updatedItems);
+  }, [items.map(item => `${item.quantity}-${item.unit_price}`)]);
+  
+  const handleItemDescriptionChange = useCallback((id: string, value: string) => {
+    setItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.id === id) {
+          const selectedItem = availableItems.find(i => i.id === value);
+          
+          if (selectedItem) {
+            return {
+              ...item,
+              description: value,
+              unit_price: selectedItem.price,
+              vat_rate: selectedItem.vat,
+              amount: selectedItem.price * item.quantity
+            };
+          }
+          
+          return {
+            ...item,
+            description: value
+          };
+        }
+        return item;
+      });
+    });
+  }, [availableItems]);
+  
+  const handleItemQuantityChange = useCallback((id: string, value: number) => {
+    setItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.id === id) {
+          const amount = value * item.unit_price;
+          return {
+            ...item,
+            quantity: value,
+            amount
+          };
+        }
+        return item;
+      });
+    });
+  }, []);
+  
+  const handleItemUnitPriceChange = useCallback((id: string, value: number) => {
+    setItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.id === id) {
+          const amount = item.quantity * value;
+          return {
+            ...item,
+            unit_price: value,
+            amount
+          };
+        }
+        return item;
+      });
+    });
+  }, []);
+  
+  const handleItemVatChange = useCallback((id: string, value: string) => {
+    setItems(prevItems => {
+      return prevItems.map(item => {
+        if (item.id === id) {
+          return {
+            ...item,
+            vat_rate: value
+          };
+        }
+        return item;
+      });
+    });
+  }, []);
+  
+  const handleAddItem = useCallback(() => {
+    setItems(prevItems => [
+      ...prevItems,
       {
         id: uuidv4(),
         description: '',
         quantity: 1,
         unit_price: 0,
-        vat_rate: '0',
-      },
+        amount: 0,
+        vat_rate: '21%'
+      }
     ]);
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setItems(currentItems => currentItems.filter(item => item.id !== id));
-  };
-
-  useEffect(() => {
-    // Calculate the total whenever items change
-    const newTotal = items.reduce((acc, item) => {
-      const itemAmount = item.quantity * item.unit_price;
-      return acc + itemAmount;
-    }, 0);
-    setTotal(newTotal);
+  }, []);
+  
+  const handleRemoveItem = useCallback((id: string) => {
+    setItems(prevItems => {
+      if (prevItems.length === 1) {
+        return prevItems;
+      }
+      return prevItems.filter(item => item.id !== id);
+    });
+  }, []);
+  
+  const getVatGroups = useCallback((): VatGroup[] => {
+    const groups = new Map<string, VatGroup>();
+    
+    items.forEach(item => {
+      const vatRate = item.vat_rate;
+      const amount = item.amount;
+      
+      if (amount === 0) return;
+      
+      let vatPercentage = 0;
+      if (vatRate !== 'Exempt' && vatRate !== 'exempt') {
+        vatPercentage = parseFloat(vatRate) || 0;
+      }
+      
+      const vatAmount = vatRate === 'Exempt' || vatRate === 'exempt' 
+        ? 0 
+        : (amount * vatPercentage) / 100;
+      
+      if (groups.has(vatRate)) {
+        const group = groups.get(vatRate)!;
+        group.value += amount;
+        group.amount += vatAmount;
+      } else {
+        groups.set(vatRate, {
+          rate: vatRate,
+          value: amount,
+          amount: vatAmount
+        });
+      }
+    });
+    
+    return Array.from(groups.values()).map(group => ({
+      ...group,
+      value: -Math.abs(group.value),
+      amount: -Math.abs(group.amount)
+    }));
   }, [items]);
+  
+  const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await handleSubmit('draft');
+  }, []);
 
-  const handleDownloadPDF = async () => {
+  const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await handleSubmit('pending');
+  }, []);
+  
+  const handleCreateAndSendYuki = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    await handleSubmit('pending', true);
+  }, []);
+
+  const generateCreditNoteNumber = async () => {
+    const prefix = 'CN';
+    const randomNumber = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-${randomNumber}`;
+  };
+
+  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('submit-credit-note-document', {
+        body: {
+          creditNoteId: creditNoteId,
+        }
+      });
+
+      if (error) {
+        console.error('Storecove submission error:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Storecove Submission Failed',
+          description: error.message || 'Failed to submit credit note to Storecove.',
+        });
+      } else {
+        toast({
+          title: 'Success',
+          description: 'Credit note submitted to Storecove successfully!',
+        });
+      }
+    } catch (error: any) {
+      console.error('Error submitting to Storecove:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to submit credit note to Storecove.',
+      });
+    }
+  }, [user, selectedClientId, toast]);
+
+  const handleDownloadPDF = useCallback(async () => {
     if (!creditNoteId) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Credit note ID is missing.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Credit note ID is missing.',
       });
       return;
     }
 
     try {
       setIsGeneratingPDF(true);
-      const { data, error } = await supabase.storage
+      
+      const { data } = supabase.storage
         .from('credit_notes')
         .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-        
-      if (error) {
-        throw error;
-      }
         
       if (data && data.publicUrl) {
         window.open(data.publicUrl, '_blank');
@@ -304,74 +392,18 @@ export function useCreditNoteForm() {
         throw new Error('PDF URL not found.');
       }
     } catch (error: any) {
-      console.error("Error downloading PDF:", error);
+      console.error('Error downloading PDF:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to download PDF",
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to download PDF.',
       });
     } finally {
       setIsGeneratingPDF(false);
     }
-  };
+  }, [creditNoteId, toast]);
 
-  const handleSendEmail = async () => {
-    if (!creditNoteId) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Credit note ID is missing.",
-      });
-      return;
-    }
-
-    try {
-      setIsSendingEmail(true);
-
-      // Call the function to send the email
-      const { error } = await supabase.functions.invoke('send-email', {
-        body: {
-          creditNoteId: creditNoteId,
-          type: 'credit_note'
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Success",
-        description: "Email sent successfully!",
-      });
-    } catch (error: any) {
-      console.error("Error sending email:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to send email.",
-      });
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
-
-  const handleSaveAsDraft = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await handleSubmit('draft');
-  };
-
-  const handleCreateAndSend = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await handleSubmit('pending');
-  };
-
-  const handleCreateAndSendYuki = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    await handleSubmit('pending', true);
-  };
-
-  const handleSubmit = async (newStatus?: string, sendToYuki: boolean = false) => {
+  const handleSubmit = useCallback(async (newStatus?: CreditNoteStatus, sendToYuki: boolean = false) => {
     if (!user || !selectedClientId) {
       toast({
         variant: 'destructive',
@@ -383,12 +415,13 @@ export function useCreditNoteForm() {
 
     setIsSubmitting(true);
     try {
-      // 1. Prepare credit note data
+      const statusToUse: CreditNoteStatus = newStatus || status;
+      
       const creditNoteData = {
         credit_note_number: creditNoteNumber,
         client_id: selectedClientId,
-        issue_date: issueDate.toISOString(),
-        status: newStatus || status,
+        issue_date: issueDate,
+        status: statusToUse,
         notes: notes,
         amount: total,
         total_amount: total,
@@ -397,9 +430,7 @@ export function useCreditNoteForm() {
 
       let creditNoteIdToUse = creditNoteId;
 
-      // 2. Insert or update credit note
       if (creditNoteId) {
-        // Update existing credit note
         const { error } = await supabase
           .from('credit_notes')
           .update(creditNoteData)
@@ -407,7 +438,6 @@ export function useCreditNoteForm() {
 
         if (error) throw error;
       } else {
-        // Insert new credit note
         const { data, error } = await supabase
           .from('credit_notes')
           .insert([creditNoteData])
@@ -419,7 +449,6 @@ export function useCreditNoteForm() {
         setCreditNoteId(creditNoteIdToUse);
       }
 
-      // 3. Prepare credit note items data
       const creditNoteItemsData = items.map(item => ({
         credit_note_id: creditNoteIdToUse,
         item_id: item.id,
@@ -427,7 +456,6 @@ export function useCreditNoteForm() {
         total_amount: item.quantity * item.unit_price,
       }));
 
-      // 4. Delete existing items and insert new ones
       if (creditNoteId) {
         const { error: deleteError } = await supabase
           .from('credit_note_items')
@@ -443,7 +471,6 @@ export function useCreditNoteForm() {
 
       if (insertItemsError) throw insertItemsError;
 
-      // 5. Generate PDF
       setIsGeneratingPDF(true);
       const { error: generatePdfError } = await supabase.functions.invoke('generate-pdf', {
         body: {
@@ -455,7 +482,6 @@ export function useCreditNoteForm() {
       if (generatePdfError) throw generatePdfError;
       setPdfGenerated(true);
 
-      // Get the URL of the newly generated PDF
       const { data: urlData } = supabase.storage
         .from('credit_notes')
         .getPublicUrl(`${creditNoteIdToUse}/credit-note.pdf`);
@@ -464,8 +490,7 @@ export function useCreditNoteForm() {
         setPdfUrl(urlData.publicUrl);
       }
 
-      // 6. Submit document to Storecove if status is pending
-      if (newStatus === 'pending' || status === 'pending') {
+      if (statusToUse === 'pending' || status === 'pending') {
         setIsSubmittingToStorecove(true);
 
         const { error: submitError } = await supabase.functions.invoke('submit-credit-note-document', {
@@ -518,44 +543,19 @@ export function useCreditNoteForm() {
         title: 'Success',
         description: 'Credit note saved successfully!',
       });
-
-			navigate('/creditnotes');
+      
+      navigate('/creditnotes');
     } catch (error: any) {
       console.error('Error saving credit note:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to save credit note',
+        description: error.message || 'Failed to save credit note.',
       });
     } finally {
       setIsSubmitting(false);
-      setIsGeneratingPDF(false);
-      setIsSubmittingToStorecove(false);
-      setIsSendingToYuki(false);
     }
-  };
-
-  const getVatGroups = () => {
-    const vatGroups = {};
-
-    items.forEach(item => {
-      const amount = item.quantity * item.unit_price;
-      const vatRate = item.vat_rate;
-
-      if (!vatGroups[vatRate]) {
-        vatGroups[vatRate] = {
-          rate: vatRate,
-          value: 0,
-          amount: 0,
-        };
-      }
-
-      vatGroups[vatRate].value += amount;
-      vatGroups[vatRate].amount += amount * (parseFloat(vatRate) / 100);
-    });
-
-    return Object.values(vatGroups);
-  };
+  }, [user, selectedClientId, status, toast, navigate]);
 
   const handleAddClient = useCallback(async (clientData: any) => {
     if (!user) return null;
@@ -564,9 +564,9 @@ export function useCreditNoteForm() {
       const newClient = {
         ...clientData,
         user_id: user.id,
-        name: clientData.name, // Required field
-        email: clientData.email, // Required field
-        type: clientData.type || 'business' // Required field with default value
+        name: clientData.name || 'New Client',
+        email: clientData.email || '',
+        type: clientData.type || 'business'
       };
       
       const { data, error } = await supabase
@@ -598,7 +598,7 @@ export function useCreditNoteForm() {
       });
       return null;
     }
-  }, [user, toast, supabase, setClients, setSelectedClientId]);
+  }, [user, toast]);
   
   return {
     isEditMode,

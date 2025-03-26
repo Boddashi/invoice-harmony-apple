@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect } from 'react';
 import MainLayout from '../components/layout/MainLayout';
 import AddClientModal from '@/components/clients/AddClientModal';
@@ -86,6 +87,11 @@ const NewCreditNote = () => {
     );
   }
 
+  const onFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSubmit();
+  };
+
   return (
     <MainLayout>
       <div className="max-w-5xl mx-auto p-2 md:p-0 space-y-6">
@@ -107,13 +113,13 @@ const NewCreditNote = () => {
           handleCreateAndSendYuki={companySettings?.yuki_email ? handleCreateAndSendYuki : undefined}
         />
         
-        <form id="creditnote-form" onSubmit={handleSubmit} className="space-y-6">
+        <form id="creditnote-form" onSubmit={onFormSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <CreditNoteBasicInfo 
               creditNoteNumber={creditNoteNumber}
               issueDate={issueDate}
               setCreditNoteNumber={setCreditNoteNumber}
-              setIssueDate={setIssueDate}
+              setIssueDate={(value) => setIssueDate(value)}
             />
             
             <ClientSelection 
