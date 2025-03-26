@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { MoreHorizontal, Edit, Trash, Check, Clock, FileDown, Mail, Download } from "lucide-react";
+import { MoreHorizontal, Edit, Trash, Check, Clock, FileDown, Mail, Download, Send } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -109,6 +109,87 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
     }
   };
 
+  const handleSendCreditNote = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      // First, update status to pending
+      const { error: updateError } = await supabase
+        .from("credit_notes")
+        .update({ status: "pending" })
+        .eq("id", creditNoteId);
+
+      if (updateError) throw updateError;
+
+      // Get credit note data for the edge function
+      const { data: creditNoteData, error: fetchError } = await supabase
+        .from("credit_notes")
+        .select(`
+          *,
+          client:clients(*),
+          items:credit_note_items(*, item:items(*))
+        `)
+        .eq("id", creditNoteId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Get company settings
+      const { data: companyData, error: companyError } = await supabase
+        .from("company_settings")
+        .select("*")
+        .eq("user_id", creditNoteData.user_id)
+        .single();
+
+      if (companyError && companyError.code !== 'PGRST116') throw companyError;
+
+      // Trigger PDF generation through the edge function
+      const { data: pdfResult, error: pdfError } = await supabase.functions
+        .invoke('generate-pdf', {
+          body: {
+            type: 'credit-note',
+            data: {
+              id: creditNoteData.id,
+              credit_note_number: creditNoteData.credit_note_number,
+              issue_date: creditNoteData.issue_date,
+              client_name: creditNoteData.client.name,
+              client_address: `${creditNoteData.client.street || ''} ${creditNoteData.client.number || ''}, ${creditNoteData.client.postcode || ''} ${creditNoteData.client.city || ''}`,
+              client_vat: creditNoteData.client.vat_number,
+              items: creditNoteData.items.map((item: any) => ({
+                description: item.item ? item.item.title : 'Unknown Item',
+                quantity: item.quantity,
+                unit_price: Math.abs(item.total_amount) / item.quantity,
+                vat_rate: item.item?.vat || '21%',
+                amount: -Math.abs(item.total_amount),
+              })),
+              subTotal: creditNoteData.amount,
+              taxAmount: creditNoteData.tax_amount,
+              total: creditNoteData.total_amount,
+              notes: creditNoteData.notes,
+              companySettings: companyData
+            }
+          }
+        });
+
+      if (pdfError) throw pdfError;
+
+      toast({
+        title: "Success",
+        description: `Credit note sent successfully.`,
+      });
+
+      onStatusChange();
+    } catch (error: any) {
+      console.error("Error sending credit note:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Could not send the credit note.",
+      });
+    }
+  };
+
   const handleDownloadPDF = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -158,9 +239,9 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
         {status === "draft" && (
-          <DropdownMenuItem onClick={(e) => handleStatusChange("pending", e)}>
-            <Clock className="w-4 h-4 mr-2" />
-            Mark as Pending
+          <DropdownMenuItem onClick={handleSendCreditNote}>
+            <Send className="w-4 h-4 mr-2" />
+            Send
           </DropdownMenuItem>
         )}
 
