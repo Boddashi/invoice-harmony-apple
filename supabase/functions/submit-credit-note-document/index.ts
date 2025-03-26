@@ -221,7 +221,7 @@ serve(async (req) => {
         receiverLegalEntityId: client.legal_entity_id,
         routing: routingConfig,
         document: {
-          documentType: "creditnote",
+          documentType: "creditnote",  // Changed from "invoice" to "creditnote"
           creditNote: {
             creditNoteNumber: creditNote.credit_note_number,
             issueDate: creditNote.issue_date,
