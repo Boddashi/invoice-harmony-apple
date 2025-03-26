@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,6 +60,7 @@ export const generateInvoicePDF = async (invoiceData: InvoiceData): Promise<stri
         iban: '',
         invoice_prefix: '',
         invoice_number_type: 'incremental',
+        credit_note_prefix: 'CN',
         logo_url: ''
       };
 

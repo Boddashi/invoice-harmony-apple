@@ -66,6 +66,7 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
           iban: '',
           invoice_prefix: '',
           invoice_number_type: 'incremental',
+          credit_note_prefix: 'CN',
           logo_url: ''
         };
 
