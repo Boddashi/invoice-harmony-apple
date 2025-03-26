@@ -3,12 +3,18 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import CustomCard from "../components/ui/CustomCard";
-import { ArrowLeft, Printer, Mail, Download } from "lucide-react";
+import { ArrowLeft, Download, Mail, Printer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { generateCreditNotePDF } from "@/utils/creditNotePdfGenerator";
+import CreditNoteHeader from "@/components/creditnotes/CreditNoteHeader";
+import CreditNoteBasicInfo from "@/components/creditnotes/CreditNoteBasicInfo";
+import CreditNoteFrom from "@/components/creditnotes/CreditNoteFrom";
+import CreditNoteItems from "@/components/creditnotes/CreditNoteItems";
+import CreditNoteNotes from "@/components/creditnotes/CreditNoteNotes";
+import CreditNoteSummary from "@/components/creditnotes/CreditNoteSummary";
 
 interface CreditNoteData {
   id: string;
@@ -58,6 +64,7 @@ const ViewCreditNote = () => {
   
   const [creditNoteData, setCreditNoteData] = useState<CreditNoteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCreditNoteData = async () => {
@@ -105,6 +112,19 @@ const ViewCreditNote = () => {
           ...creditNoteData,
           items: formattedItems,
         });
+
+        // Check if PDF exists and get URL
+        if (creditNoteData.pdf_url) {
+          setPdfUrl(creditNoteData.pdf_url);
+        } else {
+          const { data: urlData } = supabase.storage
+            .from('credit_notes')
+            .getPublicUrl(`${id}/credit-note.pdf`);
+            
+          if (urlData && urlData.publicUrl) {
+            setPdfUrl(urlData.publicUrl);
+          }
+        }
       } catch (error: any) {
         console.error("Error fetching credit note data:", error);
         toast({
@@ -125,121 +145,30 @@ const ViewCreditNote = () => {
     navigate("/creditnotes");
   };
 
-  const handlePrint = async () => {
+  const handleDownloadPDF = async () => {
     if (!creditNoteData || !user) return;
 
-    try {
-      // Prepare data for PDF generation
-      const pdfData = {
-        id: creditNoteData.id,
-        credit_note_number: creditNoteData.credit_note_number,
-        issue_date: creditNoteData.issue_date,
-        client_name: creditNoteData.client?.name || "",
-        client_address: formatAddress(creditNoteData.client),
-        client_vat: creditNoteData.client?.vat_number,
-        user_email: user.email || "",
-        items: formatItems(creditNoteData.items || []),
-        subTotal: creditNoteData.amount,
-        taxAmount: creditNoteData.tax_amount || 0,
-        total: creditNoteData.total_amount,
-        notes: creditNoteData.notes,
-        currencySymbol: currencySymbol
-      };
-
-      const pdfBlob = await generateCreditNotePDF(pdfData);
-      
-      // Convert the base64 data to a Blob
-      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
-      const blob = await base64Response.blob();
-      
-      const pdfUrl = URL.createObjectURL(blob);
-      
-      // Open the PDF in a new tab and trigger print
-      const printWindow = window.open(pdfUrl, '_blank');
-      if (printWindow) {
-        printWindow.addEventListener('load', () => {
-          printWindow.print();
-        });
-      }
-    } catch (error: any) {
-      console.error("Error printing credit note:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to print credit note",
-      });
-    }
-  };
-
-  const handleDownload = async () => {
-    if (!creditNoteData || !user) return;
-
-    try {
-      // Prepare data for PDF generation
-      const pdfData = {
-        id: creditNoteData.id,
-        credit_note_number: creditNoteData.credit_note_number,
-        issue_date: creditNoteData.issue_date,
-        client_name: creditNoteData.client?.name || "",
-        client_address: formatAddress(creditNoteData.client),
-        client_vat: creditNoteData.client?.vat_number,
-        user_email: user.email || "",
-        items: formatItems(creditNoteData.items || []),
-        subTotal: creditNoteData.amount,
-        taxAmount: creditNoteData.tax_amount || 0,
-        total: creditNoteData.total_amount,
-        notes: creditNoteData.notes,
-        currencySymbol: currencySymbol
-      };
-
-      const pdfBlob = await generateCreditNotePDF(pdfData);
-      
-      // Convert the base64 data to a Blob
-      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
-      const blob = await base64Response.blob();
-      
-      const pdfUrl = URL.createObjectURL(blob);
-      
-      // Create a link and trigger download
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = `credit-note-${creditNoteData.credit_note_number}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error: any) {
-      console.error("Error downloading credit note:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to download credit note",
-      });
-    }
-  };
-
-  const handleSendEmail = async () => {
-    if (!creditNoteData || !creditNoteData.client?.email || !user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Client email is missing",
-      });
+    if (pdfUrl) {
+      // If PDF URL exists, open it in a new tab
+      window.open(pdfUrl, '_blank');
       return;
     }
 
     try {
       toast({
-        title: "Sending email",
+        title: "Generating PDF",
         description: "Please wait...",
       });
 
       // Prepare data for PDF generation
+      const clientAddress = formatAddress(creditNoteData.client);
+      
       const pdfData = {
         id: creditNoteData.id,
         credit_note_number: creditNoteData.credit_note_number,
         issue_date: creditNoteData.issue_date,
         client_name: creditNoteData.client?.name || "",
-        client_address: formatAddress(creditNoteData.client),
+        client_address: clientAddress,
         client_vat: creditNoteData.client?.vat_number,
         user_email: user.email || "",
         items: formatItems(creditNoteData.items || []),
@@ -249,40 +178,36 @@ const ViewCreditNote = () => {
         notes: creditNoteData.notes,
         currencySymbol: currencySymbol
       };
-      
-      // Generate PDF
+
       const pdfBlob = await generateCreditNotePDF(pdfData);
       
-      // Send email with PDF attachment
-      const { error } = await supabase.functions.invoke("send-invoice-email", {
-        body: {
-          to: creditNoteData.client?.email,
-          subject: `Credit Note ${creditNoteData.credit_note_number}`,
-          pdfBase64: pdfBlob.base64,
-          fileName: `credit-note-${creditNoteData.credit_note_number}.pdf`,
-          creditNote: true,
-        },
-      });
-
-      if (error) throw error;
-
+      // Convert the base64 data to a Blob
+      const base64Response = await fetch(`data:application/pdf;base64,${pdfBlob.base64}`);
+      const blob = await base64Response.blob();
+      
+      // Create a URL for the blob
+      const pdfObjectUrl = URL.createObjectURL(blob);
+      
+      // Open the PDF in a new tab
+      window.open(pdfObjectUrl, '_blank');
+      
       toast({
         title: "Success",
-        description: "Credit note sent successfully",
+        description: "PDF generated successfully",
       });
     } catch (error: any) {
-      console.error("Error sending credit note email:", error);
+      console.error("Error generating PDF:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to send credit note email",
+        description: error.message || "Failed to generate PDF",
       });
     }
   };
 
   // Helper function to format address
   const formatAddress = (client?: CreditNoteData['client']) => {
-    if (!client) return undefined;
+    if (!client) return "";
     
     const parts = [
       client.street && client.number ? `${client.street} ${client.number}${client.bus ? `, ${client.bus}` : ''}` : undefined,
@@ -290,7 +215,7 @@ const ViewCreditNote = () => {
       client.country
     ].filter(Boolean);
     
-    return parts.length > 0 ? parts.join(', ') : undefined;
+    return parts.length > 0 ? parts.join(', ') : "";
   };
 
   // Helper function to format items for PDF generation
@@ -306,73 +231,87 @@ const ViewCreditNote = () => {
     }));
   };
 
+  // Calculate VAT groups
+  const getVatGroups = (): VatGroup[] => {
+    if (!creditNoteData || !creditNoteData.items) return [];
+    
+    const groups = new Map<string, VatGroup>();
+    
+    creditNoteData.items.forEach(item => {
+      const vatRate = item.vat;
+      const amount = item.total_amount;
+      
+      if (amount === 0) return;
+      
+      let vatPercentage = 0;
+      if (vatRate !== 'Exempt' && vatRate !== 'exempt') {
+        vatPercentage = parseFloat(vatRate) || 0;
+      }
+      
+      const vatAmount = vatRate === 'Exempt' || vatRate === 'exempt' 
+        ? 0 
+        : (amount * vatPercentage) / 100;
+      
+      if (groups.has(vatRate)) {
+        const group = groups.get(vatRate)!;
+        group.value += amount;
+        group.amount += vatAmount;
+      } else {
+        groups.set(vatRate, {
+          rate: vatRate,
+          value: amount,
+          amount: vatAmount
+        });
+      }
+    });
+    
+    return Array.from(groups.values());
+  };
+
+  // Format credit note items for CreditNoteItems component
+  const formatCreditNoteItems = () => {
+    if (!creditNoteData || !creditNoteData.items) return [];
+    
+    return creditNoteData.items.map(item => ({
+      id: item.id,
+      description: item.id,
+      quantity: item.quantity,
+      unit_price: item.price,
+      amount: item.total_amount,
+      vat_rate: item.vat
+    }));
+  };
+
+  const renderStatus = () => {
+    if (!creditNoteData) return null;
+    
+    const getStatusBadgeColor = (status: string) => {
+      switch (status) {
+        case 'draft':
+          return 'bg-gray-100 text-gray-600 border-gray-200';
+        case 'pending':
+          return 'bg-apple-orange/10 text-apple-orange border-apple-orange/20';
+        case 'paid':
+          return 'bg-apple-green/10 text-apple-green border-apple-green/20';
+        case 'overdue':
+          return 'bg-apple-red/10 text-apple-red border-apple-red/20';
+        default:
+          return 'bg-gray-100 text-gray-600 border-gray-200';
+      }
+    };
+    
+    return (
+      <span className={`px-3 py-1 text-sm font-medium border rounded-full ${getStatusBadgeColor(creditNoteData.status)}`}>
+        {creditNoteData.status.charAt(0).toUpperCase() + creditNoteData.status.slice(1)}
+      </span>
+    );
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex justify-center items-center h-full py-20">
-          <p>Loading credit note...</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (!creditNoteData) {
-    return (
-      <MainLayout>
-        <div className="flex justify-center items-center h-full py-20">
-          <p>Credit note not found</p>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-600 border-gray-200';
-      case 'pending':
-        return 'bg-apple-orange/10 text-apple-orange border-apple-orange/20';
-      case 'paid':
-        return 'bg-apple-green/10 text-apple-green border-apple-green/20';
-      case 'overdue':
-        return 'bg-apple-red/10 text-apple-red border-apple-red/20';
-      default:
-        return 'bg-gray-100 text-gray-600 border-gray-200';
-    }
-  };
-
-  // Calculate VAT groups for the summary component
-  const vatGroups = creditNoteData.items?.reduce((groups: VatGroup[], item) => {
-    const vatRate = item.vat;
-    const amount = item.total_amount;
-    
-    // Find existing group
-    const existingGroup = groups.find(group => group.rate === vatRate);
-    if (existingGroup) {
-      existingGroup.value += (amount / (1 + parseFloat(vatRate) / 100));
-      existingGroup.amount += (amount - (amount / (1 + parseFloat(vatRate) / 100)));
-      return groups;
-    }
-    
-    // Create new group
-    const vatAmount = parseFloat(vatRate) > 0 
-      ? amount - (amount / (1 + parseFloat(vatRate) / 100)) 
-      : 0;
-    
-    groups.push({
-      rate: vatRate,
-      value: amount - vatAmount,
-      amount: vatAmount
-    });
-    
-    return groups;
-  }, [] as VatGroup[]) || [];
-
-  return (
-    <MainLayout>
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
             <button 
               onClick={handleGoBack}
               className="p-2 rounded-full hover:bg-secondary transition-colors"
@@ -381,166 +320,120 @@ const ViewCreditNote = () => {
             </button>
             <h2 className="text-xl font-semibold">View Credit Note</h2>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 text-sm font-medium border rounded-full ${getStatusBadgeColor(creditNoteData.status)}`}>
-              {creditNoteData.status.charAt(0).toUpperCase() + creditNoteData.status.slice(1)}
-            </span>
-            
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-secondary transition-colors"
-              >
-                <Printer size={16} />
-                <span className="hidden sm:inline">Print</span>
-              </button>
-              <button
-                onClick={handleDownload}
-                className="flex items-center gap-2 border border-border rounded-full px-4 py-2 hover:bg-secondary transition-colors"
-              >
-                <Download size={16} />
-                <span className="hidden sm:inline">Download</span>
-              </button>
-              <button
-                onClick={handleSendEmail}
-                className="flex items-center gap-2 apple-button rounded-full px-4 py-2"
-              >
-                <Mail size={16} />
-                <span className="hidden sm:inline">Email</span>
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {isLoading ? (
-          <div className="text-center py-12">
+          <div className="flex justify-center items-center h-[60vh]">
             <p className="text-muted-foreground">Loading credit note...</p>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <CustomCard>
-                  <div className="p-4 space-y-4">
-                    <h3 className="text-lg font-medium mb-2">Credit Note Info</h3>
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2">
-                        <p className="text-muted-foreground">Credit Note Number:</p>
-                        <p className="font-medium">{creditNoteData.credit_note_number}</p>
-                      </div>
-                      <div className="grid grid-cols-2">
-                        <p className="text-muted-foreground">Issue Date:</p>
-                        <p>{new Date(creditNoteData.issue_date).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CustomCard>
-              </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!creditNoteData) {
+    return (
+      <MainLayout>
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <button 
+              onClick={handleGoBack}
+              className="p-2 rounded-full hover:bg-secondary transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h2 className="text-xl font-semibold">View Credit Note</h2>
+          </div>
+          <div className="flex justify-center items-center h-[60vh]">
+            <p className="text-red-500">Credit note not found</p>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout>
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 mb-6">
+          <button 
+            onClick={handleGoBack}
+            className="p-2 rounded-full hover:bg-secondary transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-semibold">View Credit Note</h2>
+        </div>
+        
+        <div className="space-y-6">
+          {/* Header with status and download button */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              {renderStatus()}
             </div>
-            
+            <button 
+              onClick={handleDownloadPDF} 
+              className="flex items-center gap-2 apple-button rounded-full"
+            >
+              <Download size={18} />
+              <span>Download PDF</span>
+            </button>
+          </div>
+          
+          {/* Credit Note Form */}
+          <form className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <CustomCard>
-                <div className="p-4 space-y-4">
-                  <h3 className="text-lg font-medium mb-2">Client</h3>
-                  {creditNoteData.client && (
-                    <div className="space-y-1">
-                      <p className="font-medium">{creditNoteData.client.name}</p>
-                      {creditNoteData.client.email && <p>{creditNoteData.client.email}</p>}
-                      {creditNoteData.client.phone && <p>{creditNoteData.client.phone}</p>}
-                      {creditNoteData.client.street && (
-                        <p>
-                          {creditNoteData.client.street} {creditNoteData.client.number && `${creditNoteData.client.number}`}
-                          {creditNoteData.client.bus && `, ${creditNoteData.client.bus}`}
-                        </p>
-                      )}
-                      {(creditNoteData.client.city || creditNoteData.client.country) && (
-                        <p>
-                          {creditNoteData.client.postcode && `${creditNoteData.client.postcode} `}
-                          {creditNoteData.client.city} 
-                          {creditNoteData.client.country && `, ${creditNoteData.client.country}`}
-                        </p>
-                      )}
-                      {creditNoteData.client.vat_number && <p>VAT: {creditNoteData.client.vat_number}</p>}
-                    </div>
-                  )}
-                </div>
-              </CustomCard>
+              <CreditNoteBasicInfo
+                creditNoteNumber={creditNoteData.credit_note_number}
+                issueDate={creditNoteData.issue_date}
+                selectedClientId={creditNoteData.client_id}
+                clients={[]}
+                setSelectedClientId={() => {}}
+                setIssueDate={() => {}}
+                setCreditNoteNumber={() => {}}
+                isAddClientModalOpen={false}
+                setIsAddClientModalOpen={() => {}}
+                isEditMode={false}
+                readOnly={true}
+              />
               
-              <CustomCard>
-                <div className="p-4 space-y-4">
-                  <h3 className="text-lg font-medium mb-2">From</h3>
-                  <p>{user?.email}</p>
-                </div>
-              </CustomCard>
+              <CreditNoteFrom
+                userEmail={user?.email || ""}
+                readOnly={true}
+              />
             </div>
             
-            <CustomCard>
-              <div className="p-4 space-y-4">
-                <h3 className="text-lg font-medium mb-2">Items</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Item</th>
-                        <th className="px-4 py-2 text-right">Quantity</th>
-                        <th className="px-4 py-2 text-right">Unit Price</th>
-                        <th className="px-4 py-2 text-right">VAT</th>
-                        <th className="px-4 py-2 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {creditNoteData.items?.map((item) => (
-                        <tr key={item.id} className="border-b border-border/30">
-                          <td className="px-4 py-3">{item.title}</td>
-                          <td className="px-4 py-3 text-right">{item.quantity}</td>
-                          <td className="px-4 py-3 text-right">{currencySymbol}{item.price.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-right">{item.vat}</td>
-                          <td className="px-4 py-3 text-right font-medium">{currencySymbol}{item.total_amount.toFixed(2)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </CustomCard>
+            <CreditNoteItems
+              items={formatCreditNoteItems()}
+              availableItems={[]}
+              setItems={() => {}}
+              handleItemDescriptionChange={() => {}}
+              handleItemQuantityChange={() => {}}
+              handleItemUnitPriceChange={() => {}}
+              handleItemVatChange={() => {}}
+              handleAddItem={() => {}}
+              handleRemoveItem={() => {}}
+              currencySymbol={currencySymbol}
+              vats={[]}
+              readOnly={true}
+            />
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {creditNoteData.notes && (
-                <CustomCard>
-                  <div className="p-4 space-y-4">
-                    <h3 className="text-lg font-medium mb-2">Notes</h3>
-                    <p className="text-sm text-muted-foreground">{creditNoteData.notes}</p>
-                  </div>
-                </CustomCard>
+                <CreditNoteNotes
+                  notes={creditNoteData.notes}
+                  setNotes={() => {}}
+                  readOnly={true}
+                />
               )}
               
-              <CustomCard>
-                <div className="p-4 space-y-4">
-                  <h3 className="text-lg font-medium mb-2">Summary</h3>
-                  <div className="space-y-4">
-                    {vatGroups.map((group, index) => (
-                      <div key={index} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Subtotal ({group.rate})</span>
-                          <span>{currencySymbol}{group.value.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">VAT {group.rate}</span>
-                          <span>{currencySymbol}{group.amount.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    <div className="border-t border-border pt-2 flex justify-between font-bold">
-                      <span>Total</span>
-                      <span>{currencySymbol}{creditNoteData.total_amount.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </CustomCard>
+              <CreditNoteSummary
+                items={formatCreditNoteItems()}
+                total={creditNoteData.total_amount}
+                currencySymbol={currencySymbol}
+                getVatGroups={() => getVatGroups()}
+                readOnly={true}
+              />
             </div>
-          </div>
-        )}
+          </form>
+        </div>
       </div>
     </MainLayout>
   );
