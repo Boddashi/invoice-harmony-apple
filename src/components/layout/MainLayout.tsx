@@ -35,6 +35,22 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
+  // Add class to body when on credit note pages
+  useEffect(() => {
+    const isCreditNotePage = location.pathname.includes('/creditnotes');
+    
+    if (isCreditNotePage) {
+      document.body.classList.add('credit-note-page');
+    } else {
+      document.body.classList.remove('credit-note-page');
+    }
+    
+    // Cleanup function to remove class when component unmounts
+    return () => {
+      document.body.classList.remove('credit-note-page');
+    };
+  }, [location.pathname]);
+
   useEffect(() => {
     if (!user) {
       toast.error("Please log in to access this page");
