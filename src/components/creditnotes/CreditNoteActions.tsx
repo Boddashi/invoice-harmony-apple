@@ -158,10 +158,13 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
           </DropdownMenuItem>
         )}
 
-        <DropdownMenuItem onClick={handleDelete}>
-          <Trash className="w-4 h-4 mr-2" />
-          Delete
-        </DropdownMenuItem>
+        {/* Only show delete option for draft and paid status */}
+        {status !== "pending" && (
+          <DropdownMenuItem onClick={handleDelete}>
+            <Trash className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
