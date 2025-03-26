@@ -286,7 +286,7 @@ export const generateCreditNotePDF = async (creditNoteData: CreditNoteData): Pro
 
         console.log("PDF generated successfully with server-side generation");
         
-        // After generating the PDF, we'll save it to the credit_notes bucket
+        // After generating the PDF, save it to the credit_notes bucket
         await saveCreditNotePDF(creditNoteData.id, pdfResult.base64);
         
         // Return the base64 data
@@ -359,11 +359,11 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
       throw new Error("Failed to get public URL for the PDF");
     }
     
-    // Update the credit note record with the PDF URL
+    // Update the credit note record with just the status
+    // Don't try to update the pdf_url since it doesn't exist in the schema
     const { error: updateError } = await supabase
       .from('credit_notes')
       .update({ 
-        pdf_url: urlData.publicUrl,
         status: 'pending' 
       })
       .eq('id', creditNoteId);
@@ -373,7 +373,7 @@ export const saveCreditNotePDF = async (creditNoteId: string, pdfBase64: string)
       throw updateError;
     }
 
-    console.log("Credit note record updated with PDF URL:", urlData.publicUrl);
+    console.log("Credit note record updated to pending status");
   } catch (error: any) {
     console.error('Error saving credit note PDF:', error);
     throw error;

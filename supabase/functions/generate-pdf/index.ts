@@ -25,24 +25,23 @@ serve(async (req) => {
     
     console.log(`Starting PDF generation for: ${documentType || 'document'} ID: ${documentId || 'unknown'}`);
     
-    // Convert HTML directly to a PDF without external APIs
-    // We'll generate a data URL with the HTML content and return it
-    // This approach is more reliable in the Edge Function environment
-    
-    // Base64 encode the HTML content
+    // Convert HTML to a PDF-like data format (this is just a simplified version)
+    // In a real environment, you'd use a proper PDF generation library
     const base64Html = btoa(unescape(encodeURIComponent(html)));
     
-    // Create a simple PDF-like data URL that browsers can interpret
-    // For actual rendering, the frontend will handle displaying this content
+    // Create a data URL that can be used by the frontend
     const dataUrl = `data:application/pdf;base64,${base64Html}`;
     
     console.log(`PDF data generated successfully, size: ${base64Html.length} bytes`);
     
+    // Return the data without trying to update any database records
+    // The client will handle saving the PDF to storage
     return new Response(
       JSON.stringify({ 
         documentId,
         documentType,
-        base64: dataUrl 
+        base64: dataUrl,
+        success: true
       }),
       { 
         status: 200, 
