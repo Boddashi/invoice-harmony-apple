@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { FilterIcon, Users, X, RefreshCw } from "lucide-react";
@@ -37,6 +38,7 @@ interface ReportFiltersProps {
   setSearchClientQuery: (query: string) => void;
   clearFilters: () => void;
   formatCurrency: (amount: number) => string;
+  reportSource?: 'invoices' | 'credit-notes';
 }
 
 const ReportFilters: React.FC<ReportFiltersProps> = ({
@@ -52,6 +54,7 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
   setSearchClientQuery,
   clearFilters,
   formatCurrency,
+  reportSource = 'invoices',
 }) => {
   const filteredItems = items.filter((item) =>
     item.title.toLowerCase().includes(searchItemQuery.toLowerCase())
@@ -78,9 +81,10 @@ const ReportFilters: React.FC<ReportFiltersProps> = ({
     <>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-1">Reports & Analytics</h1>
           <p className="text-muted-foreground">
-            View and analyze your business data
+            {reportSource === 'invoices' 
+              ? "View and analyze your invoice data" 
+              : "View and analyze your credit note data"}
           </p>
         </div>
 

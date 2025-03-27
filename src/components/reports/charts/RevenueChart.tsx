@@ -33,6 +33,7 @@ interface RevenueChartProps {
   formatCurrency: (amount: number) => string;
   onPeriodChange: (period: TimePeriod) => void;
   selectedPeriod: TimePeriod;
+  title?: string; // Making this optional with a default value in the component
 }
 
 const RevenueChart: React.FC<RevenueChartProps> = ({ 
@@ -40,7 +41,8 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
   currencySymbol,
   formatCurrency,
   onPeriodChange,
-  selectedPeriod
+  selectedPeriod,
+  title = "Revenue" // Default value if not provided
 }) => {
   const isMobile = useIsMobile();
   const hasValidData = data && data.length > 0;
@@ -67,7 +69,7 @@ const RevenueChart: React.FC<RevenueChartProps> = ({
     <CustomCard padding="md">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
         <div className="flex flex-row items-center gap-2">
-          <h3 className="text-lg font-medium">Revenue</h3>
+          <h3 className="text-lg font-medium">{title}</h3>
           <Select value={selectedPeriod} onValueChange={(value: TimePeriod) => onPeriodChange(value)}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Select period" />

@@ -25,12 +25,14 @@ interface ItemsAnalysisChartProps {
   }>;
   currencySymbol: string;
   formatCurrency: (amount: number) => string;
+  reportSource?: 'invoices' | 'credit-notes'; // Adding reportSource prop
 }
 
 const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
   data,
   currencySymbol,
-  formatCurrency
+  formatCurrency,
+  reportSource = 'invoices'
 }) => {
   const isMobile = useIsMobile();
   
@@ -52,10 +54,12 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
     }
   };
 
+  const title = `Selected Items ${reportSource === 'invoices' ? 'Revenue' : 'Credit'} Analysis`;
+
   return (
     <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">Selected Items Revenue Analysis</h3>
+        <h3 className="text-lg font-medium">{title}</h3>
         <BarChart3 size={20} className="text-muted-foreground" />
       </div>
       
@@ -117,7 +121,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               content={
                 <ChartTooltipContent 
                   formatter={(value, name) => {
-                    if (name === 'amount') return [`${formatCurrency(Number(value))}`, ' Revenue'];
+                    if (name === 'amount') return [`${formatCurrency(Number(value))}`, reportSource === 'invoices' ? ' Revenue' : ' Credit'];
                     if (name === 'count') return [value, ' Units Sold'];
                     return [value, name];
                   }}
@@ -129,7 +133,7 @@ const ItemsAnalysisChart: React.FC<ItemsAnalysisChartProps> = ({
               fill="url(#colorItems)"
               radius={[4, 4, 0, 0]}
               maxBarSize={isMobile ? 30 : 50}
-              name="Revenue"
+              name={reportSource === 'invoices' ? "Revenue" : "Credit"}
             />
           </BarChart>
         </ChartContainer>

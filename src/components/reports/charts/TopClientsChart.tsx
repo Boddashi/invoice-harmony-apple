@@ -21,12 +21,14 @@ interface TopClientsChartProps {
   data: Array<{ name: string; amount: number }>;
   currencySymbol: string;
   formatCurrency: (amount: number) => string;
+  reportSource?: 'invoices' | 'credit-notes'; // Adding reportSource prop
 }
 
 const TopClientsChart: React.FC<TopClientsChartProps> = ({
   data,
   currencySymbol,
-  formatCurrency
+  formatCurrency,
+  reportSource = 'invoices'
 }) => {
   const isMobile = useIsMobile();
   const hasValidData = data && data.length > 0;
@@ -49,10 +51,12 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
     }
   };
 
+  const title = reportSource === 'invoices' ? 'Top Clients by Revenue' : 'Top Clients by Credit';
+
   return (
     <CustomCard padding="md">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium">Top Clients by Revenue</h3>
+        <h3 className="text-lg font-medium">{title}</h3>
         <BarChart3 size={20} className="text-muted-foreground" />
       </div>
       
@@ -118,7 +122,7 @@ const TopClientsChart: React.FC<TopClientsChartProps> = ({
               <ChartTooltip
                 content={
                   <ChartTooltipContent 
-                    formatter={(value) => [`${formatCurrency(Number(value))}`, ' Revenue']}
+                    formatter={(value) => [`${formatCurrency(Number(value))}`, reportSource === 'invoices' ? ' Revenue' : ' Credit']}
                   />
                 }
               />

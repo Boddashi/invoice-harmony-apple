@@ -1,9 +1,12 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { createCurrencyFormatter } from '@/utils/formatCurrency';
 import { useReportData } from '@/hooks/useReportData';
 import type { TimePeriod } from '@/components/reports/charts/RevenueChart';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { FileText, Receipt } from 'lucide-react';
 
 // Import Report Components
 import ReportFilters from '@/components/reports/ReportFilters';
@@ -17,6 +20,7 @@ import SavedReportsTable from '@/components/reports/SavedReportsTable';
 const Reports: React.FC = () => {
   const { currencySymbol } = useCurrency();
   const formatCurrency = createCurrencyFormatter(currencySymbol);
+  const [reportSource, setReportSource] = useState<'invoices' | 'credit-notes'>('invoices');
   
   const {
     isLoading,
@@ -39,11 +43,38 @@ const Reports: React.FC = () => {
     setSearchItemQuery,
     setSearchClientQuery,
     clearFilters
-  } = useReportData();
+  } = useReportData(reportSource);
+
+  const handleReportSourceChange = (value: string) => {
+    if (value === 'invoices' || value === 'credit-notes') {
+      setReportSource(value);
+    }
+  };
 
   return (
     <MainLayout>
       <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-6">
+          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+          <div className="ml-auto">
+            <ToggleGroup 
+              type="single" 
+              value={reportSource} 
+              onValueChange={handleReportSourceChange}
+              className="border rounded-lg"
+            >
+              <ToggleGroupItem value="invoices" className="flex items-center gap-1 px-4">
+                <FileText size={16} />
+                <span>Invoices</span>
+              </ToggleGroupItem>
+              <ToggleGroupItem value="credit-notes" className="flex items-center gap-1 px-4">
+                <Receipt size={16} />
+                <span>Credit Notes</span>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </div>
+
         <ReportFilters
           items={items}
           clients={clients}
@@ -57,6 +88,7 @@ const Reports: React.FC = () => {
           setSearchClientQuery={setSearchClientQuery}
           clearFilters={clearFilters}
           formatCurrency={formatCurrency}
+          reportSource={reportSource}
         />
         
         {isLoading ? (
@@ -74,6 +106,7 @@ const Reports: React.FC = () => {
             currencySymbol={currencySymbol}
             selectedPeriod={selectedPeriod}
             onPeriodChange={setSelectedPeriod}
+            reportSource={reportSource}
           />
         )}
       </div>
@@ -105,6 +138,7 @@ interface ReportsContentProps {
   currencySymbol: string;
   selectedPeriod: TimePeriod;
   onPeriodChange: (period: TimePeriod) => void;
+  reportSource: 'invoices' | 'credit-notes';
 }
 
 const ReportsContent: React.FC<ReportsContentProps> = ({
@@ -118,13 +152,17 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
   formatCurrency,
   currencySymbol,
   selectedPeriod,
-  onPeriodChange
+  onPeriodChange,
+  reportSource
 }) => {
+  const title = reportSource === 'invoices' ? 'Invoice' : 'Credit Note';
+  
   return (
     <>
       <StatCards 
         invoiceStats={invoiceStats} 
-        formatCurrency={formatCurrency} 
+        formatCurrency={formatCurrency}
+        reportSource={reportSource}
       />
       
       <div className="grid grid-cols-1 gap-4">
@@ -134,14 +172,19 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
           formatCurrency={formatCurrency}
           onPeriodChange={onPeriodChange}
           selectedPeriod={selectedPeriod}
+          title={`${title} Revenue`}
         />
         
-        <InvoiceStatusChart data={statusData} />
+        <InvoiceStatusChart 
+          data={statusData} 
+          title={`${title} Status`}
+        />
         
         <TopClientsChart 
           data={clientData} 
           currencySymbol={currencySymbol}
           formatCurrency={formatCurrency}
+          reportSource={reportSource}
         />
         
         {selectedItems.length > 0 && (
@@ -149,6 +192,7 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
             data={itemData} 
             currencySymbol={currencySymbol}
             formatCurrency={formatCurrency}
+            reportSource={reportSource}
           />
         )}
       </div>
@@ -156,6 +200,7 @@ const ReportsContent: React.FC<ReportsContentProps> = ({
       <SavedReportsTable 
         reports={savedReports}
         selectedPeriod={selectedPeriod}
+        reportSource={reportSource}
       />
     </>
   );
