@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@1.1.0";
 
@@ -99,9 +100,9 @@ serve(async (req) => {
           const pdfResponse = await fetch(pdfUrl);
           if (pdfResponse.ok) {
             const pdfBuffer = await pdfResponse.arrayBuffer();
-            const pdfBase64String = btoa(
-              String.fromCharCode(...new Uint8Array(pdfBuffer))
-            );
+            
+            // Fix: Use a safer method to convert ArrayBuffer to base64
+            const pdfBase64String = await arrayBufferToBase64(pdfBuffer);
             
             attachments.push({
               filename: isCreditNote ? `credit-note-${invoiceNumber}.pdf` : `invoice-${invoiceNumber}.pdf`,
@@ -128,9 +129,8 @@ serve(async (req) => {
             
             // Check if Terms & Conditions file is under 10MB
             if (termsBuffer.byteLength <= 10 * 1024 * 1024) {
-              const termsBase64 = btoa(
-                String.fromCharCode(...new Uint8Array(termsBuffer))
-              );
+              // Fix: Use safer method to convert ArrayBuffer to base64
+              const termsBase64 = await arrayBufferToBase64(termsBuffer);
               
               attachments.push({
                 filename: "terms-and-conditions.pdf",
@@ -212,3 +212,21 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to safely convert ArrayBuffer to base64 string
+async function arrayBufferToBase64(buffer) {
+  // Create a blob from the array buffer
+  const blob = new Blob([buffer]);
+  
+  // Use the FileReader API to convert blob to base64
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      // Get the base64 string (remove the data URL prefix)
+      const base64String = reader.result.toString().split(',')[1];
+      resolve(base64String);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}

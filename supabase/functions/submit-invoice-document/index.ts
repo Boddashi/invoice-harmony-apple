@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -356,12 +357,26 @@ serve(async (req) => {
         hasAttachment: !!pdfBase64
       });
       
-      // Call send-invoice-email function with the PDF data
+      // Extract authorization headers from the incoming request to forward them
+      const authHeaders = {};
+      const authHeader = req.headers.get('authorization');
+      const apiKeyHeader = req.headers.get('apikey');
+      
+      if (authHeader) {
+        authHeaders['authorization'] = authHeader;
+      }
+      
+      if (apiKeyHeader) {
+        authHeaders['apikey'] = apiKeyHeader;
+      }
+      
+      // Call send-invoice-email function with the PDF data and proper authorization
       const emailResponse = await fetch("https://sjwqxbjxjlsdngbldhcq.supabase.co/functions/v1/send-invoice-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...corsHeaders
+          ...corsHeaders,
+          ...authHeaders
         },
         body: JSON.stringify(emailData)
       });
