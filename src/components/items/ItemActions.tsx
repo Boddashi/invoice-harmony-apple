@@ -50,7 +50,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
             item={item}
             onItemUpdated={onItemUpdated}
             trigger={
-              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default hover:bg-accent hover:text-accent-foreground rounded-lg">
+              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default hover:bg-accent hover:text-accent-foreground rounded-md">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </button>
