@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@1.1.0";
 
@@ -126,11 +127,17 @@ serve(async (req) => {
           if (termsResponse.ok) {
             const termsBuffer = await termsResponse.arrayBuffer();
             
-            // Check if Terms & Conditions file is under 10MB
+            // Fix: Properly check buffer size and convert to base64 safely
             if (termsBuffer.byteLength <= 10 * 1024 * 1024) {
-              const termsBase64 = btoa(
-                String.fromCharCode(...new Uint8Array(termsBuffer))
-              );
+              // Convert to base64 in a safe way - handle buffer in chunks to avoid stack overflow
+              let termsBase64 = '';
+              const chunkSize = 32768; // 32KB chunks to avoid stack issues
+              const u8arr = new Uint8Array(termsBuffer);
+              
+              for (let i = 0; i < u8arr.length; i += chunkSize) {
+                const chunk = u8arr.slice(i, i + chunkSize);
+                termsBase64 += btoa(String.fromCharCode.apply(null, [...chunk]));
+              }
               
               attachments.push({
                 filename: "terms-and-conditions.pdf",
