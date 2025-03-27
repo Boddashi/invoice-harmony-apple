@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Loader2, Download, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -67,8 +66,8 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
         ) : (
           <>
             {(pdfUrl || pdfGenerated) && (
-              <Button 
-                onClick={handleDownloadPDF} 
+              <Button
+                onClick={handleDownloadPDF}
                 variant="outline"
                 className="flex items-center gap-2"
                 type="button"
@@ -78,38 +77,35 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
               </Button>
             )}
             {status === "draft" && (
-              <Button 
-                onClick={handleSaveAsDraft} 
+              <Button
+                onClick={handleSaveAsDraft}
                 variant="outline"
                 type="button"
               >
                 Save as Draft
               </Button>
             )}
-            <Button 
-              onClick={handleCreateAndSend} 
-              variant="apple" 
+            <Button
+              onClick={handleCreateAndSend}
+              variant="apple"
               style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
               type="button"
             >
               Create & Send
             </Button>
             {handleCreateAndSendYuki && (
-              <Button 
+              <button
                 onClick={handleCreateAndSendYuki}
-                variant="apple" 
-                style={{ backgroundColor: "var(--apple-blue, #007AFF)" }}
                 type="button"
-                className="flex items-center gap-2"
+                className="yuki-button"
               >
-                <Mail size={16} />
                 Create & Send & Yuki
-              </Button>
+              </button>
             )}
             {handleSendEmail && (pdfUrl || pdfGenerated) && (
-              <Button 
+              <Button
                 onClick={handleSendEmail}
-                variant="apple" 
+                variant="apple"
                 style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
                 type="button"
               >
