@@ -46,7 +46,7 @@
     --gradient-start: 255, 255, 255;
     --gradient-mid: 242, 238, 255;
     --gradient-end: 229, 222, 255;
-    
+
     /* Red gradient for credit note pages */
     --credit-note-gradient-start: 255, 255, 255;
     --credit-note-gradient-mid: 255, 235, 235;
@@ -94,7 +94,7 @@
     --gradient-start: 25, 23, 36;
     --gradient-mid: 40, 35, 60;
     --gradient-end: 65, 48, 97;
-    
+
     /* Dark red gradient for credit note pages */
     --credit-note-gradient-start: 40, 23, 25;
     --credit-note-gradient-mid: 65, 30, 35;
@@ -117,7 +117,7 @@
     background-attachment: fixed;
     min-height: 100vh;
   }
-  
+
   /* Credit note page gradient */
   .credit-note-page {
     background: linear-gradient(
@@ -127,7 +127,7 @@
     );
     background-attachment: fixed;
   }
-  
+
   /* Header and sidebar gradients */
   .bg-gradient-header {
     background: linear-gradient(
@@ -136,7 +136,7 @@
       rgba(var(--gradient-mid), 0.7) 100%
     );
   }
-  
+
   .bg-gradient-credit-note-header {
     background: linear-gradient(
       90deg,
@@ -144,7 +144,7 @@
       rgba(var(--credit-note-gradient-mid), 0.7) 100%
     );
   }
-  
+
   .bg-gradient-sidebar {
     background: linear-gradient(
       180deg,
@@ -152,7 +152,7 @@
       rgba(var(--gradient-mid), 0.5) 100%
     );
   }
-  
+
   .bg-gradient-credit-note-sidebar {
     background: linear-gradient(
       180deg,
@@ -220,6 +220,10 @@
 
   .dark .yuki-button {
     @apply hover:!shadow-neon-orange;
+  }
+
+  .dark .creditnote-button {
+    @apply hover:!shadow-neon-red;
   }
 
   .draft-button {

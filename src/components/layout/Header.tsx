@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -10,7 +9,7 @@ const Header = () => {
   const { user } = useAuth();
 
   // Check if current route is credit notes related
-  const isCreditNotesPage = location.pathname.includes('/creditnotes');
+  const isCreditNotesPage = location.pathname.includes("/creditnotes");
 
   const getTitle = () => {
     switch (location.pathname) {
@@ -34,6 +33,9 @@ const Header = () => {
         if (location.pathname.startsWith("/invoices/")) {
           return "Invoice Details";
         }
+        if (location.pathname.startsWith("/creditnotes/")) {
+          return "Credit Note Details";
+        }
         if (location.pathname.startsWith("/clients/")) {
           return "Client Details";
         }
@@ -49,12 +51,14 @@ const Header = () => {
   }
 
   return (
-    <header className={cn(
-      "w-full h-16 border-b border-border/40 sticky top-0 z-30 flex items-center px-6 backdrop-blur-apple",
-      isCreditNotesPage 
-        ? "bg-gradient-credit-note-header" 
-        : "bg-gradient-header"
-    )}>
+    <header
+      className={cn(
+        "w-full h-16 border-b border-border/40 sticky top-0 z-30 flex items-center px-6 backdrop-blur-apple",
+        isCreditNotesPage
+          ? "bg-gradient-credit-note-header"
+          : "bg-gradient-header"
+      )}
+    >
       <div className="flex justify-between items-center w-full px-3">
         <div className="flex items-center gap-2">
           <img src="/favicon.ico" alt="Power Peppol Logo" className="w-6 h-6" />

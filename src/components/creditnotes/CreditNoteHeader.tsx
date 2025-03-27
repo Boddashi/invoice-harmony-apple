@@ -83,7 +83,7 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
             )}
             <button
               onClick={handleCreateAndSend}
-              className="secondary-button"
+              className="secondary-button creditnote-button !text-white"
               style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
             >
               Create & Send
