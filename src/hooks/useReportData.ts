@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,7 +37,7 @@ export type Client = {
 
 const PIE_COLORS = ['#4ade80', '#f97316', '#f43f5e'];
 
-export const useReportData = () => {
+export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoices') => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
@@ -126,9 +127,15 @@ export const useReportData = () => {
     try {
       setIsLoading(true);
       
+      // Determine which table to query based on reportSource
+      const tableName = reportSource === 'invoices' ? 'invoices' : 'credit_notes';
+      const itemsTable = reportSource === 'invoices' ? 'invoice_items' : 'credit_note_items';
+      const numberField = reportSource === 'invoices' ? 'invoice_number' : 'credit_note_number';
+      const dateField = reportSource === 'invoices' ? 'issue_date' : 'issue_date';
+      
       let query = supabase
-        .from('invoices')
-        .select('*, client:clients(name), invoice_items(item_id, quantity, total_amount)')
+        .from(tableName)
+        .select(`*, client:clients(name), ${itemsTable}(item_id, quantity, total_amount)`)
         .eq('user_id', user.id);
 
       const { data: allInvoices, error: invoicesError } = await query;
@@ -139,7 +146,7 @@ export const useReportData = () => {
       
       if (selectedItems.length > 0) {
         filteredInvoices = filteredInvoices.filter(invoice => {
-          const invoiceItems = invoice.invoice_items || [];
+          const invoiceItems = invoice[itemsTable] || [];
           return invoiceItems.some(item => selectedItems.includes(item.item_id));
         });
       }
@@ -177,11 +184,15 @@ export const useReportData = () => {
       const revenueByPeriod = new Map<string, number>();
 
       paidInvoices.forEach(invoice => {
-        const date = new Date(invoice.issue_date);
+        const date = new Date(invoice[dateField]);
         if (date >= periodStart) {
           const period = format(date, formatString);
           const currentAmount = revenueByPeriod.get(period) || 0;
-          revenueByPeriod.set(period, currentAmount + Number(invoice.total_amount));
+          // For credit notes, we want to show the absolute value
+          const amount = reportSource === 'credit-notes' 
+            ? Math.abs(Number(invoice.total_amount))
+            : Number(invoice.total_amount);
+          revenueByPeriod.set(period, currentAmount + amount);
         }
       });
 
@@ -202,7 +213,13 @@ export const useReportData = () => {
       const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
       const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue');
       
-      const totalRevenue = paidInvoicesList.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
+      // For credit notes, we want to show the absolute value
+      const totalRevenue = paidInvoicesList.reduce((sum, inv) => {
+        const amount = reportSource === 'credit-notes' 
+          ? Math.abs(Number(inv.total_amount))
+          : Number(inv.total_amount);
+        return sum + amount;
+      }, 0);
       
       setInvoiceStats({
         total: filteredInvoices.length,
@@ -242,7 +259,11 @@ export const useReportData = () => {
       paidInvoicesList.forEach(invoice => {
         if (invoice.client && invoice.client.name) {
           const clientName = invoice.client.name;
-          clientRevenue[clientName] = (clientRevenue[clientName] || 0) + Number(invoice.total_amount);
+          // For credit notes, we want to show the absolute value
+          const amount = reportSource === 'credit-notes' 
+            ? Math.abs(Number(invoice.total_amount))
+            : Number(invoice.total_amount);
+          clientRevenue[clientName] = (clientRevenue[clientName] || 0) + amount;
         }
       });
       
@@ -256,8 +277,8 @@ export const useReportData = () => {
       const itemRevenue: Record<string, { amount: number, count: number }> = {};
       
       filteredInvoices.forEach(invoice => {
-        if (invoice.status === 'paid' && invoice.invoice_items) {
-          invoice.invoice_items.forEach(item => {
+        if (invoice.status === 'paid' && invoice[itemsTable]) {
+          invoice[itemsTable].forEach(item => {
             const itemDetails = items.find(i => i.id === item.item_id);
             
             if (itemDetails) {
@@ -267,7 +288,12 @@ export const useReportData = () => {
                 itemRevenue[itemName] = { amount: 0, count: 0 };
               }
               
-              itemRevenue[itemName].amount += Number(item.total_amount);
+              // For credit notes, we want to show the absolute value
+              const amount = reportSource === 'credit-notes' 
+                ? Math.abs(Number(item.total_amount))
+                : Number(item.total_amount);
+                
+              itemRevenue[itemName].amount += amount;
               itemRevenue[itemName].count += Number(item.quantity);
             }
           });
@@ -284,10 +310,12 @@ export const useReportData = () => {
       
       setItemData(itemDataArray);
       
+      const titlePrefix = reportSource === 'invoices' ? 'Invoice ' : 'Credit Note ';
+      
       const reports: Report[] = [
         {
           id: '1',
-          title: 'Revenue',
+          title: `${titlePrefix}Revenue`,
           data: periodData,
           type: 'monthly',
           date: format(new Date(), 'yyyy-MM-dd'),
@@ -295,7 +323,7 @@ export const useReportData = () => {
         },
         {
           id: '2',
-          title: 'Invoice Status',
+          title: `${titlePrefix}Status`,
           data: statusDataArray,
           type: 'status',
           date: format(new Date(), 'yyyy-MM-dd')
@@ -349,7 +377,7 @@ export const useReportData = () => {
       fetchClients();
       fetchInvoiceData();
     }
-  }, [user, selectedPeriod]);
+  }, [user, selectedPeriod, reportSource]);
 
   useEffect(() => {
     if (user) {

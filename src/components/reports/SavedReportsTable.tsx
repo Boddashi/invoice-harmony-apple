@@ -19,9 +19,14 @@ interface Report {
 interface SavedReportsTableProps {
   reports: Report[];
   selectedPeriod: TimePeriod;
+  reportSource?: 'invoices' | 'credit-notes';
 }
 
-const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selectedPeriod }) => {
+const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ 
+  reports, 
+  selectedPeriod,
+  reportSource = 'invoices'
+}) => {
   const { toast } = useToast();
 
   const handleExport = async (report: Report) => {
@@ -35,7 +40,7 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
       
       if (report.type === 'monthly') {
         const periodLabel = getPeriodLabel(selectedPeriod);
-        csvContent = `Period,${periodLabel} Revenue\n`;
+        csvContent = `Period,${periodLabel} ${reportSource === 'invoices' ? 'Revenue' : 'Credit'}\n`;
         report.data.forEach((item: any) => {
           csvContent += `"${item.period}",${item.amount}\n`;
         });
@@ -59,8 +64,9 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       
+      const sourcePrefix = reportSource === 'invoices' ? 'invoice' : 'credit-note';
       const periodSuffix = report.type === 'monthly' ? `-${selectedPeriod}` : '';
-      const fileName = `${report.title.toLowerCase().replace(/\s+/g, '-')}${periodSuffix}-${report.date}`;
+      const fileName = `${sourcePrefix}-${report.title.toLowerCase().replace(/\s+/g, '-')}${periodSuffix}-${report.date}`;
       const link = document.createElement('a');
       link.href = url;
       link.download = `${fileName}.csv`;
@@ -95,7 +101,7 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
   };
 
   const getTypeColor = (type: string, reportType: string) => {
-    if (type === 'monthly' && reportType === 'Revenue') {
+    if (type === 'monthly' && reportType.includes('Revenue')) {
       switch (selectedPeriod) {
         case 'daily': return 'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-100';
         case 'weekly': return 'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-100';
@@ -132,9 +138,7 @@ const SavedReportsTable: React.FC<SavedReportsTableProps> = ({ reports, selected
                   <div className="p-4 border-b border-border/40">
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="font-medium truncate" title={report.title}>
-                        {report.type === 'monthly' 
-                          ? `${getPeriodLabel(selectedPeriod)} Revenue` 
-                          : report.title}
+                        {report.title}
                       </h3>
                       <Badge 
                         variant="outline" 
