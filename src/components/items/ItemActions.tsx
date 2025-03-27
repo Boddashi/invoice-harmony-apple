@@ -1,4 +1,3 @@
-
 import React from "react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,7 +52,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
             item={item}
             onItemUpdated={onItemUpdated}
             trigger={
-              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default">
+              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default hover:bg-apple-purple hover:text-white">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </button>
@@ -63,7 +62,7 @@ const ItemActions: React.FC<ItemActionsProps> = ({
         <DropdownMenuItem asChild>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default text-destructive">
+              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default text-destructive hover:bg-apple-purple hover:text-white">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </button>
