@@ -408,7 +408,7 @@ const ClientList = () => {
         <h2 className="text-xl font-semibold">Your Clients</h2>
         <Button
           onClick={handleOpenModal}
-          className="apple-button flex items-center gap-2 w-full sm:w-auto rounded-full"
+          className="apple-button dark:hover:!bg-neon-purple flex items-center gap-2 w-full sm:w-auto rounded-full"
         >
           <Plus size={18} />
           <span>Add Client</span>
