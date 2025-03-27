@@ -304,11 +304,14 @@ const AddClientModal = ({
   const createLegalEntity = async (clientData: any) => {
     try {
       setIsCreatingLegalEntity(true);
-      
-      const { data, error } = await supabase.functions.invoke('create-client-legal-entity', {
-        body: { client: clientData }
-      });
-      
+
+      const { data, error } = await supabase.functions.invoke(
+        "create-client-legal-entity",
+        {
+          body: { client: clientData },
+        }
+      );
+
       if (error) {
         console.error("Error creating legal entity:", error);
         toast({
@@ -318,11 +321,11 @@ const AddClientModal = ({
         });
         return { legalEntityId: null };
       }
-      
+
       console.log("Legal entity created:", data);
-      
-      return { 
-        legalEntityId: data?.data?.id || null
+
+      return {
+        legalEntityId: data?.data?.id || null,
       };
     } catch (error) {
       console.error("Exception creating legal entity:", error);
@@ -348,35 +351,41 @@ const AddClientModal = ({
       });
       return;
     }
-    
-    if (!formData.street || !formData.city || !formData.postcode || !formData.country) {
+
+    if (
+      !formData.street ||
+      !formData.city ||
+      !formData.postcode ||
+      !formData.country
+    ) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Street, city, postal code, and country are required for electronic invoicing capabilities.",
+        description:
+          "Street, city, postal code, and country are required for electronic invoicing capabilities.",
       });
       return;
     }
 
     try {
       let legalEntityId = null;
-      
+
       const clientDataForRequest = {
         ...formData,
-        legal_entity_id: clientToEdit?.legal_entity_id || null
+        legal_entity_id: clientToEdit?.legal_entity_id || null,
       };
-      
+
       const result = await createLegalEntity(clientDataForRequest);
       legalEntityId = result.legalEntityId || clientToEdit?.legal_entity_id;
-      
+
       console.log("Received from legal entity creation:", { legalEntityId });
 
       const clientData = {
         ...formData,
         vat_number: formData.vatNumber,
-        legal_entity_id: legalEntityId
+        legal_entity_id: legalEntityId,
       };
-      
+
       console.log("Storing client data:", clientData);
 
       if (isEditMode && onUpdateClient && clientToEdit) {
@@ -510,7 +519,9 @@ const AddClientModal = ({
             </div>
 
             <div className="border-t border-border/40 pt-4">
-              <h3 className="font-medium mb-3">Address Details (Required for Electronic Invoicing)</h3>
+              <h3 className="font-medium mb-3">
+                Address Details (Required for Electronic Invoicing)
+              </h3>
 
               <div className="space-y-4">
                 <div>
@@ -592,8 +603,8 @@ const AddClientModal = ({
                   <label className="block text-sm font-medium text-foreground mb-1">
                     Country *
                   </label>
-                  <Select 
-                    value={formData.country} 
+                  <Select
+                    value={formData.country}
                     onValueChange={handleCountryChange}
                     required
                   >
@@ -630,7 +641,8 @@ const AddClientModal = ({
                   />
                   {formData.type === "business" && (
                     <p className="text-xs text-muted-foreground mt-1">
-                      VAT number is required for electronic invoicing via PEPPOL network.
+                      VAT number is required for electronic invoicing via PEPPOL
+                      network.
                     </p>
                   )}
                 </div>
@@ -644,7 +656,7 @@ const AddClientModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-muted-foreground hover:bg-secondary transition-colors"
+              className="px-4 py-2 rounded-full text-muted-foreground hover:bg-secondary transition-colors"
             >
               Cancel
             </button>
@@ -654,11 +666,11 @@ const AddClientModal = ({
               className="apple-button "
               disabled={isCreatingLegalEntity}
             >
-              {isCreatingLegalEntity 
-                ? "Processing..." 
-                : isEditMode 
-                  ? "Update Client" 
-                  : "Add Client"}
+              {isCreatingLegalEntity
+                ? "Processing..."
+                : isEditMode
+                ? "Update Client"
+                : "Add Client"}
             </button>
           </div>
         </div>

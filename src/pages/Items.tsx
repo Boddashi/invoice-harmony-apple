@@ -246,7 +246,10 @@ const Items = () => {
                 </p>
                 <AddItemModal
                   trigger={
-                    <Button variant="apple">
+                    <Button
+                      variant="apple"
+                      className="apple-button dark:hover:!bg-neon-purple flex items-center gap-2 w-full sm:w-auto rounded-full"
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       Add Your First Item
                     </Button>

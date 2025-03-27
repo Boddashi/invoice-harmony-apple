@@ -164,11 +164,7 @@ const AddItemModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button 
-            variant="apple" 
-            className={className}
-            type="button"
-          >
+          <Button variant="apple" className={className} type="button">
             <Plus className="mr-2 h-4 w-4" /> Add Item
           </Button>
         )}
@@ -240,15 +236,15 @@ const AddItemModal = ({
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button
+            <button
               type="button"
-              variant="outline"
               onClick={() => setOpen(false)}
+              className="px-4 py-2 rounded-full text-muted-foreground hover:bg-secondary transition-colors"
             >
               Cancel
-            </Button>
+            </button>
             <Button
-              className="apple-button dark:hover:bg-neon-purple"
+              className="apple-button dark:hover:bg-neon-purple rounded-full"
               type="submit"
               variant="apple"
               disabled={loading || fetchingVatRates || vatRates.length === 0}
