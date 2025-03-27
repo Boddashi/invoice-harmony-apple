@@ -1,6 +1,6 @@
+
 import React from "react";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,40 +51,19 @@ const ItemActions: React.FC<ItemActionsProps> = ({
             item={item}
             onItemUpdated={onItemUpdated}
             trigger={
-              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default hover:bg-apple-purple hover:text-white">
+              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default hover:bg-accent hover:text-accent-foreground">
                 <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </button>
             }
           />
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="flex w-full items-center px-2 py-1.5 text-sm cursor-default text-destructive hover:bg-apple-purple hover:text-white">
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Item</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete "{item.title}"? This action
-                  cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDeleteItem(item.id)}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+        <DropdownMenuItem 
+          onClick={() => onDeleteItem(item.id)} 
+          className="text-destructive"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
