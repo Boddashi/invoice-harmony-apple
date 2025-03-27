@@ -42,12 +42,11 @@ const ItemActions: React.FC<ItemActionsProps> = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <button className="p-1.5 rounded-full hover:bg-secondary transition-colors">
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Open menu</span>
-        </Button>
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem asChild>
           <EditItemModal
             item={item}
