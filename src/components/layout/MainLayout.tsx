@@ -35,6 +35,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { user, signOut } = useAuth();
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
+  // Check if current route is credit notes related
+  const isCreditNotesPage = location.pathname.includes('/creditnotes');
+
   useEffect(() => {
     if (!user) {
       toast.error("Please log in to access this page");
@@ -90,7 +93,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col w-full">
+    <div className={cn("min-h-screen flex flex-col w-full", isCreditNotesPage && "credit-note-page")}>
       <Header />
 
       <div className="flex flex-1 w-full">
