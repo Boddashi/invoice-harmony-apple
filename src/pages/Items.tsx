@@ -4,9 +4,7 @@ import {
   Package,
   Loader2,
   Plus,
-  Pencil,
-  Trash2,
-  ArrowUpDown,
+  MoreHorizontal,
   Euro,
   Search,
   ArrowUp,
@@ -41,6 +39,7 @@ import CustomCard from "@/components/ui/CustomCard";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import ItemActions from "@/components/items/ItemActions";
 
 interface Item {
   id: string;
@@ -221,7 +220,7 @@ const Items = () => {
               size={18}
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
             />
-            <input
+            <Input
               type="text"
               placeholder="Search items..."
               className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background/60 dark:bg-secondary/20 dark:border-secondary/30 focus:outline-none focus:ring-2 focus:ring-primary/20 dark:focus:ring-primary/30 transition-colors"
@@ -229,140 +228,112 @@ const Items = () => {
               onChange={handleSearch}
             />
           </div>
-        </div>
 
-        <CustomCard className="p-0">
-          {loading ? (
-            <div className="flex justify-center p-12">
-              <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="flex items-center justify-center p-12 rounded-lg">
-              <div className="flex flex-col items-center text-center">
-                <Package size={48} className="mb-4 text-muted-foreground" />
-                <h2 className="text-xl font-semibold mb-2">No items yet</h2>
-                <p className="text-muted-foreground mb-4">
-                  You haven't added any items to your inventory yet.
-                </p>
-                <AddItemModal
-                  trigger={
-                    <Button
-                      variant="apple"
-                      className="apple-button dark:hover:!bg-neon-purple flex items-center gap-2 w-full sm:w-auto rounded-full"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Your First Item
-                    </Button>
-                  }
-                  onItemAdded={fetchItems}
-                />
+          <CustomCard className="p-0">
+            {loading ? (
+              <div className="flex justify-center p-12">
+                <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
               </div>
-            </div>
-          ) : (
-            <div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("title")}
-                    >
-                      <div className="flex items-center">
-                        Item Name
-                        {renderSortIcon("title")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("price")}
-                    >
-                      <div className="flex items-center">
-                        Price
-                        {renderSortIcon("price")}
-                      </div>
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => handleSort("vat")}
-                    >
-                      <div className="flex items-center">
-                        VAT Rate
-                        {renderSortIcon("vat")}
-                      </div>
-                    </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {getSortedItems().length === 0 ? (
+            ) : items.length === 0 ? (
+              <div className="flex items-center justify-center p-12 rounded-lg">
+                <div className="flex flex-col items-center text-center">
+                  <Package size={48} className="mb-4 text-muted-foreground" />
+                  <h2 className="text-xl font-semibold mb-2">No items yet</h2>
+                  <p className="text-muted-foreground mb-4">
+                    You haven't added any items to your inventory yet.
+                  </p>
+                  <AddItemModal
+                    trigger={
+                      <Button
+                        variant="apple"
+                        className="apple-button dark:hover:!bg-neon-purple flex items-center gap-2 w-full sm:w-auto rounded-full"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Your First Item
+                      </Button>
+                    }
+                    onItemAdded={fetchItems}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center py-6">
-                        <p>No items found matching your search.</p>
-                      </TableCell>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("title")}
+                      >
+                        <div className="flex items-center">
+                          Item Name
+                          {renderSortIcon("title")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("price")}
+                      >
+                        <div className="flex items-center">
+                          Price
+                          {renderSortIcon("price")}
+                        </div>
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => handleSort("vat")}
+                      >
+                        <div className="flex items-center">
+                          VAT Rate
+                          {renderSortIcon("vat")}
+                        </div>
+                      </TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    getSortedItems().map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.title}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center space-x-2">
-                            <Euro className="h-4 w-4 text-muted-foreground" />
-                            <span>{formatCurrency(item.price)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="ghost"
-                            className="text-base font-normal px-0"
-                          >
-                            {item.vat}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <EditItemModal
-                              item={item}
-                              onItemUpdated={fetchItems}
-                            />
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Delete Item
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "
-                                    {item.title}"? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteItem(item.id)}
-                                    className="bg-destructive hover:bg-destructive/90"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {getSortedItems().length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-6">
+                          <p>No items found matching your search.</p>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CustomCard>
+                    ) : (
+                      getSortedItems().map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">
+                            {item.title}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center space-x-2">
+                              <Euro className="h-4 w-4 text-muted-foreground" />
+                              <span>{formatCurrency(item.price)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="ghost"
+                              className="text-base font-normal px-0"
+                            >
+                              {item.vat}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <ItemActions 
+                              item={item} 
+                              onItemUpdated={fetchItems}
+                              onDeleteItem={handleDeleteItem}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CustomCard>
+        </div>
       </div>
     </MainLayout>
   );
