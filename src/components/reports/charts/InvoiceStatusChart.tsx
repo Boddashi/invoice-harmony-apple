@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { PieChart as PieChartIcon, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 import CustomCard from '@/components/ui/CustomCard';
@@ -78,9 +79,10 @@ interface InvoiceStatusChartProps {
     fill: string; 
     percent: number;
   }>;
+  title?: string; // Adding title prop
 }
 
-const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
+const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data, title = "Invoice Status Distribution" }) => {
   const isMobile = useIsMobile();
   
   if (!data || data.length === 0 || data.every(item => item.value === 0)) {
@@ -89,7 +91,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <PieChartIcon size={18} className="text-primary" />
-            <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
+            <h3 className="text-lg font-medium">{title}</h3>
           </div>
         </div>
         <div className="h-72 flex items-center justify-center">
@@ -104,7 +106,7 @@ const InvoiceStatusChart: React.FC<InvoiceStatusChartProps> = ({ data }) => {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PieChartIcon size={18} className="text-primary" />
-          <h3 className="text-lg font-medium">Invoice Status Distribution</h3>
+          <h3 className="text-lg font-medium">{title}</h3>
         </div>
       </div>
       
