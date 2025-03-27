@@ -546,665 +546,458 @@ export function useCreditNoteForm() {
         variant: 'destructive',
         title: 'Error',
         description: error.message || 'Failed to fetch items.',
-      });
-    }
-  }, [user, toast]);
-  
-  useEffect(() => {
-    fetchAvailableItems();
-  }, [fetchAvailableItems]);
-  
-  useEffect(() => {
-    const updatedItems = items.map(item => {
-      const amount = Number(item.quantity) * Number(item.unit_price);
-      return {
-        ...item,
-        amount: amount
-      };
-    });
+        });
+      }
+    }, [user, toast]);
     
-    setItems(updatedItems);
-  }, [items.map(item => `${item.quantity}-${item.unit_price}`)]);
-  
-  const handleItemDescriptionChange = useCallback((id: string, value: string) => {
-    setItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === id) {
-          const selectedItem = availableItems.find(i => i.id === value);
-          
-          if (selectedItem) {
+    useEffect(() => {
+      fetchAvailableItems();
+    }, [fetchAvailableItems]);
+    
+    useEffect(() => {
+      const updatedItems = items.map(item => {
+        const amount = Number(item.quantity) * Number(item.unit_price);
+        return {
+          ...item,
+          amount: amount
+        };
+      });
+      
+      setItems(updatedItems);
+    }, [items.map(item => `${item.quantity}-${item.unit_price}`)]);
+    
+    const handleItemDescriptionChange = useCallback((id: string, value: string) => {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === id) {
+            const selectedItem = availableItems.find(i => i.id === value);
+            
+            if (selectedItem) {
+              return {
+                ...item,
+                description: value,
+                unit_price: selectedItem.price,
+                vat_rate: selectedItem.vat,
+                amount: selectedItem.price * item.quantity
+              };
+            }
+            
             return {
               ...item,
-              description: value,
-              unit_price: selectedItem.price,
-              vat_rate: selectedItem.vat,
-              amount: selectedItem.price * item.quantity
+              description: value
             };
           }
-          
-          return {
-            ...item,
-            description: value
-          };
-        }
-        return item;
-      });
-    });
-  }, [availableItems]);
-  
-  const handleItemQuantityChange = useCallback((id: string, value: number) => {
-    setItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === id) {
-          const amount = value * item.unit_price;
-          return {
-            ...item,
-            quantity: value,
-            amount
-          };
-        }
-        return item;
-      });
-    });
-  }, []);
-  
-  const handleItemUnitPriceChange = useCallback((id: string, value: number) => {
-    setItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === id) {
-          const amount = item.quantity * value;
-          return {
-            ...item,
-            unit_price: value,
-            amount
-          };
-        }
-        return item;
-      });
-    });
-  }, []);
-  
-  const handleItemVatChange = useCallback((id: string, value: string) => {
-    setItems(prevItems => {
-      return prevItems.map(item => {
-        if (item.id === id) {
-          return {
-            ...item,
-            vat_rate: value
-          };
-        }
-        return item;
-      });
-    });
-  }, []);
-  
-  const handleAddItem = useCallback(() => {
-    setItems(prevItems => [
-      ...prevItems,
-      {
-        id: uuidv4(),
-        description: '',
-        quantity: 1,
-        unit_price: 0,
-        amount: 0,
-        vat_rate: '21%'
-      }
-    ]);
-  }, []);
-  
-  const handleRemoveItem = useCallback((id: string) => {
-    setItems(prevItems => {
-      if (prevItems.length === 1) {
-        return prevItems;
-      }
-      return prevItems.filter(item => item.id !== id);
-    });
-  }, []);
-  
-  const getVatGroups = useCallback((): VatGroup[] => {
-    const groups = new Map<string, VatGroup>();
-    
-    items.forEach(item => {
-      const vatRate = item.vat_rate;
-      const amount = item.amount;
-      
-      if (amount === 0) return;
-      
-      let vatPercentage = 0;
-      if (vatRate !== 'Exempt' && vatRate !== 'exempt') {
-        vatPercentage = parseFloat(vatRate) || 0;
-      }
-      
-      const vatAmount = vatRate === 'Exempt' || vatRate === 'exempt' 
-        ? 0 
-        : (amount * vatPercentage) / 100;
-      
-      if (groups.has(vatRate)) {
-        const group = groups.get(vatRate)!;
-        group.value += amount;
-        group.amount += vatAmount;
-      } else {
-        groups.set(vatRate, {
-          rate: vatRate,
-          value: amount,
-          amount: vatAmount
+          return item;
         });
-      }
-    });
-    
-    return Array.from(groups.values()).map(group => ({
-      ...group,
-      value: -Math.abs(group.value),
-      amount: -Math.abs(group.amount)
-    }));
-  }, [items]);
-  
-  const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (!user || !selectedClientId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a client before saving.',
       });
-      return;
-    }
+    }, [availableItems]);
     
-    try {
-      setIsSubmitting(true);
-      
-      const vatGroups = getVatGroups();
-      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
-      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
-      const totalAmount = subtotal + vatTotal;
-      
-      const creditNoteData = {
-        user_id: user.id,
-        client_id: selectedClientId,
-        credit_note_number: creditNoteNumber,
-        issue_date: issueDate,
-        status: 'draft' as CreditNoteStatus,
-        amount: subtotal,
-        tax_amount: vatTotal,
-        total_amount: totalAmount,
-        notes: notes
-      };
-      
-      let savedCreditNoteId = creditNoteId;
-      
-      if (isEditMode && id) {
-        const { error: updateError } = await supabase
-          .from('credit_notes')
-          .update(creditNoteData)
-          .eq('id', id);
-          
-        if (updateError) throw updateError;
-        
-        savedCreditNoteId = id;
-        
-        const { error: deleteItemsError } = await supabase
-          .from('credit_note_items')
-          .delete()
-          .eq('credit_note_id', id);
-          
-        if (deleteItemsError) throw deleteItemsError;
-      } else {
-        const { data, error } = await supabase
-          .from('credit_notes')
-          .insert(creditNoteData)
-          .select();
-          
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          savedCreditNoteId = data[0].id;
-          setCreditNoteId(savedCreditNoteId);
-        }
-      }
-      
-      const itemsToInsert = items
-        .filter(item => item.description)
-        .map(item => ({
-          credit_note_id: savedCreditNoteId,
-          item_id: item.description,
-          quantity: item.quantity,
-          total_amount: item.amount
-        }));
-      
-      if (itemsToInsert.length > 0) {
-        const { error: insertItemsError } = await supabase
-          .from('credit_note_items')
-          .insert(itemsToInsert);
-          
-        if (insertItemsError) throw insertItemsError;
-      }
-      
-      toast({
-        title: 'Success',
-        description: `Credit note saved as draft.`,
-      });
-      
-      navigate('/creditnotes');
-    } catch (error: any) {
-      console.error('Error saving credit note:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to save credit note.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
-    creditNoteId, isEditMode, id, navigate, getVatGroups, toast
-  ]);
-  
-  const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
-    if (!user || !selectedClientId) return null;
-    
-    try {
-      setIsSubmittingToStorecove(true);
-      
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .eq('id', selectedClientId)
-        .single();
-        
-      if (clientError) throw clientError;
-      
-      const { data: creditNoteData, error: creditNoteError } = await supabase
-        .from('credit_notes')
-        .select(`
-          *,
-          items:credit_note_items(
-            item_id,
-            quantity,
-            total_amount,
-            item:items(*)
-          )
-        `)
-        .eq('id', creditNoteId)
-        .single();
-        
-      if (creditNoteError) throw creditNoteError;
-      
-      const { data: companyData, error: companyError } = await supabase
-        .from('company_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (companyError && companyError.code !== 'PGRST116') throw companyError;
-      
-      let pdfUrl = pdfData.url;
-      if (!pdfUrl) {
-        const { data: urlData } = supabase.storage
-          .from('credit_notes')
-          .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
-          
-        if (urlData && urlData.publicUrl) {
-          pdfUrl = urlData.publicUrl;
-        }
-      }
-      
-      const formattedItems = creditNoteData.items.map((item: any) => ({
-        description: item.item ? item.item.title : 'Unknown Item',
-        quantity: item.quantity,
-        unit_price: Math.abs(item.total_amount) / item.quantity,
-        amount: -Math.abs(item.total_amount),
-        vat_rate: item.item?.vat || '21%'
-      }));
-      
-      console.log('Submitting credit note to edge function with data:', {
-        creditNoteId: creditNoteData.id,
-        creditNoteNumber: creditNoteData.credit_note_number,
-        clientId: clientData.id,
-        clientName: clientData.name,
-        itemCount: formattedItems.length,
-        hasPdfBase64: !!pdfData.base64,
-        hasPdfUrl: !!pdfUrl
-      });
-      
-      const { data: submissionResult, error: submissionError } = await supabase
-        .functions
-        .invoke('submit-credit-note-document', {
-          body: {
-            creditNote: creditNoteData,
-            client: clientData,
-            items: formattedItems,
-            companySettings: companyData,
-            pdfBase64: pdfData.base64,
-            pdfUrl: pdfUrl
-          }
-        });
-        
-      if (submissionError) {
-        console.error('Error from edge function:', submissionError);
-        throw submissionError;
-      }
-      
-      console.log('Edge function response:', submissionResult);
-      return submissionResult;
-    } catch (error: any) {
-      console.error('Error submitting to Storecove:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to submit credit note to Storecove.',
-      });
-      return null;
-    } finally {
-      setIsSubmittingToStorecove(false);
-    }
-  }, [user, selectedClientId, supabase, toast]);
-  
-  const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
-    e.preventDefault();
-    
-    if (!user || !selectedClientId) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Please select a client before sending.',
-      });
-      return;
-    }
-    
-    try {
-      setIsSubmitting(true);
-      
-      const vatGroups = getVatGroups();
-      const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
-      const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
-      const totalAmount = subtotal + vatTotal;
-      
-      const creditNoteData = {
-        user_id: user.id,
-        client_id: selectedClientId,
-        credit_note_number: creditNoteNumber,
-        issue_date: issueDate,
-        status: 'pending' as CreditNoteStatus,
-        amount: subtotal,
-        tax_amount: vatTotal,
-        total_amount: totalAmount,
-        notes: notes
-      };
-      
-      let savedCreditNoteId = creditNoteId;
-      
-      if (isEditMode && id) {
-        const { error: updateError } = await supabase
-          .from('credit_notes')
-          .update(creditNoteData)
-          .eq('id', id);
-          
-        if (updateError) throw updateError;
-        
-        savedCreditNoteId = id;
-        
-        const { error: deleteItemsError } = await supabase
-          .from('credit_note_items')
-          .delete()
-          .eq('credit_note_id', id);
-          
-        if (deleteItemsError) throw deleteItemsError;
-      } else {
-        const { data, error } = await supabase
-          .from('credit_notes')
-          .insert(creditNoteData)
-          .select();
-          
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-          savedCreditNoteId = data[0].id;
-          setCreditNoteId(savedCreditNoteId);
-        }
-      }
-      
-      const itemsToInsert = items
-        .filter(item => item.description)
-        .map(item => ({
-          credit_note_id: savedCreditNoteId,
-          item_id: item.description,
-          quantity: item.quantity,
-          total_amount: item.amount
-        }));
-      
-      if (itemsToInsert.length > 0) {
-        const { error: insertItemsError } = await supabase
-          .from('credit_note_items')
-          .insert(itemsToInsert);
-          
-        if (insertItemsError) throw insertItemsError;
-      }
-
-      console.log('Generating PDF for credit note ID:', savedCreditNoteId);
-      const pdfData = await generatePDF(savedCreditNoteId, false);
-      
-      if (pdfData) {
-        console.log('PDF generated successfully');
-        
-        const { error: updateError } = await supabase
-          .from('credit_notes')
-          .update({
-            status: 'pending'
-          })
-          .eq('id', savedCreditNoteId);
-          
-        if (updateError) throw updateError;
-        
-        setStatus('pending');
-        setPdfGenerated(true);
-        
-        console.log('Calling submitToStorecove with credit note ID:', savedCreditNoteId);
-        const storecoveResult = await submitToStorecove(savedCreditNoteId, pdfData);
-        
-        if (storecoveResult) {
-          console.log('Storecove submission successful:', storecoveResult);
-          
-          const savedId = savedCreditNoteId;
-          setCreditNoteId(savedId);
-          
-          if (!storecoveResult.emailSent) {
-            console.log('Email not sent by edge function, sending directly...');
-            const tempSelectedClientId = selectedClientId;
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
-            
-            const sendEmailAfterCreation = async () => {
-              setSelectedClientId(tempSelectedClientId);
-              setCreditNoteId(savedId);
-              
-              try {
-                await handleSendEmail();
-                console.log('Email sent successfully after credit note creation');
-              } catch (emailError) {
-                console.error('Failed to send email after credit note creation:', emailError);
-              }
+    const handleItemQuantityChange = useCallback((id: string, value: number) => {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === id) {
+            const amount = value * item.unit_price;
+            return {
+              ...item,
+              quantity: value,
+              amount
             };
-            
-            await sendEmailAfterCreation();
           }
-          
-          toast({
-            title: 'Success',
-            description: `Credit note created and sent.${storecoveResult.emailSent ? ' Email sent successfully.' : ''}`,
-          });
+          return item;
+        });
+      });
+    }, []);
+    
+    const handleItemUnitPriceChange = useCallback((id: string, value: number) => {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === id) {
+            const amount = item.quantity * value;
+            return {
+              ...item,
+              unit_price: value,
+              amount
+            };
+          }
+          return item;
+        });
+      });
+    }, []);
+    
+    const handleItemVatChange = useCallback((id: string, value: string) => {
+      setItems(prevItems => {
+        return prevItems.map(item => {
+          if (item.id === id) {
+            return {
+              ...item,
+              vat_rate: value
+            };
+          }
+          return item;
+        });
+      });
+    }, []);
+    
+    const handleAddItem = useCallback(() => {
+      setItems(prevItems => [
+        ...prevItems,
+        {
+          id: uuidv4(),
+          description: '',
+          quantity: 1,
+          unit_price: 0,
+          amount: 0,
+          vat_rate: '21%'
+        }
+      ]);
+    }, []);
+    
+    const handleRemoveItem = useCallback((id: string) => {
+      setItems(prevItems => {
+        if (prevItems.length === 1) {
+          return prevItems;
+        }
+        return prevItems.filter(item => item.id !== id);
+      });
+    }, []);
+    
+    const getVatGroups = useCallback((): VatGroup[] => {
+      const groups = new Map<string, VatGroup>();
+      
+      items.forEach(item => {
+        const vatRate = item.vat_rate;
+        const amount = item.amount;
+        
+        if (amount === 0) return;
+        
+        let vatPercentage = 0;
+        if (vatRate !== 'Exempt' && vatRate !== 'exempt') {
+          vatPercentage = parseFloat(vatRate) || 0;
+        }
+        
+        const vatAmount = vatRate === 'Exempt' || vatRate === 'exempt' 
+          ? 0 
+          : (amount * vatPercentage) / 100;
+        
+        if (groups.has(vatRate)) {
+          const group = groups.get(vatRate)!;
+          group.value += amount;
+          group.amount += vatAmount;
         } else {
-          console.warn('Storecove submission returned null result');
-          
-          console.log('Attempting to send email directly after failed Storecove submission');
-          const tempSelectedClientId = selectedClientId;
-          const savedId = savedCreditNoteId;
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay to ensure PDF is saved
-          
-          const sendEmailAfterCreation = async () => {
-            setSelectedClientId(tempSelectedClientId);
-            setCreditNoteId(savedId);
-            
-            try {
-              await handleSendEmail();
-              console.log('Email sent successfully after credit note creation');
-            } catch (emailError) {
-              console.error('Failed to send email after credit note creation:', emailError);
-            }
-          };
-          
-          await sendEmailAfterCreation();
-          
-          toast({
-            title: 'Partial Success',
-            description: 'Credit note created and email sent, but not sent to Storecove.',
+          groups.set(vatRate, {
+            rate: vatRate,
+            value: amount,
+            amount: vatAmount
           });
         }
-      } else {
-        console.error('PDF generation failed');
+      });
+      
+      return Array.from(groups.values()).map(group => ({
+        ...group,
+        value: -Math.abs(group.value),
+        amount: -Math.abs(group.amount)
+      }));
+    }, [items]);
+    
+    const handleSaveAsDraft = useCallback(async (e: React.MouseEvent) => {
+      e.preventDefault();
+      
+      if (!user || !selectedClientId) {
         toast({
           variant: 'destructive',
           title: 'Error',
-          description: 'Failed to generate PDF for credit note.',
+          description: 'Please select a client before saving.',
         });
+        return;
       }
       
-      navigate('/creditnotes');
-    } catch (error: any) {
-      console.error('Error creating and sending credit note:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to create and send credit note.',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
-    creditNoteId, isEditMode, id, navigate, getVatGroups, toast, generatePDF, submitToStorecove,
-    handleSendEmail, setCreditNoteId, setSelectedClientId
-  ]);
-  
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    handleCreateAndSend(e as unknown as React.MouseEvent);
-  }, [handleCreateAndSend]);
-  
-  const handleAddClient = useCallback(async (newClient: Omit<Client, 'id'>) => {
-    if (!user) return;
-    
-    try {
-      if (!newClient.email || !newClient.name || !newClient.type) {
-        throw new Error('Client requires email, name, and type fields');
-      }
-
-      const clientData = {
-        email: newClient.email,
-        name: newClient.name,
-        type: newClient.type,
-        user_id: user.id,
-        ...(newClient.phone && { phone: newClient.phone }),
-        ...(newClient.street && { street: newClient.street }),
-        ...(newClient.number && { number: newClient.number }),
-        ...(newClient.bus && { bus: newClient.bus }),
-        ...(newClient.postcode && { postcode: newClient.postcode }),
-        ...(newClient.city && { city: newClient.city }),
-        ...(newClient.country && { country: newClient.country }),
-        ...(newClient.vat_number && { vat_number: newClient.vat_number })
-      };
-      
-      const { data, error } = await supabase
-        .from('clients')
-        .insert(clientData)
-        .select();
+      try {
+        setIsSubmitting(true);
         
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        setClients(prevClients => [...prevClients, data[0]]);
-        setSelectedClientId(data[0].id);
+        const vatGroups = getVatGroups();
+        const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+        const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+        const totalAmount = subtotal + vatTotal;
+        
+        const creditNoteData = {
+          user_id: user.id,
+          client_id: selectedClientId,
+          credit_note_number: creditNoteNumber,
+          issue_date: issueDate,
+          status: 'draft' as CreditNoteStatus,
+          amount: subtotal,
+          tax_amount: vatTotal,
+          total_amount: totalAmount,
+          notes: notes
+        };
+        
+        let savedCreditNoteId = creditNoteId;
+        
+        if (isEditMode && id) {
+          const { error: updateError } = await supabase
+            .from('credit_notes')
+            .update(creditNoteData)
+            .eq('id', id);
+            
+          if (updateError) throw updateError;
+          
+          savedCreditNoteId = id;
+          
+          const { error: deleteItemsError } = await supabase
+            .from('credit_note_items')
+            .delete()
+            .eq('credit_note_id', id);
+            
+          if (deleteItemsError) throw deleteItemsError;
+        } else {
+          const { data, error } = await supabase
+            .from('credit_notes')
+            .insert(creditNoteData)
+            .select();
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            savedCreditNoteId = data[0].id;
+            setCreditNoteId(savedCreditNoteId);
+          }
+        }
+        
+        const itemsToInsert = items
+          .filter(item => item.description)
+          .map(item => ({
+            credit_note_id: savedCreditNoteId,
+            item_id: item.description,
+            quantity: item.quantity,
+            total_amount: item.amount
+          }));
+        
+        if (itemsToInsert.length > 0) {
+          const { error: insertItemsError } = await supabase
+            .from('credit_note_items')
+            .insert(itemsToInsert);
+            
+          if (insertItemsError) throw insertItemsError;
+        }
         
         toast({
           title: 'Success',
-          description: 'Client added successfully.',
+          description: `Credit note saved as draft.`,
         });
+        
+        navigate('/creditnotes');
+      } catch (error: any) {
+        console.error('Error saving credit note:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to save credit note.',
+        });
+      } finally {
+        setIsSubmitting(false);
       }
-    } catch (error: any) {
-      console.error('Error adding client:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to add client.',
-      });
-    }
-  }, [user, toast, setClients, setSelectedClientId]);
-  
-  const handleDownloadPDF = useCallback(async () => {
-    if (!pdfUrl) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'No PDF URL available for download.',
-      });
-      return;
-    }
+    }, [
+      user, selectedClientId, creditNoteNumber, issueDate, notes, items, 
+      creditNoteId, isEditMode, id, navigate, getVatGroups, toast
+    ]);
     
-    try {
-      window.open(pdfUrl, '_blank');
-    } catch (error: any) {
-      console.error('Error downloading PDF:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to download PDF.',
-      });
-    }
-  }, [pdfUrl, toast]);
-  
-  return {
-    isEditMode,
-    isLoading,
-    isSubmitting,
-    isGeneratingPDF,
-    isSendingEmail,
-    isSubmittingToStorecove,
-    isAddClientModalOpen,
-    creditNoteNumber,
-    selectedClientId,
-    issueDate,
-    status,
-    notes,
-    items,
-    total,
-    clients,
-    availableItems,
-    vats,
-    pdfGenerated,
-    creditNoteId,
-    pdfUrl,
-    currencySymbol,
-    user,
-    companySettings,
+    const submitToStorecove = useCallback(async (creditNoteId: string, pdfData: { base64: string, url?: string }) => {
+      if (!user || !selectedClientId) return null;
+      
+      try {
+        setIsSubmittingToStorecove(true);
+        
+        const { data: clientData, error: clientError } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', selectedClientId)
+          .single();
+          
+        if (clientError) throw clientError;
+        
+        const { data: creditNoteData, error: creditNoteError } = await supabase
+          .from('credit_notes')
+          .select(`
+            *,
+            items:credit_note_items(
+              item_id,
+              quantity,
+              total_amount,
+              item:items(*)
+            )
+          `)
+          .eq('id', creditNoteId)
+          .single();
+          
+        if (creditNoteError) throw creditNoteError;
+        
+        const { data: companyData, error: companyError } = await supabase
+          .from('company_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (companyError && companyError.code !== 'PGRST116') throw companyError;
+        
+        let pdfUrl = pdfData.url;
+        if (!pdfUrl) {
+          const { data: urlData } = supabase.storage
+            .from('credit_notes')
+            .getPublicUrl(`${creditNoteId}/credit-note.pdf`);
+            
+          if (urlData && urlData.publicUrl) {
+            pdfUrl = urlData.publicUrl;
+          }
+        }
+        
+        const formattedItems = creditNoteData.items.map((item: any) => ({
+          description: item.item ? item.item.title : 'Unknown Item',
+          quantity: item.quantity,
+          unit_price: Math.abs(item.total_amount) / item.quantity,
+          amount: -Math.abs(item.total_amount),
+          vat_rate: item.item?.vat || '21%'
+        }));
+        
+        console.log('Submitting credit note to edge function with data:', {
+          creditNoteId: creditNoteData.id,
+          creditNoteNumber: creditNoteData.credit_note_number,
+          clientId: clientData.id,
+          clientName: clientData.name,
+          itemCount: formattedItems.length,
+          hasPdfBase64: !!pdfData.base64,
+          hasPdfUrl: !!pdfUrl
+        });
+        
+        const { data: submissionResult, error: submissionError } = await supabase
+          .functions
+          .invoke('submit-credit-note-document', {
+            body: {
+              creditNote: creditNoteData,
+              client: clientData,
+              items: formattedItems,
+              companySettings: companyData,
+              pdfBase64: pdfData.base64,
+              pdfUrl: pdfUrl
+            }
+          });
+          
+        if (submissionError) {
+          console.error('Error from edge function:', submissionError);
+          throw submissionError;
+        }
+        
+        console.log('Edge function response:', submissionResult);
+        return submissionResult;
+      } catch (error: any) {
+        console.error('Error submitting to Storecove:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message || 'Failed to submit credit note to Storecove.',
+        });
+        return null;
+      } finally {
+        setIsSubmittingToStorecove(false);
+      }
+    }, [user, selectedClientId, supabase, toast]);
     
-    setIsAddClientModalOpen,
-    setCreditNoteNumber,
-    setSelectedClientId,
-    setIssueDate,
-    setNotes,
-    handleAddClient,
-    handleItemDescriptionChange,
-    handleItemQuantityChange,
-    handleItemUnitPriceChange,
-    handleItemVatChange,
-    handleAddItem,
-    handleRemoveItem,
-    handleDownloadPDF,
-    handleSendEmail,
-    handleSaveAsDraft,
-    handleCreateAndSend,
-    handleSubmit,
-    getVatGroups,
-    fetchAvailableItems
-  };
-}
+    const handleCreateAndSend = useCallback(async (e: React.MouseEvent) => {
+      e.preventDefault();
+      
+      if (!user || !selectedClientId) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Please select a client before sending.',
+        });
+        return;
+      }
+      
+      try {
+        setIsSubmitting(true);
+        
+        const vatGroups = getVatGroups();
+        const subtotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.value), 0));
+        const vatTotal = -Math.abs(vatGroups.reduce((sum, group) => sum + Math.abs(group.amount), 0));
+        const totalAmount = subtotal + vatTotal;
+        
+        const creditNoteData = {
+          user_id: user.id,
+          client_id: selectedClientId,
+          credit_note_number: creditNoteNumber,
+          issue_date: issueDate,
+          status: 'pending' as CreditNoteStatus,
+          amount: subtotal,
+          tax_amount: vatTotal,
+          total_amount: totalAmount,
+          notes: notes
+        };
+        
+        let savedCreditNoteId = creditNoteId;
+        
+        if (isEditMode && id) {
+          const { error: updateError } = await supabase
+            .from('credit_notes')
+            .update(creditNoteData)
+            .eq('id', id);
+            
+          if (updateError) throw updateError;
+          
+          savedCreditNoteId = id;
+          
+          const { error: deleteItemsError } = await supabase
+            .from('credit_note_items')
+            .delete()
+            .eq('credit_note_id', id);
+            
+          if (deleteItemsError) throw deleteItemsError;
+        } else {
+          const { data, error } = await supabase
+            .from('credit_notes')
+            .insert(creditNoteData)
+            .select();
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            savedCreditNoteId = data[0].id;
+            setCreditNoteId(savedCreditNoteId);
+          }
+        }
+        
+        const itemsToInsert = items
+          .filter(item => item.description)
+          .map(item => ({
+            credit_note_id: savedCreditNoteId,
+            item_id: item.description,
+            quantity: item.quantity,
+            total_amount: item.amount
+          }));
+        
+        if (itemsToInsert.length > 0) {
+          const { error: insertItemsError } = await supabase
+            .from('credit_note_items')
+            .insert(itemsToInsert);
+            
+          if (insertItemsError) throw insertItemsError;
+        }
+
+        console.log('Generating PDF for credit note ID:', savedCreditNoteId);
+        const pdfData = await generatePDF(savedCreditNoteId, false);
+        
+        if (pdfData) {
+          console.log('PDF generated successfully');
+          
+          const { error: updateError } = await supabase
+            .from('credit_notes')
+            .update({
+              status: 'pending'
+            })
+            .eq('id', savedCreditNoteId);
+            
+          if (updateError) throw updateError;
+          
+          setStatus('pending');
+          setPdfGenerated(true);
+          
+          console.log('Calling submitToStorecove with credit note ID:', savedCreditNoteId);

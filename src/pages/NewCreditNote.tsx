@@ -55,6 +55,7 @@ const NewCreditNote = () => {
     handleSendEmail,
     handleSaveAsDraft,
     handleCreateAndSend,
+    handleCreateAndSendYuki,
     handleSubmit,
     getVatGroups,
     fetchAvailableItems
@@ -74,6 +75,11 @@ const NewCreditNote = () => {
     console.log('Generate PDF function URL:', 
       `${SUPABASE_URL}/functions/v1/generate-pdf`);
   }, []);
+
+  // Debug logging for client selection
+  useEffect(() => {
+    console.log('Client selected:', selectedClientId);
+  }, [selectedClientId]);
 
   if (isLoading && isEditMode) {
     return (
@@ -101,6 +107,7 @@ const NewCreditNote = () => {
           handleDownloadPDF={handleDownloadPDF}
           handleSaveAsDraft={handleSaveAsDraft}
           handleCreateAndSend={handleCreateAndSend}
+          handleCreateAndSendYuki={handleCreateAndSendYuki}
           handleSendEmail={pdfGenerated ? handleSendEmail : undefined}
         />
         

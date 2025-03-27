@@ -1,20 +1,22 @@
 
 import React from "react";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, Mail } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface CreditNoteHeaderProps {
   isEditMode: boolean;
   pdfUrl: string | null;
-  pdfGenerated?: boolean; // Added this prop
-  creditNoteId?: string;  // Added this prop
+  pdfGenerated?: boolean;
+  creditNoteId?: string;
   isSubmitting: boolean;
   isGeneratingPDF: boolean;
   isSendingEmail: boolean;
   isSubmittingToStorecove?: boolean;
-  status: "draft" | "pending" | "paid"; // Removed 'overdue' option
+  status: "draft" | "pending" | "paid";
   handleDownloadPDF: () => void;
   handleSaveAsDraft: (e: React.MouseEvent) => void;
   handleCreateAndSend: (e: React.MouseEvent) => void;
+  handleCreateAndSendYuki?: (e: React.MouseEvent) => void;
   handleSendEmail?: () => void;
 }
 
@@ -30,6 +32,7 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
   handleDownloadPDF,
   handleSaveAsDraft,
   handleCreateAndSend,
+  handleCreateAndSendYuki,
   handleSendEmail,
 }) => {
   return (
@@ -64,41 +67,54 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
         ) : (
           <>
             {(pdfUrl || pdfGenerated) && (
-              <button 
+              <Button 
                 onClick={handleDownloadPDF} 
-                className="secondary-button flex items-center gap-2"
+                variant="outline"
+                className="flex items-center gap-2"
                 type="button"
               >
                 <Download size={16} />
                 Download PDF
-              </button>
+              </Button>
             )}
             {status === "draft" && (
-              <button 
+              <Button 
                 onClick={handleSaveAsDraft} 
-                className="secondary-button"
+                variant="outline"
                 type="button"
               >
                 Save as Draft
-              </button>
+              </Button>
             )}
-            <button 
+            <Button 
               onClick={handleCreateAndSend} 
-              className="apple-button" 
+              variant="apple" 
               style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
               type="button"
             >
               Create & Send
-            </button>
+            </Button>
+            {handleCreateAndSendYuki && (
+              <Button 
+                onClick={handleCreateAndSendYuki}
+                variant="apple" 
+                style={{ backgroundColor: "var(--apple-blue, #007AFF)" }}
+                type="button"
+                className="flex items-center gap-2"
+              >
+                <Mail size={16} />
+                Create & Send & Yuki
+              </Button>
+            )}
             {handleSendEmail && (pdfUrl || pdfGenerated) && (
-              <button 
+              <Button 
                 onClick={handleSendEmail}
-                className="apple-button" 
+                variant="apple" 
                 style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
                 type="button"
               >
                 Send Email
-              </button>
+              </Button>
             )}
           </>
         )}

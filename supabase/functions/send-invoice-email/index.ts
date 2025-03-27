@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "npm:resend@1.1.0";
 
@@ -35,7 +34,8 @@ serve(async (req) => {
       includeAttachments = true,
       pdfBase64,
       yukiEmail,
-      isCreditNote = false
+      isCreditNote = false,
+      forceYukiCopy = false
     } = data;
     
     const documentType = isCreditNote ? "Credit Note" : "Invoice";
