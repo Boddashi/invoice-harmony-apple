@@ -77,22 +77,17 @@ const CreditNoteHeader: React.FC<CreditNoteHeaderProps> = ({
               </Button>
             )}
             {status === "draft" && (
-              <Button
-                onClick={handleSaveAsDraft}
-                variant="outline"
-                type="button"
-              >
+              <button onClick={handleSaveAsDraft} className="secondary-button">
                 Save as Draft
-              </Button>
+              </button>
             )}
-            <Button
+            <button
               onClick={handleCreateAndSend}
-              variant="apple"
+              className="secondary-button"
               style={{ backgroundColor: "var(--apple-red, #FF3B30)" }}
-              type="button"
             >
               Create & Send
-            </Button>
+            </button>
             {handleCreateAndSendYuki && (
               <button
                 onClick={handleCreateAndSendYuki}

@@ -24,6 +24,8 @@ const Header = () => {
         return "Items";
       case "/login":
         return "Sign In";
+      case "/creditnotes":
+        return "Credit Notes";
       default:
         if (location.pathname.startsWith("/invoices/")) {
           return "Invoice Details";
@@ -31,7 +33,7 @@ const Header = () => {
         if (location.pathname.startsWith("/clients/")) {
           return "Client Details";
         }
-        return "Invoice App";
+        return "Power to the Peppol";
     }
   };
 
