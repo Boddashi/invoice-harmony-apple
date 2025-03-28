@@ -17,7 +17,7 @@ interface InvoiceSummaryProps {
 const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({ vatGroups, total, currencySymbol }) => {
   // Calculate the correct total from the VAT groups
   const calculatedSubtotal = vatGroups.reduce((acc, group) => acc + group.subtotal, 0);
-  const calculatedVatTotal = vatGroups.reduce((acc, group) => acc + group.vat, 0);
+  const calculatedVatTotal = vatGroups.reduce((acc, group) => acc + (isNaN(group.vat) ? 0 : group.vat), 0);
   const calculatedTotal = calculatedSubtotal + calculatedVatTotal;
 
   return (
@@ -34,7 +34,7 @@ const InvoiceSummary: React.FC<InvoiceSummaryProps> = ({ vatGroups, total, curre
             
             <div className="flex justify-between">
               <span className="text-muted-foreground pl-0">VAT {group.rate}</span>
-              <span className="font-medium">{currencySymbol}{group.vat.toFixed(2)}</span>
+              <span className="font-medium">{currencySymbol}{isNaN(group.vat) ? '0.00' : group.vat.toFixed(2)}</span>
             </div>
           </div>
         ))}

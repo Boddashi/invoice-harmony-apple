@@ -22,13 +22,13 @@ const CreditNoteSummary: React.FC<CreditNoteSummaryProps> = ({
   readOnly = false,
 }) => {
   const subtotal = vatGroups.reduce((acc, group) => acc + group.value, 0);
-  const vatTotal = vatGroups.reduce((acc, group) => acc + group.amount, 0);
+  const vatTotal = vatGroups.reduce((acc, group) => acc + (isNaN(group.amount) ? 0 : group.amount), 0);
   
   // Calculate the correct total (sum of subtotal and VAT)
   const calculatedTotal = subtotal + vatTotal;
   
   const formatAmount = (amount: number) => {
-    return amount.toFixed(2);
+    return isNaN(amount) ? '0.00' : amount.toFixed(2);
   };
 
   return (
