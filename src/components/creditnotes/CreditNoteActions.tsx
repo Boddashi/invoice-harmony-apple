@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Edit, Trash, Check, Clock, FileDown, Mail, Download, Send } from "lucide-react";
@@ -252,16 +251,8 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
           </DropdownMenuItem>
         )}
 
-        {status === "paid" && (
-          <DropdownMenuItem onClick={(e) => handleStatusChange("pending", e)}>
-            <Clock className="w-4 h-4 mr-2" />
-            Mark as Pending
-          </DropdownMenuItem>
-        )}
-
         <DropdownMenuSeparator />
 
-        {/* Only show download option for pending and paid status */}
         {(status === "pending" || status === "paid") && (
           <DropdownMenuItem onClick={handleDownloadPDF}>
             <Download className="w-4 h-4 mr-2" />
@@ -281,7 +272,6 @@ const CreditNoteActions = ({ creditNoteId, status, onStatusChange }: CreditNoteA
           </DropdownMenuItem>
         )}
 
-        {/* Only show delete option for draft status */}
         {status === "draft" && (
           <DropdownMenuItem onClick={handleDelete}>
             <Trash className="w-4 h-4 mr-2" />
