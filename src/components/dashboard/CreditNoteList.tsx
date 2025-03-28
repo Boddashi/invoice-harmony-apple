@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import CreditNoteActions from "../creditnotes/CreditNoteActions";
 
 type CreditNoteStatus = "applied" | "pending" | "draft";
 
@@ -122,6 +123,13 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
     fetchCreditNotes();
   }, [user, toast]);
 
+  const handleStatusChange = () => {
+    fetchCreditNotes();
+    if (onStatusChange) {
+      onStatusChange();
+    }
+  };
+
   return (
     <CustomCard className="animate-slide-up" style={{ animationDelay: "0.4s" }}>
       <div className="flex justify-between items-center mb-4">
@@ -152,14 +160,16 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
             const StatusIcon = status.icon;
 
             return (
-              <Link
+              <div
                 key={creditNote.id}
-                to={`/creditnotes/view/${creditNote.id}`}
                 className="block rounded-lg hover:bg-secondary/50 transition-colors"
               >
                 {/* Desktop Layout */}
                 <div className="hidden md:flex items-center justify-between p-3">
-                  <div className="flex items-center gap-4">
+                  <Link
+                    to={`/creditnotes/view/${creditNote.id}`}
+                    className="flex items-center gap-4 flex-grow"
+                  >
                     <div
                       className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
@@ -178,7 +188,7 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                         {formatDate(creditNote.issue_date)}
                       </p>
                     </div>
-                  </div>
+                  </Link>
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
@@ -195,56 +205,77 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                     >
                       {status.label}
                     </div>
+
+                    <CreditNoteActions
+                      creditNoteId={creditNote.id}
+                      status={creditNote.status}
+                      onStatusChange={handleStatusChange}
+                    />
                   </div>
                 </div>
 
                 {/* Mobile Layout */}
                 <div className="md:hidden p-3 relative">
-                  {/* Top row: icon, client name, and status badge */}
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center",
-                          status.color
-                        )}
-                      >
-                        <StatusIcon size={16} />
+                  <div className="flex justify-between items-start">
+                    <Link
+                      to={`/creditnotes/view/${creditNote.id}`}
+                      className="flex-grow"
+                    >
+                      {/* Top row: icon, client name, and status badge */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center",
+                              status.color
+                            )}
+                          >
+                            <StatusIcon size={16} />
+                          </div>
+
+                          <h3 className="font-medium text-sm truncate max-w-[120px]">
+                            {creditNote.client?.name || "Unknown Client"}
+                          </h3>
+                        </div>
+
+                        <div
+                          className={cn(
+                            "px-2 py-0.5 text-xs font-medium border rounded-full",
+                            status.color
+                          )}
+                        >
+                          {status.label}
+                        </div>
                       </div>
 
-                      <h3 className="font-medium text-sm truncate max-w-[120px]">
-                        {creditNote.client?.name || "Unknown Client"}
-                      </h3>
+                      {/* Middle row: credit note number, amount */}
+                      <div className="flex justify-between mb-1">
+                        <p className="text-xs text-muted-foreground">
+                          {creditNote.credit_note_number}
+                        </p>
+                        <p className="font-semibold text-sm">
+                          {formatAmount(creditNote.total_amount)}
+                        </p>
+                      </div>
+
+                      {/* Bottom row: dates */}
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs text-muted-foreground">
+                          Issued {formatDate(creditNote.issue_date)}
+                        </p>
+                      </div>
+                    </Link>
+
+                    <div className="ml-2">
+                      <CreditNoteActions
+                        creditNoteId={creditNote.id}
+                        status={creditNote.status}
+                        onStatusChange={handleStatusChange}
+                      />
                     </div>
-
-                    <div
-                      className={cn(
-                        "px-2 py-0.5 text-xs font-medium border rounded-full",
-                        status.color
-                      )}
-                    >
-                      {status.label}
-                    </div>
-                  </div>
-
-                  {/* Middle row: credit note number, amount */}
-                  <div className="flex justify-between mb-1">
-                    <p className="text-xs text-muted-foreground">
-                      {creditNote.credit_note_number}
-                    </p>
-                    <p className="font-semibold text-sm">
-                      {formatAmount(creditNote.total_amount)}
-                    </p>
-                  </div>
-
-                  {/* Bottom row: dates */}
-                  <div className="flex justify-between items-center">
-                    <p className="text-xs text-muted-foreground">
-                      Issued {formatDate(creditNote.issue_date)}
-                    </p>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
