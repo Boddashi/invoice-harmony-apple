@@ -1,10 +1,11 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import CustomCard from "../ui/CustomCard";
 import { CompanySettings } from "@/models/CompanySettings";
 import { Loader2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface BillingTabProps {
   companySettings: CompanySettings;
@@ -21,16 +22,28 @@ const BillingTab = ({
   saving,
   handleSaveCompany,
 }: BillingTabProps) => {
+  const { toast } = useToast();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setCompanySettings((prev) => ({
       ...prev,
       [name]: value,
     }));
+    
+    // Clear the error for this field if it exists
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   // When component mounts, ensure invoice_number_type is set to 'incremental'
-  React.useEffect(() => {
+  useEffect(() => {
     if (companySettings.invoice_number_type !== 'incremental') {
       setCompanySettings((prev) => ({
         ...prev,
@@ -47,6 +60,36 @@ const BillingTab = ({
     }
   }, []);
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    
+    if (!companySettings.invoice_prefix?.trim()) {
+      newErrors.invoice_prefix = "Invoice prefix cannot be empty";
+    }
+    
+    if (!companySettings.credit_note_prefix?.trim()) {
+      newErrors.credit_note_prefix = "Credit note prefix cannot be empty";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fix the errors before saving.",
+      });
+      return;
+    }
+    
+    await handleSaveCompany(e);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-8">
@@ -62,7 +105,7 @@ const BillingTab = ({
         Configure your invoice settings.
       </p>
 
-      <form onSubmit={handleSaveCompany}>
+      <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           <div>
             <h3 className="text-base font-medium mb-4">
@@ -80,7 +123,7 @@ const BillingTab = ({
                     placeholder="e.g. INV"
                     value={companySettings.invoice_prefix}
                     onChange={handleInputChange}
-                    className="input-field w-full"
+                    className={`input-field w-full ${errors.invoice_prefix ? "border-destructive" : ""}`}
                   />
                   <span className="mx-2 text-muted-foreground">
                     -
@@ -89,6 +132,11 @@ const BillingTab = ({
                     00001
                   </div>
                 </div>
+                {errors.invoice_prefix && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.invoice_prefix}
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Example: {companySettings.invoice_prefix || "INV"}-00001
                 </p>
@@ -105,7 +153,7 @@ const BillingTab = ({
                     placeholder="e.g. CN"
                     value={companySettings.credit_note_prefix}
                     onChange={handleInputChange}
-                    className="input-field w-full"
+                    className={`input-field w-full ${errors.credit_note_prefix ? "border-destructive" : ""}`}
                   />
                   <span className="mx-2 text-muted-foreground">
                     -
@@ -114,6 +162,11 @@ const BillingTab = ({
                     00001
                   </div>
                 </div>
+                {errors.credit_note_prefix && (
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.credit_note_prefix}
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
                   Example: {companySettings.credit_note_prefix || "CN"}-00001
                 </p>
