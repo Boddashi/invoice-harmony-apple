@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Pencil, Trash2, Download, Send, Check, Bell } from 'lucide-react';
@@ -6,6 +5,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
@@ -456,112 +457,80 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
 
   return (
     <>
-      <div className="flex items-center gap-1">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button 
-              className="p-1.5 rounded-full hover:bg-secondary transition-colors"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal size={16} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {status === 'draft' && (
-              <>
-                <DropdownMenuItem 
-                  onClick={handleSend}
-                  disabled={isSending}
-                  className="flex items-center text-blue-700 hover:bg-blue-50/80 hover:!text-blue-700 rounded-md my-1 cursor-pointer"
-                >
-                  <Send className="mr-2 h-4 w-4" />
-                  {isSending ? 'Sending...' : 'Send'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleEdit}
-                  className="flex items-center text-amber-700 hover:bg-amber-50/80 hover:!text-amber-700 rounded-md my-1 cursor-pointer"
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleOpenDeleteDialog} 
-                  className="flex items-center text-red-700 hover:bg-red-50/80 hover:!text-red-700 rounded-md my-1 cursor-pointer"
-                  disabled={isDeleting}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </DropdownMenuItem>
-              </>
-            )}
-            
-            {status === 'pending' && (
-              <>
-                <DropdownMenuItem 
-                  onClick={handleMarkAsPaid}
-                  disabled={isMarkingAsPaid}
-                  className="flex items-center text-green-700 hover:bg-green-50/80 hover:!text-green-700 rounded-md my-1 cursor-pointer"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleDownload}
-                  className="flex items-center text-gray-600 hover:bg-gray-50/80 hover:!text-gray-600 rounded-md my-1 cursor-pointer"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </DropdownMenuItem>
-              </>
-            )}
-            
-            {status === 'paid' && (
-              <DropdownMenuItem 
-                onClick={handleDownload}
-                className="flex items-center text-gray-600 hover:bg-gray-50/80 hover:!text-gray-600 rounded-md my-1 cursor-pointer"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </DropdownMenuItem>
-            )}
-            
-            {status === 'overdue' && (
-              <>
-                <DropdownMenuItem 
-                  onClick={handleMarkAsPaid}
-                  disabled={isMarkingAsPaid}
-                  className="flex items-center text-green-700 hover:bg-green-50/80 hover:!text-green-700 rounded-md my-1 cursor-pointer"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleSendReminder}
-                  className="flex items-center text-orange-700 hover:bg-orange-50/80 hover:!text-orange-700 rounded-md my-1 cursor-pointer"
-                  disabled={isSendingReminder}
-                >
-                  <Bell className="mr-2 h-4 w-4" />
-                  {isSendingReminder ? 'Sending...' : 'Send Reminder'}
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={handleDownload}
-                  className="flex items-center text-gray-600 hover:bg-gray-50/80 hover:!text-gray-600 rounded-md my-1 cursor-pointer"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            onClick={(e) => e.stopPropagation()}
+            className="p-2 hover:bg-muted rounded-full"
+            aria-label="More actions"
+          >
+            <MoreHorizontal size={18} />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-      <Dialog 
-        open={showDeleteDialog} 
-        onOpenChange={handleCloseDeleteDialog}
-        modal={true}
-      >
-        <DialogContent className="sm:max-w-[425px] z-50">
+          {status === 'draft' && (
+            <DropdownMenuItem onClick={handleSend}>
+              <Send className="w-4 h-4 mr-2" />
+              {isSending ? 'Sending...' : 'Send'}
+            </DropdownMenuItem>
+          )}
+
+          {status === 'pending' && (
+            <DropdownMenuItem onClick={handleMarkAsPaid}>
+              <Check className="w-4 h-4 mr-2" />
+              {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
+            </DropdownMenuItem>
+          )}
+
+          {status === 'overdue' && (
+            <>
+              <DropdownMenuItem onClick={handleMarkAsPaid}>
+                <Check className="w-4 h-4 mr-2" />
+                {isMarkingAsPaid ? 'Processing...' : 'Mark as Paid'}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSendReminder} disabled={isSendingReminder}>
+                <Bell className="w-4 h-4 mr-2" />
+                {isSendingReminder ? 'Sending...' : 'Send Reminder'}
+              </DropdownMenuItem>
+            </>
+          )}
+
+          <DropdownMenuSeparator />
+
+          {/* Only show download option for pending, paid and overdue status */}
+          {(status === 'pending' || status === 'paid' || status === 'overdue') && (
+            <DropdownMenuItem onClick={handleDownload}>
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </DropdownMenuItem>
+          )}
+
+          {status === 'draft' ? (
+            <DropdownMenuItem onClick={handleEdit}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={handleView}>
+              <Download className="w-4 h-4 mr-2" />
+              View
+            </DropdownMenuItem>
+          )}
+
+          {/* Only show delete option for draft and paid status */}
+          {status !== 'pending' && (
+            <DropdownMenuItem onClick={handleOpenDeleteDialog}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <Dialog open={showDeleteDialog} onOpenChange={handleCloseDeleteDialog}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Invoice</DialogTitle>
             <DialogDescription>
@@ -569,18 +538,10 @@ const InvoiceActions = ({ invoiceId, status, onStatusChange }: InvoiceActionsPro
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={handleCloseDeleteDialog}
-              disabled={isDeleting}
-            >
+            <Button variant="outline" onClick={handleCloseDeleteDialog} disabled={isDeleting}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
