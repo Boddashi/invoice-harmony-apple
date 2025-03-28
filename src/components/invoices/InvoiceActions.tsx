@@ -106,15 +106,12 @@ const InvoiceActions = ({
 
     setIsSending(true);
     try {
-      // Check if the invoice has any items before sending
       const { data: invoiceItems, error: itemsError } = await supabase
         .from("invoice_items")
         .select("quantity")
         .eq("invoice_id", invoiceId);
 
-      // Handle database errors with user-friendly messages
       if (itemsError) {
-        // Check for specific database errors and provide friendly messages
         if (
           itemsError.message?.includes("column invoice_items.id does not exist")
         ) {
@@ -201,7 +198,7 @@ const InvoiceActions = ({
         .eq("user_id", user.id)
         .single();
 
-      const currencySymbol = "€"; // Always use EUR
+      const currencySymbol = "€";
 
       const pdfBase64 = await generateInvoicePDF({
         id: invoiceId,
@@ -319,7 +316,6 @@ const InvoiceActions = ({
     } catch (error: any) {
       console.error("Error sending invoice:", error);
 
-      // Provide a user-friendly error message based on the error type
       let errorMessage = "Failed to send invoice";
 
       if (error.message?.includes("column invoice_items.id does not exist")) {
@@ -549,7 +545,6 @@ const InvoiceActions = ({
 
           <DropdownMenuSeparator />
 
-          {/* Only show download option for pending, paid and overdue status */}
           {(status === "pending" ||
             status === "paid" ||
             status === "overdue") && (
@@ -571,8 +566,7 @@ const InvoiceActions = ({
             </DropdownMenuItem>
           )}
 
-          {/* Only show delete option for draft and paid status */}
-          {status !== "pending" && (
+          {status === "draft" && (
             <DropdownMenuItem onClick={handleOpenDeleteDialog}>
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
