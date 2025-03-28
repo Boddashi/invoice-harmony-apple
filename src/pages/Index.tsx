@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import DashboardSummary from "../components/dashboard/DashboardSummary";
 import InvoiceList from "../components/dashboard/InvoiceList";
+import CreditNoteList from "../components/dashboard/CreditNoteList";
 import { BarChart4 } from "lucide-react";
 import CustomCard from "../components/ui/CustomCard";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -450,6 +451,8 @@ const Index = () => {
         </div>
 
         <InvoiceList onStatusChange={handleDataRefresh} />
+        
+        <CreditNoteList onStatusChange={handleDataRefresh} />
       </div>
     </MainLayout>
   );
