@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import CreditNoteActions from "../creditnotes/CreditNoteActions";
 
-type CreditNoteStatus = "applied" | "pending" | "draft";
+type CreditNoteStatus = "applied" | "pending" | "draft" | "paid";
 
 interface CreditNote {
   id: string;
@@ -38,8 +38,9 @@ interface CreditNoteListProps {
 const getStatusConfig = (status: string) => {
   switch (status) {
     case "applied":
+    case "paid":
       return {
-        label: "Applied",
+        label: status === "applied" ? "Applied" : "Paid",
         color: "bg-apple-green/10 text-apple-green border-apple-green/20",
         icon: CheckCircle,
       };
