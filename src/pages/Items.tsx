@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import {
@@ -214,7 +215,7 @@ const Items = () => {
           </div>
         </div>
 
-        <div className="relative w-full">
+        <div className="relative w-full mt-4">
           <div className="relative pb-3">
             <Search
               size={18}
