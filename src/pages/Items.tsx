@@ -214,7 +214,7 @@ const Items = () => {
           </div>
         </div>
 
-        <div className="relative w-full">
+        <div className="relative w-full pb-3">
           <div className="relative">
             <Search
               size={18}
@@ -319,8 +319,8 @@ const Items = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-right">
-                            <ItemActions 
-                              item={item} 
+                            <ItemActions
+                              item={item}
                               onItemUpdated={fetchItems}
                               onDeleteItem={handleDeleteItem}
                             />
