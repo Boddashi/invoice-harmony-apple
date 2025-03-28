@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../components/layout/MainLayout";
-import { User, Building, CreditCard, FileText } from "lucide-react";
+import { Building, CreditCard, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "../contexts/CurrencyContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,13 +11,12 @@ import {
 } from "@/models/CompanySettings";
 import { TabItem } from "@/models/SettingsModels";
 import SettingsTabs from "@/components/settings/SettingsTabs";
-import ProfileTab from "@/components/settings/ProfileTab";
 import CompanyTab from "@/components/settings/CompanyTab";
 import BillingTab from "@/components/settings/BillingTab";
 import TermsTab from "@/components/settings/TermsTab";
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState("profile");
+  const [activeTab, setActiveTab] = useState("company");
   const { toast } = useToast();
   const { currency } = useCurrency();
   const { user } = useAuth();
@@ -28,7 +27,6 @@ const Settings = () => {
   );
 
   const tabs: TabItem[] = [
-    { id: "profile", label: "Profile", icon: User },
     { id: "company", label: "Company", icon: Building },
     { id: "billing", label: "Billing", icon: CreditCard },
     { id: "terms", label: "Terms & Conditions", icon: FileText },
@@ -249,8 +247,6 @@ const Settings = () => {
           </div>
 
           <div className="col-span-1 lg:col-span-3 animate-fade-in">
-            {activeTab === "profile" && <ProfileTab />}
-
             {activeTab === "company" && (
               <CompanyTab
                 companySettings={companySettings}
