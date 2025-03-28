@@ -214,7 +214,7 @@ const Items = () => {
           </div>
         </div>
 
-        <div className="relative w-full ">
+        <div className="relative w-full">
           <div className="relative pb-3">
             <Search
               size={18}
@@ -229,7 +229,7 @@ const Items = () => {
             />
           </div>
 
-          <CustomCard className="p-0">
+          <CustomCard className="p-0 mt-4">
             {loading ? (
               <div className="flex justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
