@@ -201,6 +201,21 @@ const CompanyTab = ({
     }
   };
 
+  const formatPeppolIdentifier = () => {
+    if (!companySettings.peppol_identifier) return null;
+    
+    try {
+      const peppol = companySettings.peppol_identifier;
+      if (peppol.scheme && peppol.identifier) {
+        return `${peppol.scheme}${peppol.identifier}`;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error formatting PEPPOL identifier:", error);
+      return null;
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-8">
@@ -299,6 +314,20 @@ const CompanyTab = ({
                 Required for e-invoicing. Format as country code + VAT number without spaces (e.g. BE0628719851).
               </p>
             </div>
+            
+            {companySettings.peppol_identifier && (
+              <div className="md:col-span-2 mt-1">
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-500">
+                  <Check className="h-4 w-4" />
+                  <span>
+                    PEPPOL Registered: <span className="font-medium">{formatPeppolIdentifier()}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your company is registered on the PEPPOL e-invoicing network.
+                </p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -531,6 +560,8 @@ const CompanyTab = ({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...
               </>
+            ) : companySettings.peppol_identifier ? (
+              "Save & Update Legal Entity"
             ) : (
               "Save & Register Legal Entity"
             )}
