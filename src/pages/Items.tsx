@@ -214,7 +214,7 @@ const Items = () => {
           </div>
         </div>
 
-        <div className="relative w-full pb-3">
+        <div className="relative w-full pb-5">
           <div className="relative">
             <Search
               size={18}
