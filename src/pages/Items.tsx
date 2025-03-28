@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import MainLayout from "@/components/layout/MainLayout";
 import {
@@ -230,7 +229,7 @@ const Items = () => {
             />
           </div>
 
-          <CustomCard className="p-0 mt-4">
+          <CustomCard className="p-0 mt-3">
             {loading ? (
               <div className="flex justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-apple-blue" />
