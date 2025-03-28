@@ -164,7 +164,8 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
         <div className="space-y-4">
           {recentCreditNotes.map((creditNote) => {
             const status = getStatusConfig(creditNote.status);
-            const StatusIcon = status.icon;
+            // Ensure we have a valid icon component
+            const StatusIcon = status?.icon || FileText;
 
             return (
               <div

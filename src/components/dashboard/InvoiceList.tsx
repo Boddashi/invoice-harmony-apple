@@ -173,7 +173,8 @@ const InvoiceList: React.FC<InvoiceListProps> = ({ onStatusChange }) => {
         <div className="space-y-4">
           {recentInvoices.map((invoice) => {
             const status = getStatusConfig(invoice.status);
-            const StatusIcon = status.icon;
+            // Ensure we have a valid icon component
+            const StatusIcon = status?.icon || FileText;
 
             return (
               <Link
