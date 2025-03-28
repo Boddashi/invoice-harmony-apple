@@ -1,3 +1,4 @@
+
 import React from "react";
 import CustomCard from "../ui/CustomCard";
 import {
@@ -50,7 +51,7 @@ const ClientSelection: React.FC<ClientSelectionProps> = ({
           <SelectTrigger id="client-select" className="w-full bg-background">
             <SelectValue placeholder="Select a client" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-popover">
             <SelectGroup>
               {clients.map((client) => (
                 <SelectItem key={client.id} value={client.id}>
