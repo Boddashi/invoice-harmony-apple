@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, DollarSign, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import CustomCard from '../ui/CustomCard';
@@ -38,6 +39,7 @@ const DashboardSummary = () => {
       try {
         setIsLoading(true);
         
+        // Fetch invoices
         const { data: invoices, error: invoicesError } = await supabase
           .from('invoices')
           .select('*')
@@ -47,18 +49,35 @@ const DashboardSummary = () => {
           throw invoicesError;
         }
         
-        const totalRevenue = invoices?.reduce((sum, invoice) => 
-          invoice.status === 'paid' ? sum + Number(invoice.total_amount) : sum, 0) || 0;
+        // Fetch credit notes
+        const { data: creditNotes, error: creditNotesError } = await supabase
+          .from('credit_notes')
+          .select('*')
+          .eq('user_id', user.id);
           
+        if (creditNotesError) {
+          throw creditNotesError;
+        }
+        
+        // Calculate invoice stats
+        const paidInvoices = invoices?.filter(invoice => invoice.status === 'paid') || [];
+        const paidInvoicesAmount = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0);
+        
         const pendingInvoices = invoices?.filter(invoice => invoice.status === 'pending') || [];
         const pendingAmount = pendingInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0);
-        
-        const paidInvoices = invoices?.filter(invoice => invoice.status === 'paid') || [];
-        const paidAmount = paidInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0);
         
         const overdueInvoices = invoices?.filter(invoice => invoice.status === 'overdue') || [];
         const overdueAmount = overdueInvoices.reduce((sum, invoice) => sum + Number(invoice.total_amount), 0);
         
+        // Calculate credit notes stats (use only paid/completed credit notes)
+        const paidCreditNotes = creditNotes?.filter(note => note.status === 'paid') || [];
+        const paidCreditNotesAmount = paidCreditNotes.reduce((sum, note) => sum + Number(note.total_amount), 0);
+        
+        // Calculate total revenue (paid invoices minus paid credit notes)
+        const totalRevenue = paidInvoicesAmount - paidCreditNotesAmount;
+        
+        // For percentage change, we'll use a simplified approach
+        // Normally you'd compare to a previous period, but for demo we'll use a fraction
         const previousTotalRevenue = totalRevenue * 0.8;
         const percentChange = totalRevenue > 0 
           ? ((totalRevenue - previousTotalRevenue) / previousTotalRevenue * 100).toFixed(1) + '%'
@@ -87,7 +106,7 @@ const DashboardSummary = () => {
           },
           { 
             title: 'Paid Invoices', 
-            amount: paidAmount, 
+            amount: paidInvoicesAmount, 
             change: `${paidInvoices.length} invoices`, 
             isPositive: true,
             icon: CheckCircle,
@@ -248,4 +267,3 @@ const DashboardSummary = () => {
 };
 
 export default DashboardSummary;
-

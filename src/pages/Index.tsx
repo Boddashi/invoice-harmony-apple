@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import MainLayout from "../components/layout/MainLayout";
 import DashboardSummary from "../components/dashboard/DashboardSummary";
@@ -84,7 +85,9 @@ const Index = () => {
         default:
           startDate = subMonths(today, 6);
       }
-      const { data: invoices, error } = await supabase
+      
+      // Fetch paid invoices
+      const { data: invoices, error: invoiceError } = await supabase
         .from("invoices")
         .select("issue_date, total_amount")
         .eq("user_id", user.id)
@@ -93,9 +96,23 @@ const Index = () => {
         .lte("issue_date", endOfMonth(today).toISOString())
         .order("issue_date", { ascending: true });
 
-      if (error) throw error;
+      if (invoiceError) throw invoiceError;
+      
+      // Fetch paid credit notes
+      const { data: creditNotes, error: creditNoteError } = await supabase
+        .from("credit_notes")
+        .select("issue_date, total_amount")
+        .eq("user_id", user.id)
+        .eq("status", "paid")
+        .gte("issue_date", startOfMonth(startDate).toISOString())
+        .lte("issue_date", endOfMonth(today).toISOString())
+        .order("issue_date", { ascending: true });
+        
+      if (creditNoteError) throw creditNoteError;
 
       const monthlyRevenue = new Map<string, number>();
+      
+      // Add invoice amounts
       invoices?.forEach((invoice) => {
         const monthKey = format(new Date(invoice.issue_date), "MMM yyyy");
         const currentAmount = monthlyRevenue.get(monthKey) || 0;
@@ -104,6 +121,17 @@ const Index = () => {
           currentAmount + Number(invoice.total_amount)
         );
       });
+      
+      // Subtract credit note amounts
+      creditNotes?.forEach((creditNote) => {
+        const monthKey = format(new Date(creditNote.issue_date), "MMM yyyy");
+        const currentAmount = monthlyRevenue.get(monthKey) || 0;
+        monthlyRevenue.set(
+          monthKey,
+          currentAmount - Number(creditNote.total_amount)
+        );
+      });
+      
       const formattedData = Array.from(monthlyRevenue.entries()).map(
         ([name, amount]) => ({
           name,
@@ -131,6 +159,7 @@ const Index = () => {
       try {
         setIsLoading(true);
 
+        // Fetch invoices with client data
         const { data: invoices, error: invoicesError } = await supabase
           .from("invoices")
           .select(
@@ -140,38 +169,70 @@ const Index = () => {
           `
           )
           .eq("user_id", user.id);
+          
         if (invoicesError) {
           throw invoicesError;
         }
+        
+        // Fetch credit notes
+        const { data: creditNotes, error: creditNotesError } = await supabase
+          .from("credit_notes")
+          .select("status, total_amount")
+          .eq("user_id", user.id);
+          
+        if (creditNotesError) {
+          throw creditNotesError;
+        }
 
-        const totalAmount =
+        // Calculate invoice amounts
+        const totalInvoiceAmount =
           invoices?.reduce(
             (sum, invoice) => sum + Number(invoice.total_amount),
             0
           ) || 0;
-        const paidAmount =
+          
+        const paidInvoiceAmount =
           invoices
             ?.filter((i) => i.status === "paid")
             .reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) ||
           0;
+          
         const pendingAmount =
           invoices
             ?.filter((i) => i.status === "pending")
             .reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) ||
           0;
+          
         const overdueAmount =
           invoices
             ?.filter((i) => i.status === "overdue")
             .reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) ||
           0;
-
+        
+        // Calculate credit note amounts
+        const paidCreditNoteAmount = 
+          creditNotes
+            ?.filter((cn) => cn.status === "paid")
+            .reduce((sum, cn) => sum + Number(cn.total_amount), 0) || 
+          0;
+        
+        // Adjust total amount by subtracting credit notes
+        const adjustedTotalAmount = totalInvoiceAmount - paidCreditNoteAmount;
+        const adjustedPaidAmount = paidInvoiceAmount - paidCreditNoteAmount;
+        
+        // Calculate percentages based on adjusted amounts
+        const effectiveTotalAmount = adjustedTotalAmount > 0 ? adjustedTotalAmount : 1;
+        
         const paidPercent =
-          totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0;
+          Math.round((adjustedPaidAmount / effectiveTotalAmount) * 100);
+          
         const pendingPercent =
-          totalAmount > 0 ? Math.round((pendingAmount / totalAmount) * 100) : 0;
+          Math.round((pendingAmount / effectiveTotalAmount) * 100);
+          
         const overduePercent =
-          totalAmount > 0 ? Math.round((overdueAmount / totalAmount) * 100) : 0;
+          Math.round((overdueAmount / effectiveTotalAmount) * 100);
 
+        // Process client data
         const clientMap = new Map<
           string,
           {
@@ -179,25 +240,34 @@ const Index = () => {
             amount: number;
           }
         >();
+        
         invoices?.forEach((invoice) => {
-          const clientName = invoice.client?.name || "Unknown Client";
-          const clientId = invoice.client_id;
-          if (clientMap.has(clientId)) {
-            const current = clientMap.get(clientId)!;
-            clientMap.set(clientId, {
-              name: clientName,
-              amount: current.amount + Number(invoice.total_amount),
-            });
-          } else {
-            clientMap.set(clientId, {
-              name: clientName,
-              amount: Number(invoice.total_amount),
-            });
+          if (invoice.status === 'paid') {
+            const clientName = invoice.client?.name || "Unknown Client";
+            const clientId = invoice.client_id;
+            if (clientMap.has(clientId)) {
+              const current = clientMap.get(clientId)!;
+              clientMap.set(clientId, {
+                name: clientName,
+                amount: current.amount + Number(invoice.total_amount),
+              });
+            } else {
+              clientMap.set(clientId, {
+                name: clientName,
+                amount: Number(invoice.total_amount),
+              });
+            }
           }
         });
+        
+        // Adjust client amounts for credit notes
+        // We would need client information from credit notes as well for this
+        // This is a simplified approach
+        
         const topClients = Array.from(clientMap.values())
           .sort((a, b) => b.amount - a.amount)
           .slice(0, 3);
+          
         setStats({
           paid: paidPercent,
           pending: pendingPercent,

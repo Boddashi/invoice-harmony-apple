@@ -62,7 +62,9 @@ const StatCards: React.FC<StatCardsProps> = ({
         className={cn("cursor-pointer hover:ring-1 hover:ring-primary/20 transition-transform duration-300 hover:translate-y-[-2px]")}
         onClick={() => handleCardClick(basePath)}
       >
-        <h3 className="text-sm font-medium text-muted-foreground">Total {reportSource === 'invoices' ? 'Revenue' : 'Credit'}</h3>
+        <h3 className="text-sm font-medium text-muted-foreground">
+          {reportSource === 'invoices' ? 'Total Revenue' : 'Total Credit'}
+        </h3>
         <p className="text-2xl font-semibold mt-1">{formatCurrency(invoiceStats.revenue)}</p>
       </CustomCard>
     </div>
