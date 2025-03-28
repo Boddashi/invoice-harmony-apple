@@ -164,7 +164,7 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
         <div className="space-y-4">
           {recentCreditNotes.map((creditNote) => {
             const status = getStatusConfig(creditNote.status);
-            // Ensure we have a valid icon component
+            // Always provide a fallback icon to prevent undefined errors
             const StatusIcon = status?.icon || FileText;
 
             return (
@@ -181,7 +181,7 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                     <div
                       className={cn(
                         "w-10 h-10 rounded-full flex items-center justify-center",
-                        status.color
+                        status?.color || "bg-gray-100 text-gray-600 border-gray-200"
                       )}
                     >
                       <StatusIcon size={18} />
@@ -208,10 +208,10 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                     <div
                       className={cn(
                         "px-3 py-1 text-xs font-medium border rounded-full",
-                        status.color
+                        status?.color || "bg-gray-100 text-gray-600 border-gray-200"
                       )}
                     >
-                      {status.label}
+                      {status?.label || "Unknown"}
                     </div>
 
                     <CreditNoteActions
@@ -235,7 +235,7 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                           <div
                             className={cn(
                               "w-8 h-8 rounded-full flex items-center justify-center",
-                              status.color
+                              status?.color || "bg-gray-100 text-gray-600 border-gray-200"
                             )}
                           >
                             <StatusIcon size={16} />
@@ -249,10 +249,10 @@ const CreditNoteList: React.FC<CreditNoteListProps> = ({ onStatusChange }) => {
                         <div
                           className={cn(
                             "px-2 py-0.5 text-xs font-medium border rounded-full",
-                            status.color
+                            status?.color || "bg-gray-100 text-gray-600 border-gray-200"
                           )}
                         >
-                          {status.label}
+                          {status?.label || "Unknown"}
                         </div>
                       </div>
 
