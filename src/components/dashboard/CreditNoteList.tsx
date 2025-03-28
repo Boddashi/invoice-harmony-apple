@@ -35,7 +35,7 @@ interface CreditNoteListProps {
   onStatusChange?: () => void;
 }
 
-const getStatusConfig = (status: CreditNoteStatus) => {
+const getStatusConfig = (status: string) => {
   switch (status) {
     case "applied":
       return {
@@ -52,6 +52,13 @@ const getStatusConfig = (status: CreditNoteStatus) => {
     case "draft":
       return {
         label: "Draft",
+        color: "bg-gray-100 text-gray-600 border-gray-200",
+        icon: FileText,
+      };
+    default:
+      // Fallback for unknown status
+      return {
+        label: "Unknown",
         color: "bg-gray-100 text-gray-600 border-gray-200",
         icon: FileText,
       };

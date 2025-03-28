@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -35,7 +36,7 @@ interface InvoiceListProps {
   onStatusChange?: () => void;
 }
 
-const getStatusConfig = (status: InvoiceStatus) => {
+const getStatusConfig = (status: string) => {
   switch (status) {
     case "paid":
       return {
@@ -58,6 +59,13 @@ const getStatusConfig = (status: InvoiceStatus) => {
     case "draft":
       return {
         label: "Draft",
+        color: "bg-gray-100 text-gray-600 border-gray-200",
+        icon: FileText,
+      };
+    default:
+      // Fallback for unknown status
+      return {
+        label: "Unknown",
         color: "bg-gray-100 text-gray-600 border-gray-200",
         icon: FileText,
       };
