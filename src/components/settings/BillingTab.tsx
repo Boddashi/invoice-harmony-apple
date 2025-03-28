@@ -37,6 +37,14 @@ const BillingTab = ({
         invoice_number_type: 'incremental',
       }));
     }
+    
+    // Ensure credit_note_prefix has a default value if not set
+    if (!companySettings.credit_note_prefix) {
+      setCompanySettings((prev) => ({
+        ...prev,
+        credit_note_prefix: 'CN',
+      }));
+    }
   }, []);
 
   if (loading) {
@@ -95,7 +103,7 @@ const BillingTab = ({
                     id="credit_note_prefix"
                     name="credit_note_prefix"
                     placeholder="e.g. CN"
-                    value={companySettings.credit_note_prefix || "CN"}
+                    value={companySettings.credit_note_prefix}
                     onChange={handleInputChange}
                     className="input-field w-full"
                   />
