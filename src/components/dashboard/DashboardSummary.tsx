@@ -29,7 +29,7 @@ const DashboardSummary = () => {
   const [summaryData, setSummaryData] = useState<SummaryData[]>([]);
   
   const formatAmount = (amount: number) => {
-    return `${currencySymbol}${amount.toFixed(2)}`;
+    return `${currencySymbol}${Math.abs(amount).toFixed(2)}`;
   };
   
   useEffect(() => {
@@ -71,7 +71,7 @@ const DashboardSummary = () => {
         
         // Calculate credit notes stats (use only paid/completed credit notes)
         const paidCreditNotes = creditNotes?.filter(note => note.status === 'paid') || [];
-        const paidCreditNotesAmount = paidCreditNotes.reduce((sum, note) => sum + Number(note.total_amount), 0);
+        const paidCreditNotesAmount = paidCreditNotes.reduce((sum, note) => sum + Math.abs(Number(note.total_amount)), 0);
         
         // Calculate total revenue (paid invoices minus paid credit notes)
         const totalRevenue = paidInvoicesAmount - paidCreditNotesAmount;
@@ -79,8 +79,8 @@ const DashboardSummary = () => {
         // For percentage change, we'll use a simplified approach
         // Normally you'd compare to a previous period, but for demo we'll use a fraction
         const previousTotalRevenue = totalRevenue * 0.8;
-        const percentChange = totalRevenue > 0 
-          ? ((totalRevenue - previousTotalRevenue) / previousTotalRevenue * 100).toFixed(1) + '%'
+        const percentChange = totalRevenue !== 0 
+          ? ((totalRevenue - previousTotalRevenue) / Math.abs(previousTotalRevenue) * 100).toFixed(1) + '%'
           : '0%';
         
         const newSummaryData: SummaryData[] = [

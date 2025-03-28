@@ -65,7 +65,7 @@ const StatCards: React.FC<StatCardsProps> = ({
         <h3 className="text-sm font-medium text-muted-foreground">
           {reportSource === 'invoices' ? 'Total Revenue' : 'Total Credit'}
         </h3>
-        <p className="text-2xl font-semibold mt-1">{formatCurrency(invoiceStats.revenue)}</p>
+        <p className="text-2xl font-semibold mt-1">{formatCurrency(Math.abs(invoiceStats.revenue))}</p>
       </CustomCard>
     </div>
   );

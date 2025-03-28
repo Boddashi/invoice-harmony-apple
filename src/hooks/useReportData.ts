@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -157,6 +158,10 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
       }
 
       const paidInvoices = filteredInvoices.filter(inv => inv.status === 'paid');
+      const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
+      const overdueInvoices = reportSource === 'invoices' ? 
+        filteredInvoices.filter(inv => inv.status === 'overdue') : [];
+      
       const today = new Date();
       let periodStart: Date;
       let formatString: string;
@@ -187,9 +192,9 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
         if (date >= periodStart) {
           const period = format(date, formatString);
           const currentAmount = revenueByPeriod.get(period) || 0;
-          // For credit notes, we want to show the absolute value
+          // For credit notes, we show the amount as negative
           const amount = reportSource === 'credit-notes' 
-            ? Math.abs(Number(invoice.total_amount))
+            ? -Math.abs(Number(invoice.total_amount))
             : Number(invoice.total_amount);
           revenueByPeriod.set(period, currentAmount + amount);
         }
@@ -209,16 +214,16 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
       setMonthlyData(periodData);
       
       const paidInvoicesList = filteredInvoices.filter(inv => inv.status === 'paid');
-      const pendingInvoices = filteredInvoices.filter(inv => inv.status === 'pending');
-      const overdueInvoices = filteredInvoices.filter(inv => inv.status === 'overdue');
       
-      // For credit notes, we want to show the absolute value
-      const totalRevenue = paidInvoicesList.reduce((sum, inv) => {
-        const amount = reportSource === 'credit-notes' 
-          ? Math.abs(Number(inv.total_amount))
-          : Number(inv.total_amount);
-        return sum + amount;
-      }, 0);
+      // Calculate total revenue based on source
+      let totalRevenue;
+      if (reportSource === 'credit-notes') {
+        // For credit notes, revenue is negative
+        totalRevenue = -paidInvoicesList.reduce((sum, inv) => sum + Math.abs(Number(inv.total_amount)), 0);
+      } else {
+        // For invoices, revenue is positive
+        totalRevenue = paidInvoicesList.reduce((sum, inv) => sum + Number(inv.total_amount), 0);
+      }
       
       setInvoiceStats({
         total: filteredInvoices.length,
@@ -242,14 +247,18 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
           value: pendingInvoices.length, 
           fill: PIE_COLORS[1], 
           percent: pendingInvoices.length / totalCount 
-        },
-        { 
+        }
+      ];
+      
+      // Only add overdue for invoices, not for credit notes
+      if (reportSource === 'invoices') {
+        statusDataArray.push({ 
           name: 'Overdue', 
           value: overdueInvoices.length, 
           fill: PIE_COLORS[2], 
           percent: overdueInvoices.length / totalCount 
-        }
-      ];
+        });
+      }
       
       setStatusData(statusDataArray);
       
@@ -258,9 +267,9 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
       paidInvoicesList.forEach(invoice => {
         if (invoice.client && invoice.client.name) {
           const clientName = invoice.client.name;
-          // For credit notes, we want to show the absolute value
+          // For credit notes, amount is negative
           const amount = reportSource === 'credit-notes' 
-            ? Math.abs(Number(invoice.total_amount))
+            ? -Math.abs(Number(invoice.total_amount))
             : Number(invoice.total_amount);
           clientRevenue[clientName] = (clientRevenue[clientName] || 0) + amount;
         }
@@ -268,7 +277,7 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
       
       const clientDataArray = Object.entries(clientRevenue)
         .map(([name, amount]) => ({ name, amount }))
-        .sort((a, b) => b.amount - a.amount)
+        .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))
         .slice(0, 5);
       
       setClientData(clientDataArray);
@@ -287,9 +296,9 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
                 itemRevenue[itemName] = { amount: 0, count: 0 };
               }
               
-              // For credit notes, we want to show the absolute value
+              // For credit notes, amount is negative
               const amount = reportSource === 'credit-notes' 
-                ? Math.abs(Number(item.total_amount))
+                ? -Math.abs(Number(item.total_amount))
                 : Number(item.total_amount);
                 
               itemRevenue[itemName].amount += amount;
@@ -305,16 +314,17 @@ export const useReportData = (reportSource: 'invoices' | 'credit-notes' = 'invoi
           amount: data.amount,
           count: data.count 
         }))
-        .sort((a, b) => b.amount - a.amount);
+        .sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
       
       setItemData(itemDataArray);
       
       const titlePrefix = reportSource === 'invoices' ? 'Invoice ' : 'Credit Note ';
+      const revenueTitle = reportSource === 'invoices' ? 'Revenue' : 'Amount';
       
       const reports: Report[] = [
         {
           id: '1',
-          title: `${titlePrefix}Revenue`,
+          title: `${titlePrefix}${revenueTitle}`,
           data: periodData,
           type: 'monthly',
           date: format(new Date(), 'yyyy-MM-dd'),

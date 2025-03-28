@@ -63,7 +63,7 @@ const Index = () => {
   const isMobile = useIsMobile();
 
   const formatAmount = (amount: number) => {
-    return `${currencySymbol}${amount.toFixed(2)}`;
+    return `${currencySymbol}${Math.abs(amount).toFixed(2)}`;
   };
 
   const fetchRevenueData = async () => {
@@ -122,13 +122,13 @@ const Index = () => {
         );
       });
       
-      // Subtract credit note amounts
+      // Subtract credit note amounts (use absolute value as credit notes are stored as negative)
       creditNotes?.forEach((creditNote) => {
         const monthKey = format(new Date(creditNote.issue_date), "MMM yyyy");
         const currentAmount = monthlyRevenue.get(monthKey) || 0;
         monthlyRevenue.set(
           monthKey,
-          currentAmount - Number(creditNote.total_amount)
+          currentAmount - Math.abs(Number(creditNote.total_amount))
         );
       });
       
@@ -177,7 +177,7 @@ const Index = () => {
         // Fetch credit notes
         const { data: creditNotes, error: creditNotesError } = await supabase
           .from("credit_notes")
-          .select("status, total_amount")
+          .select("status, total_amount, client_id")
           .eq("user_id", user.id);
           
         if (creditNotesError) {
@@ -209,11 +209,11 @@ const Index = () => {
             .reduce((sum, invoice) => sum + Number(invoice.total_amount), 0) ||
           0;
         
-        // Calculate credit note amounts
+        // Calculate credit note amounts (use absolute value for calculations)
         const paidCreditNoteAmount = 
           creditNotes
             ?.filter((cn) => cn.status === "paid")
-            .reduce((sum, cn) => sum + Number(cn.total_amount), 0) || 
+            .reduce((sum, cn) => sum + Math.abs(Number(cn.total_amount)), 0) || 
           0;
         
         // Adjust total amount by subtracting credit notes
@@ -221,7 +221,7 @@ const Index = () => {
         const adjustedPaidAmount = paidInvoiceAmount - paidCreditNoteAmount;
         
         // Calculate percentages based on adjusted amounts
-        const effectiveTotalAmount = adjustedTotalAmount > 0 ? adjustedTotalAmount : 1;
+        const effectiveTotalAmount = adjustedTotalAmount !== 0 ? adjustedTotalAmount : 1;
         
         const paidPercent =
           Math.round((adjustedPaidAmount / effectiveTotalAmount) * 100);
@@ -232,7 +232,7 @@ const Index = () => {
         const overduePercent =
           Math.round((overdueAmount / effectiveTotalAmount) * 100);
 
-        // Process client data
+        // Process client data with credit notes factored in
         const clientMap = new Map<
           string,
           {
@@ -241,6 +241,7 @@ const Index = () => {
           }
         >();
         
+        // Add invoice amounts per client
         invoices?.forEach((invoice) => {
           if (invoice.status === 'paid') {
             const clientName = invoice.client?.name || "Unknown Client";
@@ -260,9 +261,19 @@ const Index = () => {
           }
         });
         
-        // Adjust client amounts for credit notes
-        // We would need client information from credit notes as well for this
-        // This is a simplified approach
+        // Subtract credit note amounts per client
+        creditNotes?.forEach((creditNote) => {
+          if (creditNote.status === 'paid' && creditNote.client_id) {
+            const clientId = creditNote.client_id;
+            if (clientMap.has(clientId)) {
+              const current = clientMap.get(clientId)!;
+              clientMap.set(clientId, {
+                name: current.name,
+                amount: current.amount - Math.abs(Number(creditNote.total_amount)),
+              });
+            }
+          }
+        });
         
         const topClients = Array.from(clientMap.values())
           .sort((a, b) => b.amount - a.amount)
@@ -373,14 +384,14 @@ const Index = () => {
                         tick={{
                           fontSize: 12,
                         }}
-                        tickFormatter={(value) => `${currencySymbol}${value}`}
+                        tickFormatter={(value) => `${currencySymbol}${Math.abs(value)}`}
                       />
                       <ChartTooltip
                         content={
                           <ChartTooltipContent
                             formatter={(value: number) => [
-                              `${currencySymbol}${value.toFixed(2)}`,
-                              " Revenue",
+                              `${currencySymbol}${Math.abs(value).toFixed(2)}`,
+                              value < 0 ? "Credit" : "Revenue",
                             ]}
                           />
                         }
